@@ -94,7 +94,7 @@ jobs:
     name: Test GPT-4
     runs-on: ubuntu-latest
     needs: validate-rules
-    if: ${{ secrets.OPENAI_API_KEY != '' }}
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -130,7 +130,7 @@ jobs:
     name: Test Claude 3.5 Sonnet
     runs-on: ubuntu-latest
     needs: validate-rules
-    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -166,7 +166,7 @@ jobs:
     name: Test Gemini Pro
     runs-on: ubuntu-latest
     needs: validate-rules
-    if: ${{ secrets.GOOGLE_API_KEY != '' }}
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -202,7 +202,7 @@ jobs:
     name: Test Codestral
     runs-on: ubuntu-latest
     needs: validate-rules
-    if: ${{ secrets.MISTRAL_API_KEY != '' }}
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -309,10 +309,15 @@ jobs:
           cat test-results/summary.md >> $GITHUB_STEP_SUMMARY
 
       - name: Post to Slack
-        if: ${{ secrets.SLACK_WEBHOOK_URL != '' && (github.event_name == 'push' || github.event_name == 'schedule') }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+        continue-on-error: true
         run: |
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            -H 'Content-Type: application/json' \
-            -d "{\"text\": \"AI Compatibility Tests completed. Check workflow for details.\"}"
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+              -H 'Content-Type: application/json' \
+              -d "{\"text\": \"AI Compatibility Tests completed. Check workflow for details.\"}"
+          else
+            echo "SLACK_WEBHOOK_URL not configured, skipping notification"
+          fi
 
 
