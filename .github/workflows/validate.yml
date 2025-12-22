@@ -76,8 +76,10 @@ jobs:
       
       - name: Install dependencies
         run: |
-          echo "Checking for jq..."
-          which jq || sudo apt-get update && sudo apt-get install -y jq
+          echo "Installing jq..."
+          sudo apt-get update -qq
+          sudo apt-get install -y jq
+          jq --version
           echo "✓ jq is available"
       
       - name: Validate bash syntax
