@@ -79,26 +79,35 @@ while IFS= read -r lang_key; do
     
     # Check language base files
     while IFS= read -r file; do
-        file_path="$lang_dir/$file.md"
-        if [[ ! -f "$file_path" ]]; then
-            missing_files+=("$lang_key/$file.md")
+        # Skip if file is null, empty, or not defined
+        if [[ -n "$file" && "$file" != "null" ]]; then
+            file_path="$lang_dir/$file.md"
+            if [[ ! -f "$file_path" ]]; then
+                missing_files+=("$lang_key/$file.md")
+            fi
         fi
     done < <(jq -r ".languages[\"$lang_key\"].files[]" "$CONFIG_FILE" 2>/dev/null || echo "")
     
     # Check framework files
     while IFS= read -r fw_key; do
         fw_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].file" "$CONFIG_FILE")
-        fw_path="$RULES_DIR/$lang_key/frameworks/$fw_file.md"
-        if [[ ! -f "$fw_path" ]]; then
-            missing_files+=("$lang_key/frameworks/$fw_file.md")
+        # Skip if file is null, empty, or not defined
+        if [[ -n "$fw_file" && "$fw_file" != "null" ]]; then
+            fw_path="$RULES_DIR/$lang_key/frameworks/$fw_file.md"
+            if [[ ! -f "$fw_path" ]]; then
+                missing_files+=("$lang_key/frameworks/$fw_file.md")
+            fi
         fi
         
         # Check structure files
         while IFS= read -r struct_key; do
             struct_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].file" "$CONFIG_FILE")
-            struct_path="$RULES_DIR/$lang_key/frameworks/structures/$struct_file.md"
-            if [[ ! -f "$struct_path" ]]; then
-                missing_files+=("$lang_key/frameworks/structures/$struct_file.md")
+            # Skip if file is null, empty, or not defined
+            if [[ -n "$struct_file" && "$struct_file" != "null" ]]; then
+                struct_path="$RULES_DIR/$lang_key/frameworks/structures/$struct_file.md"
+                if [[ ! -f "$struct_path" ]]; then
+                    missing_files+=("$lang_key/frameworks/structures/$struct_file.md")
+                fi
             fi
         done < <(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures | keys[]" "$CONFIG_FILE" 2>/dev/null || echo "")
     done < <(jq -r ".languages[\"$lang_key\"].frameworks | keys[]" "$CONFIG_FILE" 2>/dev/null || echo "")
