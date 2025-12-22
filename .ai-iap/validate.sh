@@ -26,10 +26,10 @@ test_result() {
     
     if [[ "$passed" == "true" ]]; then
         echo -e "${GREEN}[PASS]${NC} $name"
-        ((pass_count++))
+        pass_count=$((pass_count + 1))
     else
         echo -e "${RED}[FAIL]${NC} $name - $message"
-        ((fail_count++))
+        fail_count=$((fail_count + 1))
     fi
 }
 
@@ -44,22 +44,16 @@ else
 fi
 
 # Test 2: Config file is valid JSON
-echo "DEBUG: Checking for jq..."
 if ! command -v jq &> /dev/null; then
-    echo "DEBUG: jq not found in PATH"
     test_result "Config file is valid JSON" "false" "jq not installed"
     exit 1
 fi
-echo "DEBUG: jq found at $(which jq)"
 
-echo "DEBUG: Testing JSON with jq..."
 jq_output=$(jq empty "$CONFIG_FILE" 2>&1)
 jq_exit_code=$?
-echo "DEBUG: jq exit code: $jq_exit_code"
 if [[ $jq_exit_code -eq 0 ]]; then
     test_result "Config file is valid JSON" "true"
 else
-    echo "DEBUG: jq output: $jq_output"
     test_result "Config file is valid JSON" "false" "Invalid JSON syntax: $jq_output"
     exit 1
 fi
