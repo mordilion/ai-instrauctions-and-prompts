@@ -1,4 +1,4 @@
-﻿# Swift Security
+# Swift Security
 
 > **Scope**: Swift-specific security (iOS, macOS, Vapor)
 > **Extends**: general/security.md

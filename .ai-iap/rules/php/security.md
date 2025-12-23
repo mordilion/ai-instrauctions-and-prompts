@@ -1,4 +1,4 @@
-﻿# PHP Security
+# PHP Security
 
 > **Scope**: PHP-specific security (Laravel, Symfony, WordPress)
 > **Extends**: general/security.md

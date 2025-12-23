@@ -1,4 +1,4 @@
-﻿# Dart/Flutter Security
+# Dart/Flutter Security
 
 > **Scope**: Dart and Flutter-specific security practices
 > **Extends**: general/security.md
