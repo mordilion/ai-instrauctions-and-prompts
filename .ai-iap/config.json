@@ -55,10 +55,10 @@
       "description": "Dart and Flutter standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "flutter_test testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish flutter_test in existing projects"
         }
       },
       "frameworks": {
@@ -118,10 +118,10 @@
       "description": ".NET and C# standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "NUnit testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish NUnit testing in existing projects"
         }
       },
       "frameworks": {
@@ -255,10 +255,10 @@
       "description": "TypeScript standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "Jest/Vitest testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish Jest/Vitest testing in existing projects"
         }
       },
       "frameworks": {
@@ -395,10 +395,10 @@
       "description": "Java standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "JUnit 5 testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish JUnit 5 testing in existing projects"
         }
       },
       "frameworks": {
@@ -474,10 +474,10 @@
       "description": "Python standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "pytest testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish pytest testing in existing projects"
         }
       },
       "frameworks": {
@@ -560,10 +560,10 @@
       "description": "PHP standards",
       "files": ["architecture", "code-style"],
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "PHPUnit testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish PHPUnit testing in existing projects"
         }
       },
       "frameworks": {
@@ -637,10 +637,10 @@
       "description": "Modern, expressive language for JVM, Android, and multiplatform",
       "enabled": true,
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "JUnit 5/Kotest testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish JUnit 5/Kotest testing in existing projects"
         }
       },
       "frameworks": {
@@ -730,10 +730,10 @@
       "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
       "enabled": true,
       "processes": {
-        "testing": {
+        "test-implementation": {
           "name": "Testing Implementation",
-          "file": "testing",
-          "description": "XCTest testing setup workflow"
+          "file": "test-implementation",
+          "description": "Establish XCTest testing in existing projects"
         }
       },
       "frameworks": {
