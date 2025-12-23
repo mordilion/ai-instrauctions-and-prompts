@@ -46,7 +46,7 @@
       "globs": "*",
       "alwaysApply": true,
       "description": "General coding standards",
-      "files": ["persona", "architecture", "code-style"]
+      "files": ["persona", "architecture", "code-style", "security"]
     },
     "dart": {
       "name": "Dart/Flutter",
@@ -116,7 +116,7 @@
       "globs": "*.cs,*.csproj,*.razor",
       "alwaysApply": false,
       "description": ".NET and C# standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
@@ -253,7 +253,7 @@
       "globs": "*.ts,*.tsx",
       "alwaysApply": false,
       "description": "TypeScript standards",
-      "files": ["architecture", "code-style"],
+      "files": ["architecture", "code-style", "security"],
       "processes": {
         "test-implementation": {
           "name": "Testing Implementation",
