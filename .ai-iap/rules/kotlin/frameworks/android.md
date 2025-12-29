@@ -1,50 +1,47 @@
 # Android Development with Kotlin
 
-## Overview
-Kotlin: Google's recommended language for Android development since 2019, offering null safety, concise syntax, and coroutines.
-Interoperable with Java, but provides modern language features that prevent common Android bugs (null pointer exceptions).
-Best for all new Android projects and when modernizing Java Android apps.
+> **Scope**: Android apps using Kotlin (Google's recommended language since 2019)
+> **Applies to**: Kotlin files in Android projects
+> **Extends**: kotlin/architecture.md, kotlin/code-style.md
 
-## Core Components
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use ViewBinding (NOT findViewById or Kotlin synthetics)
+> **ALWAYS**: Use `by viewModels()` delegation (NOT manual ViewModelProvider)
+> **ALWAYS**: Clean up Fragment bindings in `onDestroyView` (memory leak prevention)
+> **ALWAYS**: Use `lifecycleScope` for coroutines (auto-cancellation)
+> **ALWAYS**: Use StateFlow or LiveData for reactive UI
+> 
+> **NEVER**: Use `lateinit` for ViewBinding in Fragments (causes memory leaks)
+> **NEVER**: Use manual ViewModel creation (use delegation)
+> **NEVER**: Use `findViewById()` (use ViewBinding)
+> **NEVER**: Use `GlobalScope` (not lifecycle-aware)
+> **NEVER**: Block main thread with synchronous operations
 
 ## Pattern Selection
 
-### ViewBinding Patterns
-**Activities: Use `lateinit`**
-- ViewBinding initialized in onCreate, never null after
-- No cleanup needed (Activity destroyed = binding destroyed)
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| **StateFlow** | New apps, coroutine support | Modern, Kotlin-first, cold streams |
+| **LiveData** | Java interop, existing codebase | Lifecycle-aware out of the box |
+| **Activity lateinit** | ViewBinding in Activities | Safe (onCreate before access) |
+| **Fragment nullable** | ViewBinding in Fragments | Memory leak prevention |
 
-**Fragments: Use nullable + cleanup**
-- Fragment view can be destroyed while Fragment lives (memory leak risk)
-- MUST set to null in onDestroyView
-
-### State Management
-**Use StateFlow when**:
-- Building new apps (modern, Kotlin-first)
-- Need coroutine support
-- Want cold streams (no initial value needed)
-
-**Use LiveData when**:
-- Working with Java code
-- Need lifecycle awareness out of the box
-- Existing codebase uses LiveData
+## Core Patterns
 
 ### Activities
+
 ```kotlin
-// Activity: lateinit is safe (onCreate always runs before access)
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding  // lateinit: initialized in onCreate
-    private val viewModel: MainViewModel by viewModels()  // Lazy delegate: survives rotation
+    private lateinit var binding: ActivityMainBinding  // lateinit: safe in Activities
+    private val viewModel: MainViewModel by viewModels()  // Lazy: survives rotation
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)  // Must initialize before use
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setupObservers()
-    }
-    
-    private fun setupObservers() {
-        viewModel.state.observe(this) { state ->  // 'this' = LifecycleOwner (auto cleanup)
+        
+        viewModel.state.observe(this) { state ->  // 'this' = LifecycleOwner
             when (state) {
                 is UiState.Loading -> showLoading()
                 is UiState.Success -> showData(state.data)
@@ -55,33 +52,31 @@ class MainActivity : AppCompatActivity() {
 }
 ```
 
-### Fragments
+### Fragments (CRITICAL: Memory Leak Prevention)
+
 ```kotlin
-// Fragment: MUST use nullable binding pattern (memory leak prevention)
 class UserFragment : Fragment(R.layout.fragment_user) {
     private var _binding: FragmentUserBinding? = null  // Nullable: view destroyed before fragment
-    private val binding get() = _binding!!  // Safe: only accessed between onCreateView-onDestroyView
+    private val binding get() = _binding!!  // Safe: only between onCreateView-onDestroyView
     private val viewModel: UserViewModel by viewModels()
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentUserBinding.bind(view)  // Create binding
+        _binding = FragmentUserBinding.bind(view)
         setupUI()
     }
     
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null  // CRITICAL: Release view reference to prevent memory leak
-        // Fragment instance may live, but view is destroyed (e.g., in ViewPager, back stack)
+        _binding = null  // CRITICAL: Release view reference
     }
 }
 ```
 
 ### ViewModels
+
 ```kotlin
-// ViewModel: Survives configuration changes (rotation, etc.)
 class UserViewModel(private val repository: UserRepository) : ViewModel() {
-    // Backing property pattern: private mutable, public immutable
     private val _state = MutableStateFlow<UiState<User>>(UiState.Loading)
     val state: StateFlow<UiState<User>> = _state.asStateFlow()  // Read-only for UI
     
@@ -95,7 +90,6 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
     }
 }
 
-// Sealed class: Type-safe state representation (exhaustive when expressions)
 sealed class UiState<out T> {
     data object Loading : UiState<Nothing>()
     data class Success<T>(val data: T) : UiState<T>()
@@ -105,7 +99,6 @@ sealed class UiState<out T> {
 
 ## Jetpack Compose
 
-### Composables
 ```kotlin
 @Composable
 fun UserScreen(viewModel: UserViewModel = viewModel()) {
@@ -117,45 +110,15 @@ fun UserScreen(viewModel: UserViewModel = viewModel()) {
         is UiState.Error -> ErrorView((state as UiState.Error).message)
     }
 }
-
-@Composable
-private fun UserDetails(user: User) {
-    Column(Modifier.padding(16.dp)) {
-        Text(user.name, style = MaterialTheme.typography.headlineMedium)
-        Text(user.email, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-```
-
-### State Management
-```kotlin
-@Composable
-fun SearchScreen() {
-    var query by remember { mutableStateOf("") }
-    val results by viewModel.results.collectAsStateWithLifecycle()
-    
-    LaunchedEffect(query) {
-        if (query.isNotEmpty()) viewModel.search(query)
-    }
-    
-    Column {
-        SearchBar(query = query, onQueryChange = { query = it })
-        LazyColumn {
-            items(results) { SearchResultItem(it) }
-        }
-    }
-}
 ```
 
 ## Room Database
 
-### Entity & DAO
 ```kotlin
 @Entity(tableName = "users")
 data class UserEntity(
     @PrimaryKey val id: Long,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "email") val email: String
+    @ColumnInfo(name = "name") val name: String
 )
 
 @Dao
@@ -163,42 +126,13 @@ interface UserDao {
     @Query("SELECT * FROM users")
     suspend fun getAll(): List<UserEntity>
     
-    @Query("SELECT * FROM users WHERE id = :id")
-    suspend fun getById(id: Long): UserEntity?
-    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(user: UserEntity)
-    
-    @Delete
-    suspend fun delete(user: UserEntity)
-}
-```
-
-### Database
-```kotlin
-@Database(entities = [UserEntity::class], version = 1)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
-    
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-        
-        fun getInstance(context: Context): AppDatabase =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app_database"
-                ).build().also { INSTANCE = it }
-            }
-    }
 }
 ```
 
 ## Dependency Injection (Hilt)
 
-### Setup
 ```kotlin
 @HiltAndroidApp
 class MyApplication : Application()
@@ -209,10 +143,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context) =
-        AppDatabase.getInstance(context)
-    
-    @Provides
-    fun provideUserDao(db: AppDatabase) = db.userDao()
+        Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
 }
 
 @HiltViewModel
@@ -221,138 +152,25 @@ class UserViewModel @Inject constructor(
 ) : ViewModel()
 ```
 
-## Navigation
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-### Navigation Component
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Fragment Binding** | `lateinit var binding` | `var _binding: ..? = null` | Memory leak |
+| **ViewModel Creation** | `ViewModelProvider(this)` | `by viewModels()` | Manual lifecycle management |
+| **Coroutine Scope** | `GlobalScope.launch` | `lifecycleScope.launch` | Not lifecycle-aware |
+| **findViewById** | `findViewById<TextView>` | ViewBinding | Type-unsafe, verbose |
+| **Leaked Observers** | No lifecycle owner | `.observe(viewLifecycleOwner)` | Crash after destroy |
+
+### Anti-Pattern: Fragment Memory Leak (CRITICAL)
+
 ```kotlin
-@Composable
-fun AppNavigation(navController: NavHostController) {
-    NavHost(navController, startDestination = "home") {
-        composable("home") {
-            HomeScreen(onNavigateToDetail = { id ->
-                navController.navigate("detail/$id")
-            })
-        }
-        composable("detail/{userId}") { backStackEntry ->
-            val userId = backStackEntry.arguments?.getLong("userId")
-            DetailScreen(userId)
-        }
-    }
-}
-```
-
-## RecyclerView
-
-### Adapter with DiffUtil
-```kotlin
-class UserAdapter(
-    private val onItemClick: (User) -> Unit
-) : ListAdapter<User, UserAdapter.ViewHolder>(DiffCallback()) {
-    
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        ViewHolder(ItemUserBinding.inflate(LayoutInflater.from(parent.context), parent, false))
-    
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
-    }
-    
-    inner class ViewHolder(private val binding: ItemUserBinding) : 
-        RecyclerView.ViewHolder(binding.root) {
-        fun bind(user: User) {
-            binding.textName.text = user.name
-            binding.root.setOnClickListener { onItemClick(user) }
-        }
-    }
-    
-    class DiffCallback : DiffUtil.ItemCallback<User>() {
-        override fun areItemsTheSame(old: User, new: User) = old.id == new.id
-        override fun areContentsTheSame(old: User, new: User) = old == new
-    }
-}
-```
-
-## Testing
-
-### Unit Tests
-```kotlin
-@ExperimentalCoroutinesApi
-class UserViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
-    
-    private lateinit var repository: FakeUserRepository
-    private lateinit var viewModel: UserViewModel
-    
-    @Before
-    fun setup() {
-        repository = FakeUserRepository()
-        viewModel = UserViewModel(repository)
-    }
-    
-    @Test
-    fun `loadUser succeeds updates state`() = runTest {
-        repository.setUser(User(1, "John", "john@test.com"))
-        viewModel.loadUser()
-        advanceUntilIdle()
-        
-        val state = viewModel.state.value
-        assertThat(state).isInstanceOf(UiState.Success::class.java)
-    }
-}
-```
-
-### UI Tests (Compose)
-```kotlin
-class UserScreenTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-    
-    @Test
-    fun whenSuccess_showsUserDetails() {
-        composeTestRule.setContent {
-            UserScreenContent(state = UiState.Success(User(1, "John", "john@test.com")))
-        }
-        
-        composeTestRule.onNodeWithText("John").assertIsDisplayed()
-        composeTestRule.onNodeWithText("john@test.com").assertIsDisplayed()
-    }
-}
-```
-
-## Best Practices
-
-**MUST**:
-- Use ViewBinding (NOT findViewById or Kotlin synthetics)
-- Use `by viewModels()` delegation (NOT manual ViewModelProvider)
-- Clean up Fragment bindings in `onDestroyView` (memory leak prevention)
-- Use `lifecycleScope` for coroutines in UI components (auto-cancellation)
-- Use StateFlow or LiveData for reactive UI updates
-
-**SHOULD**:
-- Use Hilt for dependency injection
-- Use Room for local database
-- Use Jetpack Navigation for multi-screen apps
-- Use sealed classes for state representation
-- Use data classes for models
-
-**AVOID**:
-- `lateinit` in Fragments for ViewBinding (causes memory leaks)
-- Manual ViewModel creation (use delegation)
-- `findViewById()` (use ViewBinding)
-- Leaked observers (use lifecycle-aware observation)
-- Blocking operations on main thread
-
-## Common Patterns
-
-### Memory Leak Prevention
-```kotlin
-// ❌ BAD: Memory leak in Fragment
+// ❌ WRONG: Memory leak
 class UserFragment : Fragment() {
-    private lateinit var binding: FragmentUserBinding  // WRONG for Fragments!
-    // Problem: Fragment kept in memory when view destroyed (ViewPager, back stack)
+    private lateinit var binding: FragmentUserBinding  // Fragment kept in memory!
 }
 
-// ✅ GOOD: Proper cleanup
+// ✅ CORRECT: Proper cleanup
 class UserFragment : Fragment() {
     private var _binding: FragmentUserBinding? = null
     private val binding get() = _binding!!
@@ -364,47 +182,67 @@ class UserFragment : Fragment() {
 }
 ```
 
-### ViewModel Scope Selection
+### Anti-Pattern: GlobalScope (LIFECYCLE DISASTER)
+
 ```kotlin
-// ❌ WRONG: Activity-scoped ViewModel in Fragment (unless sharing data)
-private val viewModel: MainViewModel by activityViewModels()  // Shares with Activity
-
-// ✅ CORRECT: Fragment-scoped ViewModel
-private val viewModel: UserViewModel by viewModels()  // Scoped to this Fragment
-
-// ✅ CORRECT: Shared between Fragments
-private val sharedViewModel: SharedViewModel by activityViewModels()  // Explicit sharing
-```
-
-### Lifecycle-Aware Coroutines
-```kotlin
-// ❌ BAD: Not lifecycle-aware
-GlobalScope.launch {  // Never cancelled!
+// ❌ WRONG: Never cancelled
+GlobalScope.launch {
     val data = fetchData()
     updateUI(data)  // Crash if Activity destroyed
 }
 
-// ✅ GOOD: Lifecycle-aware
-lifecycleScope.launch {  // Cancelled when lifecycle destroyed
+// ✅ CORRECT: Lifecycle-aware
+lifecycleScope.launch {
     val data = fetchData()
-    updateUI(data)  // Safe: cancelled if Activity destroyed
-}
-
-// ✅ GOOD: Collect flows safely
-viewLifecycleOwner.lifecycleScope.launch {  // Use viewLifecycleOwner in Fragments
-    viewModel.state.collect { state ->
-        updateUI(state)
-    }
+    updateUI(data)  // Cancelled if Activity destroyed
 }
 ```
 
-### Kotlin Extensions (Use Sparingly)
-```kotlin
-// ✅ GOOD: Useful extension
-fun Fragment.showToast(message: String) {
-    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-}
+## AI Self-Check (Verify BEFORE generating Android code)
 
-// ❌ AVOID: Too generic (pollution)
-fun Any.log() { println(this) }  // Adds to every class!
-```
+- [ ] Using ViewBinding (NOT findViewById)?
+- [ ] Nullable binding pattern in Fragments?
+- [ ] Cleaning up binding in onDestroyView?
+- [ ] Using `by viewModels()` delegation?
+- [ ] StateFlow or LiveData for state?
+- [ ] lifecycleScope for coroutines?
+- [ ] Sealed classes for UI state?
+- [ ] Hilt for dependency injection?
+- [ ] Room for local database?
+- [ ] No memory leaks in Fragments?
+
+## Key Libraries
+
+| Library | Purpose | Keywords |
+|---------|---------|----------|
+| ViewBinding | View access | Type-safe, null-safe |
+| Lifecycle | Lifecycle awareness | `lifecycleScope`, `viewLifecycleOwner` |
+| ViewModel | Survive rotation | `by viewModels()` |
+| StateFlow/LiveData | Reactive UI | Observable state |
+| Room | Local database | `@Entity`, `@Dao`, `@Database` |
+| Hilt | Dependency injection | `@Inject`, `@HiltViewModel` |
+| Compose | Declarative UI | `@Composable`, `collectAsStateWithLifecycle` |
+| Navigation | Multi-screen | `NavController`, `navigate()` |
+
+## Best Practices
+
+**MUST**:
+- ViewBinding in all UI components
+- Nullable binding in Fragments + cleanup
+- `by viewModels()` delegation
+- lifecycleScope for coroutines
+- StateFlow/LiveData for reactive UI
+
+**SHOULD**:
+- Hilt for DI
+- Room for local storage
+- Jetpack Navigation
+- Sealed classes for state
+- Data classes for models
+
+**AVOID**:
+- `lateinit` for Fragment ViewBinding
+- Manual ViewModel creation
+- `findViewById()`
+- `GlobalScope`
+- Main thread blocking
