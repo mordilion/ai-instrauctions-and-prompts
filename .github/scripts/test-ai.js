@@ -234,15 +234,16 @@ async function createAIClient(provider) {
 
 // Load rule files
 function loadRules(ruleFiles) {
-  const rulesDir = path.join(process.cwd(), '.ai-iap');
+  // Go up to project root (from .github/scripts to project root)
+  const projectRoot = path.join(__dirname, '..', '..');
   let rulesContent = '';
   
   for (const ruleFile of ruleFiles) {
-    const filePath = path.join(rulesDir, ruleFile);
+    const filePath = path.join(projectRoot, ruleFile);
     if (fs.existsSync(filePath)) {
       rulesContent += fs.readFileSync(filePath, 'utf8') + '\n\n';
     } else {
-      console.warn(`Warning: Rule file not found: ${ruleFile}`);
+      console.warn(`Warning: Rule file not found: ${ruleFile} (looking in ${filePath})`);
     }
   }
   
