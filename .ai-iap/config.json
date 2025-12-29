@@ -74,6 +74,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -152,6 +157,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -304,6 +314,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -479,6 +494,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -573,6 +593,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -674,6 +699,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -767,6 +797,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
@@ -876,6 +911,11 @@
           "name": "Docker Containerization",
           "file": "docker-containerization",
           "description": "Containerize application with Docker"
+        },
+        "authentication-setup": {
+          "name": "Authentication Setup",
+          "file": "authentication-setup",
+          "description": "Implement JWT, OAuth, and RBAC authentication"
         }
       },
       "frameworks": {
