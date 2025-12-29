@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd .github/scripts
-          npm ci
+          npm install
       
       - name: Run GPT-4 tests
         continue-on-error: true  # Don't fail workflow if API key is missing
@@ -113,7 +113,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd .github/scripts
-          npm ci
+          npm install
       
       - name: Run Claude tests
         continue-on-error: true  # Don't fail workflow if API key is missing
@@ -164,7 +164,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd .github/scripts
-          npm ci
+          npm install
       
       - name: Run Gemini tests
         continue-on-error: true  # Don't fail workflow if API key is missing
@@ -215,7 +215,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd .github/scripts
-          npm ci
+          npm install
       
       - name: Run Codestral tests
         continue-on-error: true  # Don't fail workflow if API key is missing
