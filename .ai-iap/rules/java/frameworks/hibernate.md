@@ -1,16 +1,39 @@
 # Hibernate ORM
 
-## Overview
-Hibernate: powerful, mature ORM (Object-Relational Mapper) for Java with JPA implementation.
-Handles object-to-database mapping, lazy loading, caching, and query optimization automatically.
-Best for complex data models, when you need caching, or working with legacy databases.
+> **Scope**: Apply these rules when using Hibernate in Java projects
+> **Applies to**: Java files using Hibernate
+> **Extends**: java/architecture.md, java/code-style.md
 
-## Entity Mapping
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
+> **ALWAYS**: Use @Entity with proper mapping annotations
+> **ALWAYS**: Use Criteria API or JPQL (NOT raw SQL)
+> **ALWAYS**: Use transactions for write operations
+> **ALWAYS**: Use fetch joins to avoid N+1 queries
+> **ALWAYS**: Close SessionFactory on application shutdown
+> 
+> **NEVER**: Use raw SQL without parameterization (SQL injection)
+> **NEVER**: Load collections in loops (N+1 problem)
+> **NEVER**: Forget @Transactional on write methods
+> **NEVER**: Use lazy loading without open session
+> **NEVER**: Store Session in instance variables (not thread-safe)
+
+## Pattern Selection
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Entity Mapping | Domain models | `@Entity`, `@Table`, `@Column` |
+| Criteria API | Type-safe queries | `CriteriaBuilder`, type-safe |
+| JPQL | String-based queries | HQL syntax |
+| Fetch Joins | Avoid N+1 | `JOIN FETCH` |
+| Named Queries | Reusable queries | `@NamedQuery` |
+
+## Core Patterns
+
+### Entity Mapping
 ```java
 @Entity
 @Table(name = "users")
-@Getter @Setter
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,259 +42,153 @@ public class User {
     @Column(nullable = false, length = 100)
     private String name;
     
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
     
-    @Column(name = "created_at")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt;
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
     
-    @PrePersist
-    protected void onCreate() {
-        createdAt = new Date();
-    }
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 }
+```
+
+### Criteria API (Type-Safe)
+```java
+CriteriaBuilder cb = session.getCriteriaBuilder();
+CriteriaQuery<User> query = cb.createQuery(User.class);
+Root<User> root = query.from(User.class);
+
+query.select(root)
+    .where(cb.equal(root.get("email"), email));
+
+User user = session.createQuery(query).getSingleResult();
+```
+
+### JPQL with Fetch Join
+```java
+String jpql = "SELECT u FROM User u JOIN FETCH u.posts WHERE u.id = :id";
+User user = session.createQuery(jpql, User.class)
+    .setParameter("id", userId)
+    .getSingleResult();
+```
+
+### Transaction Management
+```java
+Transaction tx = null;
+try {
+    tx = session.beginTransaction();
+    
+    User user = new User();
+    user.setName("John");
+    user.setEmail("john@example.com");
+    
+    session.persist(user);
+    tx.commit();
+} catch (Exception e) {
+    if (tx != null) tx.rollback();
+    throw e;
+}
+```
+
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **N+1 Queries** | Loop with lazy load | `JOIN FETCH` | Performance killer |
+| **Raw SQL** | Unparameterized SQL | Criteria API or parameterized | SQL injection |
+| **No Transaction** | Write without transaction | `@Transactional` or manual | Data inconsistency |
+| **Lazy Load Outside Session** | Access lazy collection after close | Eager fetch or open session | LazyInitializationException |
+| **Session as Field** | Store Session in class field | Method-local Session | Not thread-safe |
+
+### Anti-Pattern: N+1 Queries (PERFORMANCE DISASTER)
+```java
+// ❌ WRONG - N+1 queries
+List<User> users = session.createQuery("FROM User", User.class).list();
+for (User user : users) {
+    user.getPosts().size();  // Separate query for EACH user!
+}
+
+// ✅ CORRECT - Fetch join
+String jpql = "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.posts";
+List<User> users = session.createQuery(jpql, User.class).list();
+```
+
+### Anti-Pattern: Raw SQL Without Parameters (SQL INJECTION)
+```java
+// ❌ WRONG - SQL injection vulnerability
+String sql = "SELECT * FROM users WHERE email = '" + email + "'";
+Query query = session.createNativeQuery(sql, User.class);
+
+// ✅ CORRECT - Parameterized query
+String jpql = "FROM User WHERE email = :email";
+User user = session.createQuery(jpql, User.class)
+    .setParameter("email", email)
+    .getSingleResult();
+```
+
+## AI Self-Check (Verify BEFORE generating Hibernate code)
+
+- [ ] Using @Entity with proper annotations?
+- [ ] Criteria API or JPQL (NOT raw SQL)?
+- [ ] Parameterized queries for all user input?
+- [ ] Transactions for write operations?
+- [ ] Fetch joins to avoid N+1?
+- [ ] Cascade operations configured?
+- [ ] No Session stored in fields?
+- [ ] Lazy loading handled properly?
+- [ ] SessionFactory properly configured?
+- [ ] Following Hibernate best practices?
+
+## Configuration
+
+```xml
+<!-- hibernate.cfg.xml -->
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://localhost/mydb</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.show_sql">true</property>
+    </session-factory>
+</hibernate-configuration>
 ```
 
 ## Relationships
 
+| Type | Annotation | Example |
+|------|-----------|---------|
+| One-to-Many | `@OneToMany(mappedBy="...")` | User → Posts |
+| Many-to-One | `@ManyToOne` | Post → User |
+| Many-to-Many | `@ManyToMany` | Users ↔ Roles |
+| One-to-One | `@OneToOne` | User → Profile |
+
+## Cascade Operations
+
 ```java
-// One-to-Many
-@Entity
-public class User {
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Post> posts = new ArrayList<>();
-}
-
-@Entity
-public class Post {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-}
-
-// Many-to-Many
-@Entity
-public class Student {
-    @ManyToMany
-    @JoinTable(
-        name = "student_course",
-        joinColumns = @JoinColumn(name = "student_id"),
-        inverseJoinColumns = @JoinColumn(name = "course_id")
-    )
-    private Set<Course> courses = new HashSet<>();
-}
-```
-
-## Querying
-
-### HQL
-```java
-@Repository
-public class UserRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
-    
-    public List<User> findByName(String name) {
-        return entityManager.createQuery(
-            "SELECT u FROM User u WHERE u.name LIKE :name", User.class
-        )
-        .setParameter("name", "%" + name + "%")
-        .getResultList();
-    }
-}
-```
-
-### Criteria API
-```java
-public List<User> findUsers(String name, String email) {
-    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-    CriteriaQuery<User> query = cb.createQuery(User.class);
-    Root<User> user = query.from(User.class);
-    
-    List<Predicate> predicates = new ArrayList<>();
-    if (name != null) {
-        predicates.add(cb.like(user.get("name"), "%" + name + "%"));
-    }
-    if (email != null) {
-        predicates.add(cb.equal(user.get("email"), email));
-    }
-    
-    query.where(predicates.toArray(new Predicate[0]));
-    return entityManager.createQuery(query).getResultList();
-}
-```
-
-### Named Queries
-```java
-@Entity
-@NamedQuery(
-    name = "User.findByEmail",
-    query = "SELECT u FROM User u WHERE u.email = :email"
+@OneToMany(
+    mappedBy = "author",
+    cascade = CascadeType.ALL,  // Propagate all operations
+    orphanRemoval = true  // Delete orphaned entities
 )
-public class User {
-    // ...
-}
-
-public Optional<User> findByEmail(String email) {
-    return entityManager.createNamedQuery("User.findByEmail", User.class)
-        .setParameter("email", email)
-        .getResultStream()
-        .findFirst();
-}
-```
-
-## Transactions
-
-```java
-@Service
-@Transactional(readOnly = true)
-public class UserService {
-    
-    @Transactional
-    public void transferData(Long fromId, Long toId) {
-        User from = userRepository.findById(fromId)
-            .orElseThrow(() -> new UserNotFoundException(fromId));
-        User to = userRepository.findById(toId)
-            .orElseThrow(() -> new UserNotFoundException(toId));
-        
-        // Business logic
-        userRepository.save(from);
-        userRepository.save(to);
-    }
-}
-```
-
-## Lazy Loading
-
-```java
-@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 private List<Post> posts;
-
-// Fetch eagerly when needed
-@Query("SELECT u FROM User u LEFT JOIN FETCH u.posts WHERE u.id = :id")
-Optional<User> findByIdWithPosts(@Param("id") Long id);
 ```
 
-## Caching
+## Key Features
 
-### Second-Level Cache
-```java
-@Entity
-@Cacheable
-@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class User {
-    // ...
-}
+- **Automatic DDL**: Schema generation
+- **Caching**: First/second level cache
+- **Lazy Loading**: On-demand loading
+- **Criteria API**: Type-safe queries
+- **HQL/JPQL**: Object-oriented queries
 
-// application.properties
-// spring.jpa.properties.hibernate.cache.use_second_level_cache=true
-// spring.jpa.properties.hibernate.cache.region.factory_class=org.hibernate.cache.jcache.JCacheRegionFactory
-```
+## Key Annotations
 
-## Best Practices
-
-**MUST**:
-- Use `fetch = FetchType.LAZY` for collections (default for @OneToMany, @ManyToMany)
-- Use `@EntityGraph` or `JOIN FETCH` to prevent N+1 queries
-- Override `equals()` and `hashCode()` for entities (use business key or ID)
-- Use `@Transactional` for write operations
-- Always specify `cascade` and `orphanRemoval` explicitly
-
-**SHOULD**:
-- Use DTOs for returning data from service layer (NOT entities)
-- Use second-level cache for read-heavy entities
-- Use batch fetching for collections
-- Use `@Query` with JPQL for complex queries
-- Use protected no-arg constructor for entities
-
-**AVOID**:
-- N+1 queries (use eager loading strategically)
-- Exposing entities outside service layer
-- Bi-directional relationships without careful management
-- `fetch = FetchType.EAGER` (causes performance issues)
-- Forgetting to configure connection pool properly
-
-## Common Patterns
-
-### Entity equals/hashCode
-```java
-@Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)  // Required by Hibernate
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    // ✅ GOOD: equals/hashCode based on ID (after persist)
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User)) return false;
-        return id != null && id.equals(((User) o).id);  // null-safe
-    }
-    
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();  // Stable across persist
-    }
-    
-    // ❌ BAD: Using all fields
-    // Don't use Objects.hash(id, name, email) - breaks when entity changes
-}
-```
-
-### Avoiding N+1 Queries
-```java
-// ❌ BAD: N+1 queries (1 query for users + N queries for posts)
-List<User> users = userRepository.findAll();
-for (User user : users) {
-    System.out.println(user.getPosts().size());  // New query each time!
-}
-
-// ✅ GOOD: Single query with JOIN FETCH
-@Query("SELECT u FROM User u LEFT JOIN FETCH u.posts")
-List<User> findAllWithPosts();
-
-// ✅ GOOD: EntityGraph (cleaner for simple cases)
-@EntityGraph(attributePaths = {"posts"})
-List<User> findAll();
-
-// ✅ GOOD: Separate query (better for large collections)
-@EntityGraph(attributePaths = {"posts"})
-@Query("SELECT DISTINCT u FROM User u")
-List<User> findAllWithPostsSeparately();
-```
-
-### Lazy Loading Pitfalls
-```java
-// ❌ BAD: LazyInitializationException
-@Transactional
-public User getUser(Long id) {
-    return userRepository.findById(id).orElseThrow();
-}
-
-// In controller (outside transaction):
-User user = userService.getUser(1L);
-user.getPosts().size();  // LazyInitializationException!
-
-// ✅ GOOD: Fetch within transaction or use DTO
-@Transactional
-public UserDto getUser(Long id) {
-    User user = userRepository.findById(id).orElseThrow();
-    return new UserDto(user.getId(), user.getName(), user.getPosts().size());
-    // Posts loaded within transaction
-}
-```
-
-### Batch Operations
-```java
-// Use @Modifying for bulk updates
-@Modifying
-@Query("UPDATE User u SET u.status = :status WHERE u.createdAt < :date")
-int updateOldUsers(@Param("status") String status, @Param("date") LocalDateTime date);
-
-// Use DTO projections to avoid loading full entities
-@Query("SELECT new com.app.dto.UserDto(u.id, u.name, u.email) FROM User u")
-List<UserDto> findAllDtos();  // Only selects needed columns
-```
+- `@Entity`: Mark as entity
+- `@Id`: Primary key
+- `@GeneratedValue`: Auto-generate ID
+- `@Column`: Column mapping
+- `@ManyToOne/@OneToMany`: Relationships
+- `@Transient`: Exclude from persistence
