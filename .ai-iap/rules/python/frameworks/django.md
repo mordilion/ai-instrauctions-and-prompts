@@ -1,335 +1,230 @@
 # Django Framework
 
-## Overview
-Django: high-level Python web framework with batteries included (ORM, admin panel, authentication, forms).
-Follows MVT (Model-View-Template) pattern. Best for rapid development of database-driven web applications.
-Use Django REST Framework (shown here) for building REST APIs.
+> **Scope**: Apply these rules when working with Django 4+ applications
+> **Applies to**: Python files in Django projects
+> **Extends**: python/architecture.md, python/code-style.md
+> **Precedence**: Framework rules OVERRIDE Python rules for Django-specific patterns
+
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use Django ORM querysets (type-safe, SQL injection protection)
+> **ALWAYS**: Use Django forms or serializers for validation
+> **ALWAYS**: Use class-based views (CBVs) or function-based views (FBVs) consistently
+> **ALWAYS**: Use Django's built-in authentication system
+> **ALWAYS**: Use migrations for all schema changes
+> 
+> **NEVER**: Use raw SQL without parameterization (SQL injection risk)
+> **NEVER**: Skip CSRF protection (security vulnerability)
+> **NEVER**: Store sensitive data in settings.py (use environment variables)
+> **NEVER**: Use syncdb (deprecated, use migrations)
+> **NEVER**: Query in templates (N+1 problem)
 
 ## Pattern Selection
 
-### Views
-**Use Function-Based Views when**:
-- Simple logic (< 50 lines)
-- Single HTTP method
-- Quick prototypes
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Class-Based Views (CBV) | CRUD operations, reusability | `ListView`, `CreateView`, `UpdateView` |
+| Function-Based Views (FBV) | Custom logic, simple views | `@require_http_methods`, decorators |
+| Django REST Framework | APIs | `APIView`, `ViewSet`, `Serializer` |
+| ORM QuerySets | Database queries | `filter()`, `exclude()`, `select_related()` |
+| Forms/ModelForms | Data validation | `Form`, `ModelForm`, `is_valid()` |
 
-**Use Class-Based Views when**:
-- Complex logic, multiple methods
-- Need inheritance/mixins
-- Standard patterns (List, Detail, Create)
+## Core Patterns
 
-**Use ViewSets when**:
-- Building REST API
-- Standard CRUD operations
-- Want automatic URL routing
-
-## Models
-
+### Model Definition
 ```python
 from django.db import models
-
-class User(models.Model):
-    email = models.EmailField(unique=True)  # Unique constraint at DB level
-    name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)  # Set once on create
-    updated_at = models.DateTimeField(auto_now=True)  # Update on every save
-    
-    class Meta:
-        db_table = "users"  # Explicit table name
-        ordering = ["-created_at"]  # Default ordering (newest first)
-        indexes = [models.Index(fields=["email"])]  # Index for query performance
-    
-    def __str__(self):
-        return self.name  # String representation in admin
+from django.contrib.auth.models import User
 
 class Post(models.Model):
-    # ForeignKey: Many posts -> One user
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE,  # Delete posts when user deleted
-        related_name="posts"  # Access via user.posts.all()
-    )
     title = models.CharField(max_length=200)
     content = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = "posts"
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['-created_at'])]
+    
+    def __str__(self):
+        return self.title
 ```
 
-## Views
-
-### Function-Based Views
+### Class-Based View
 ```python
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.views.generic import ListView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-def user_list(request):
-    users = User.objects.all()
-    return JsonResponse({
-        "users": [{"id": u.id, "name": u.name} for u in users]
-    })
-
-def user_detail(request, pk):
-    user = get_object_or_404(User, pk=pk)
-    return JsonResponse({"id": user.id, "name": user.name})
-```
-
-### Class-Based Views
-```python
-from django.views.generic import ListView, DetailView, CreateView
-
-class UserListView(ListView):
-    model = User
-    template_name = "users/list.html"
-    context_object_name = "users"
-    paginate_by = 20
+class PostListView(ListView):
+    model = Post
+    template_name = 'posts/list.html'
+    context_object_name = 'posts'
+    paginate_by = 10
     
     def get_queryset(self):
-        return User.objects.select_related("profile")
+        return Post.objects.select_related('author').filter(published=True)
 
-class UserDetailView(DetailView):
-    model = User
-    template_name = "users/detail.html"
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    fields = ['title', 'content']
+    template_name = 'posts/create.html'
+    
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
 ```
 
-## Django REST Framework
-
-### Serializers
+### Function-Based View
 ```python
-from rest_framework import serializers
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 
-class UserSerializer(serializers.ModelSerializer):
-    posts_count = serializers.IntegerField(source="posts.count", read_only=True)
+@login_required
+def post_detail(request, pk):
+    post = get_object_or_404(Post.objects.select_related('author'), pk=pk)
+    return render(request, 'posts/detail.html', {'post': post})
+
+@login_required
+def post_create(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.save()
+            return redirect('post_detail', pk=post.pk)
+    else:
+        form = PostForm()
+    return render(request, 'posts/create.html', {'form': form})
+```
+
+### Django REST Framework (API)
+```python
+from rest_framework import viewsets, serializers
+from rest_framework.permissions import IsAuthenticated
+
+class PostSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.username', read_only=True)
     
     class Meta:
-        model = User
-        fields = ["id", "name", "email", "posts_count"]
-        read_only_fields = ["id"]
-    
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Email already exists")
-        return value
+        model = Post
+        fields = ['id', 'title', 'content', 'author_name', 'created_at']
+        read_only_fields = ['author_name', 'created_at']
 
-class CreateUserSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=100)
-    email = serializers.EmailField()
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.select_related('author')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 ```
 
-### ViewSets
-```python
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search = self.request.query_params.get("search")
-        if search:
-            queryset = queryset.filter(name__icontains=search)
-        return queryset
-    
-    @action(detail=True, methods=["post"])
-    def activate(self, request, pk=None):
-        user = self.get_object()
-        user.is_active = True
-        user.save()
-        return Response({"status": "activated"})
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Raw SQL** | `cursor.execute(f"... {user_input}")` | Use ORM or parameterized queries | SQL injection vulnerability |
+| **N+1 Queries** | `for post in posts: post.author.name` | `select_related('author')` | Performance disaster |
+| **No CSRF** | Disable CSRF protection | Keep CSRF enabled, use `{% csrf_token %}` | Security vulnerability |
+| **Settings in Code** | `SECRET_KEY = 'hardcoded'` | Use `os.environ.get()` | Secret exposure |
+| **Template Queries** | `{% for user in User.objects.all %}` | Pass data via context | N+1, breaks separation |
+
+### Anti-Pattern: Raw SQL Without Params (SQL INJECTION)
+```python
+# ❌ WRONG - SQL injection vulnerability
+def search_users(query):
+    cursor.execute(f"SELECT * FROM users WHERE name = '{query}'")  # DANGEROUS!
+    return cursor.fetchall()
+
+# ✅ CORRECT - Use ORM
+def search_users(query):
+    return User.objects.filter(name__icontains=query)
+
+# ✅ CORRECT - Parameterized if raw SQL needed
+def search_users(query):
+    return User.objects.raw("SELECT * FROM users WHERE name = %s", [query])
 ```
 
-## URLs
+### Anti-Pattern: N+1 Queries (PERFORMANCE KILLER)
+```python
+# ❌ WRONG - N+1 queries
+posts = Post.objects.all()
+for post in posts:
+    print(post.author.name)  # Separate query for EACH post!
+
+# ✅ CORRECT - select_related (1 query with JOIN)
+posts = Post.objects.select_related('author').all()
+for post in posts:
+    print(post.author.name)  # No additional query
+
+# ✅ CORRECT - prefetch_related (2 queries, for many-to-many)
+posts = Post.objects.prefetch_related('tags').all()
+```
+
+## AI Self-Check (Verify BEFORE generating Django code)
+
+- [ ] Using Django ORM (NOT raw SQL without params)?
+- [ ] Using select_related/prefetch_related to avoid N+1?
+- [ ] Forms/serializers for validation?
+- [ ] CSRF protection enabled?
+- [ ] Secrets in environment variables (NOT settings.py)?
+- [ ] Using migrations for schema changes?
+- [ ] Authentication via Django's system?
+- [ ] No queries in templates?
+- [ ] Type hints for function parameters?
+- [ ] Following Django naming conventions?
+
+## URL Patterns
 
 ```python
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-
-router = DefaultRouter()
-router.register(r"users", UserViewSet)
+# urls.py
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path("api/", include(router.urls)),
-    path("users/<int:pk>/", user_detail, name="user-detail"),
+    path('', views.PostListView.as_view(), name='post_list'),
+    path('post/<int:pk>/', views.post_detail, name='post_detail'),
+    path('post/create/', views.post_create, name='post_create'),
 ]
 ```
 
-## Querysets
+## Migrations
 
-```python
-# Select related (1-to-1, ForeignKey)
-users = User.objects.select_related("profile").all()
+```bash
+# Create migration after model changes
+python manage.py makemigrations
 
-# Prefetch related (Many-to-Many, reverse ForeignKey)
-users = User.objects.prefetch_related("posts").all()
+# Apply migrations
+python manage.py migrate
 
-# Complex queries
-users = User.objects.filter(
-    created_at__gte=datetime(2024, 1, 1),
-    posts__isnull=False
-).distinct()
-
-# Aggregation
-from django.db.models import Count, Avg
-stats = User.objects.aggregate(
-    total=Count("id"),
-    avg_posts=Avg("posts__count")
-)
+# Show migration SQL
+python manage.py sqlmigrate app_name 0001
 ```
 
-## Forms
+## QuerySet Optimization
 
-```python
-from django import forms
+| Method | Purpose | Use Case |
+|--------|---------|----------|
+| select_related() | JOIN for ForeignKey/OneToOne | Reduce queries |
+| prefetch_related() | Separate query for ManyToMany | Reduce queries |
+| only() | Fetch specific fields | Reduce data transfer |
+| defer() | Exclude specific fields | Reduce data transfer |
+| values() | Return dict instead of model | Performance |
 
-class UserForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ["name", "email"]
-        widgets = {
-            "email": forms.EmailInput(attrs={"class": "form-control"}),
-        }
-    
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("Email already exists")
-        return email
-```
+## Key Features
 
-## Authentication
+- **ORM**: Type-safe database queries
+- **Admin**: Auto-generated admin interface
+- **Auth**: Built-in user authentication
+- **Forms**: Data validation and rendering
+- **Middleware**: Request/response processing
+- **Signals**: Event-driven actions
 
-```python
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
+## Key Libraries
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def protected_view(request):
-    return Response({"user": request.user.username})
-
-# Custom permission
-from rest_framework import permissions
-
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return obj.user == request.user
-```
-
-## Middleware
-
-```python
-class RequestLoggingMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-    
-    def __call__(self, request):
-        # Before view
-        print(f"Request: {request.path}")
-        
-        response = self.get_response(request)
-        
-        # After view
-        print(f"Response: {response.status_code}")
-        return response
-```
-
-## Signals
-
-```python
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-```
-
-## Testing
-
-```python
-from django.test import TestCase
-from rest_framework.test import APITestCase
-
-class UserModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create(name="John", email="john@test.com")
-    
-    def test_user_creation(self):
-        self.assertEqual(self.user.name, "John")
-        self.assertIsNotNone(self.user.created_at)
-
-class UserAPITest(APITestCase):
-    def test_get_users(self):
-        response = self.client.get("/api/users/")
-        self.assertEqual(response.status_code, 200)
-```
-
-## Best Practices
-
-**MUST**:
-- Use `select_related()` for ForeignKey/OneToOne (JOIN)
-- Use `prefetch_related()` for ManyToMany/reverse ForeignKey (separate queries)
-- Add indexes to fields used in filters, ordering, or foreign keys
-- Use ViewSets for REST APIs (not function-based views)
-- Validate data at serializer level (NOT in views)
-
-**SHOULD**:
-- Use Class-Based Views for complex logic
-- Use `get_object_or_404()` instead of try/except
-- Use transactions for multi-step database operations
-- Use `bulk_create()` for inserting multiple records
-- Use Django signals for decoupled side effects
-
-**AVOID**:
-- N+1 queries (always use `select_related`/`prefetch_related`)
-- Business logic in views (move to services/models)
-- Returning model instances from serializers (use `SerializerMethodField`)
-- Ignoring database indexes (add for frequently queried fields)
-- Mixing Django templates with REST Framework (use one approach)
-
-## Query Optimization
-
-### Avoiding N+1 Queries
-```python
-# ❌ BAD: N+1 queries (1 query for users + N queries for posts)
-users = User.objects.all()
-for user in users:
-    print(user.posts.all())  # Additional query per user!
-
-# ✅ GOOD: 2 queries total (users + all posts)
-users = User.objects.prefetch_related('posts')
-for user in users:
-    print(user.posts.all())  # No additional query - already loaded
-
-# ✅ GOOD: 1 query with JOIN (for ForeignKey)
-posts = Post.objects.select_related('user').all()
-for post in posts:
-    print(post.user.name)  # No additional query - JOINed
-```
-
-### Complex Queries
-```python
-from django.db.models import Count, Q, Prefetch
-
-# Annotate with aggregation
-users_with_post_count = User.objects.annotate(
-    post_count=Count('posts')
-).filter(post_count__gt=0)
-
-# Complex filtering with Q objects
-active_users = User.objects.filter(
-    Q(created_at__gte=datetime(2024, 1, 1)) &
-    (Q(email__contains='@company.com') | Q(is_staff=True))
-)
-
-# Custom prefetch with filtering
-users = User.objects.prefetch_related(
-    Prefetch('posts', queryset=Post.objects.filter(published=True))
-)
-```
+- **Django REST Framework**: API development
+- **django-crispy-forms**: Form rendering
+- **django-filter**: QuerySet filtering
+- **Celery**: Async task queue
