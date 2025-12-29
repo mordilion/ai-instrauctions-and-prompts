@@ -1,6 +1,6 @@
 # Logging & Observability Implementation Process - TypeScript/Node.js
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for TypeScript/Node.js applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
 ---
 
@@ -13,12 +13,21 @@
 
 ---
 
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b logging/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "feat(logging): <description>"`
+> 4. Push and verify in CI/CD
+
+Phases below reference this pattern instead of repeating it.
+
+---
+
 ## Phase 1: Structured Logging
 
-### Branch Strategy
-```
-main → logging/structured
-```
+**Branch**: `logging/structured`
 
 ### 1.1 Install Logging Library
 
@@ -35,7 +44,6 @@ main → logging/structured
 **Install Winston**:
 ```bash
 npm install winston
-npm install --save-dev @types/winston
 ```
 
 ### 1.2 Configure Structured Logger
@@ -47,14 +55,8 @@ npm install --save-dev @types/winston
 > - Context/metadata (requestId, userId, service name)
 > - Separate transports (console, file, external service)
 
-> **NEVER**:
-> - Use plain text format in production
-> - Mix structured and unstructured logs
-> - Log entire objects without sanitization
-
 **Winston Configuration**:
 ```typescript
-// src/utils/logger.ts
 import winston from 'winston';
 
 export const logger = winston.createLogger({
@@ -67,8 +69,7 @@ export const logger = winston.createLogger({
   defaultMeta: { service: 'my-app' },
   transports: [
     new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
+    new winston.transports.File({ filename: 'error.log', level: 'error' })
   ]
 });
 ```
@@ -88,51 +89,26 @@ import { v4 as uuidv4 } from 'uuid';
 app.use((req, res, next) => {
   req.id = req.headers['x-correlation-id'] || uuidv4();
   res.setHeader('X-Correlation-ID', req.id);
-  logger.info('Incoming request', { 
-    requestId: req.id, 
-    method: req.method, 
-    path: req.path 
-  });
+  logger.info('Incoming request', { requestId: req.id, method: req.method, path: req.path });
   next();
 });
 ```
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add src/utils/logger.ts package.json
-> git commit -m "feat: add structured logging with Winston"
-> git push origin logging/structured
-> ```
-
-> **Verify**:
-> - Logs output as JSON
-> - Timestamp present in each log
-> - Request ID tracked across logs
-> - No sensitive data in logs
+**Verify**: Logs output as JSON, timestamp present, request ID tracked, no sensitive data logged
 
 ---
 
 ## Phase 2: Application Monitoring
 
-### Branch Strategy
-```
-main → logging/monitoring
-```
+**Branch**: `logging/monitoring`
 
-### 2.1 Add Health Check Endpoint
+### 2.1 Health Check Endpoint
 
 > **ALWAYS include**:
 > - /health or /healthz endpoint
 > - Check database connectivity
 > - Check external dependencies (Redis, APIs)
 > - Return HTTP 200 if healthy, 503 if unhealthy
-
-> **NEVER**:
-> - Expose detailed error messages to public
-> - Skip timeout on dependency checks
-> - Return 200 when critical services are down
 
 **Health Check Example**:
 ```typescript
@@ -142,27 +118,23 @@ app.get('/health', async (req, res) => {
     redis: await checkRedis(),
     uptime: process.uptime()
   };
-  
   const healthy = Object.values(checks).every(c => c === true || typeof c === 'number');
   res.status(healthy ? 200 : 503).json(checks);
 });
 ```
 
-### 2.2 Add Metrics Collection
+### 2.2 Metrics Collection
 
-> **ALWAYS use** (pick one):
-> - **Prometheus** ⭐ (industry standard)
-> - **StatsD** (simple, lightweight)
-> - **OpenTelemetry** (future-proof)
+> **ALWAYS use**: **Prometheus** ⭐ (industry standard) with prom-client
 
-> **Key metrics to track**:
-> - Request count (by route, status code)
-> - Response time (p50, p95, p99)
-> - Error rate
-> - Active connections
-> - Memory/CPU usage
+**Key metrics to track**:
+- Request count (by route, status code)
+- Response time (p50, p95, p99)
+- Error rate
+- Active connections
+- Memory/CPU usage
 
-**Prometheus with prom-client**:
+**Prometheus Setup**:
 ```bash
 npm install prom-client
 ```
@@ -186,17 +158,9 @@ app.get('/metrics', async (req, res) => {
 });
 ```
 
-### 2.3 Add Error Tracking
+### 2.3 Error Tracking
 
-> **ALWAYS use** (pick one):
-> - **Sentry** ⭐ (comprehensive, easy setup)
-> - **Rollbar**
-> - **Bugsnag**
-
-> **NEVER**:
-> - Catch errors without logging
-> - Send PII to error tracking
-> - Ignore unhandled promise rejections
+> **ALWAYS use**: **Sentry** ⭐ (comprehensive, easy setup), Rollbar, or Bugsnag
 
 **Sentry Setup**:
 ```bash
@@ -218,37 +182,17 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(Sentry.Handlers.errorHandler());
 ```
 
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add src/
-> git commit -m "feat: add health checks, metrics, and error tracking"
-> git push origin logging/monitoring
-> ```
-
-> **Verify**:
-> - /health endpoint returns correct status
-> - /metrics endpoint exposes Prometheus metrics
-> - Errors sent to Sentry
-> - No performance degradation
+**Verify**: /health endpoint returns correct status, /metrics exposes Prometheus metrics, errors sent to Sentry, no performance degradation
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-### Branch Strategy
-```
-main → logging/tracing
-```
+**Branch**: `logging/tracing`
 
 ### 3.1 Install Tracing Library
 
-> **ALWAYS use**:
-> - **OpenTelemetry** ⭐ (vendor-neutral)
-> - **Jaeger** (self-hosted)
-> - **Zipkin** (self-hosted)
-> - **Datadog APM** (managed service)
+> **ALWAYS use**: **OpenTelemetry** ⭐ (vendor-neutral), Jaeger, Zipkin, or Datadog APM
 
 **OpenTelemetry Setup**:
 ```bash
@@ -277,37 +221,13 @@ const sdk = new NodeSDK({
 sdk.start();
 ```
 
-### 3.3 Add Custom Spans
-
-> **ALWAYS**:
-> - Create spans for business-critical operations
-> - Add relevant attributes (query, result size, cache hit/miss)
-> - Record exceptions in spans
-> - End spans in finally blocks
-
-### 3.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add src/
-> git commit -m "feat: add distributed tracing with OpenTelemetry"
-> git push origin logging/tracing
-> ```
-
-> **Verify**:
-> - Traces visible in UI (Jaeger/Zipkin/Datadog)
-> - Trace ID propagated across services
-> - Spans show correct timing
-> - No excessive overhead (<5% CPU)
+**Verify**: Traces visible in UI (Jaeger/Zipkin/Datadog), trace ID propagated across services, spans show correct timing, overhead <5% CPU
 
 ---
 
 ## Phase 4: Log Aggregation & Alerts
 
-### Branch Strategy
-```
-main → logging/aggregation
-```
+**Branch**: `logging/aggregation`
 
 ### 4.1 Configure Log Shipping
 
@@ -317,11 +237,6 @@ main → logging/aggregation
 > - **CloudWatch Logs** (AWS)
 > - **Azure Monitor** (Azure)
 > - **Google Cloud Logging** (GCP)
-
-> **NEVER**:
-> - Rely only on local file logs
-> - Ship logs without rate limiting
-> - Forget to rotate log files
 
 **Winston + Datadog**:
 ```bash
@@ -348,10 +263,7 @@ logger.add(new DatadogTransport({
 > - High memory/CPU usage (>80%)
 > - Unhandled exceptions
 
-> **NEVER**:
-> - Alert on every error (use thresholds)
-> - Create alerts without runbooks
-> - Forget to test alert delivery
+> **NEVER**: Alert on every error (use thresholds), create alerts without runbooks, forget to test alert delivery
 
 ### 4.3 Add Dashboards
 
@@ -362,107 +274,64 @@ logger.add(new DatadogTransport({
 > - Cache hit rate
 > - Business metrics (signups, orders, etc.)
 
-### 4.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add src/
-> git commit -m "feat: add log aggregation and alerting"
-> git push origin logging/aggregation
-> ```
-
-> **Verify**:
-> - Logs visible in aggregation service
-> - Alerts trigger correctly
-> - Dashboards show real-time data
-> - Runbooks documented
+**Verify**: Logs visible in aggregation service, alerts trigger correctly, dashboards show real-time data, runbooks documented
 
 ---
 
 ## Framework-Specific Notes
 
-### Express.js
-- Use morgan for HTTP logging
-- Middleware: logger, metrics, error handler
-- Context: req.id for correlation
-
-### NestJS
-- Built-in Logger service
-- Interceptors for request/response logging
-- Use @nestjs/terminus for health checks
-
-### Next.js
-- Server-side logging only
-- Use next-logger or winston
-- API routes: add logging middleware
-
-### Fastify
-- Built-in logging with Pino
-- Hooks: onRequest, onResponse
-- Decorators for request context
+| Framework | Logger | Health Checks | Notes |
+|-----------|--------|---------------|-------|
+| **Express.js** | Winston + morgan | Custom middleware | Use morgan for HTTP logging |
+| **NestJS** | Built-in Logger | @nestjs/terminus | Interceptors for request/response logging |
+| **Next.js** | Winston | API route | Server-side logging only |
+| **Fastify** | Built-in Pino | Hooks | onRequest, onResponse hooks |
 
 ---
 
 ## Best Practices
 
 ### Log Levels
-- **DEBUG**: Detailed info for troubleshooting
-- **INFO**: General informational messages
-- **WARN**: Warning messages, app can continue
-- **ERROR**: Error messages, operation failed
-- **FATAL**: Critical errors, app cannot continue
+| Level | Use Case | Example |
+|-------|----------|---------|
+| **DEBUG** | Detailed troubleshooting info | Variable values, function entry/exit |
+| **INFO** | General informational messages | Request received, operation completed |
+| **WARN** | Warning messages, app can continue | Deprecated API usage, fallback used |
+| **ERROR** | Error messages, operation failed | Database connection failed, validation error |
 
 ### What to Log
-> **ALWAYS log**:
-> - Request/response (method, path, status, duration)
-> - Errors with stack traces
-> - Authentication events (login, logout, failures)
-> - Business events (payment, order, signup)
-> - Performance metrics
+> **ALWAYS log**: Request/response (method, path, status, duration), Errors with stack traces, Authentication events, Business events (payment, order), Performance metrics
 
-> **NEVER log**:
-> - Passwords, tokens, API keys
-> - PII without consent (email, phone, SSN)
-> - Credit card numbers
-> - Session IDs
+> **NEVER log**: Passwords/tokens/API keys, PII without consent (email, phone, SSN), Credit card numbers, Session IDs
 
 ### Performance
-> **ALWAYS**:
-> - Use async logging (non-blocking)
-> - Sample high-frequency logs (e.g., 10% of requests)
-> - Rotate log files to prevent disk filling
-> - Set log retention policy (30-90 days)
+> **ALWAYS**: Use async logging (non-blocking), Sample high-frequency logs (10% of requests), Rotate log files, Set log retention policy (30-90 days)
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Logs not appearing** | Check log level, verify transport configuration, ensure logger initialized before use |
+| **High memory usage** | Implement log rotation, reduce log verbosity, check for memory leaks in custom transports |
+| **Missing correlation IDs** | Ensure middleware runs before route handlers, check async context propagation |
+| **Metrics endpoint slow** | Cache metrics, reduce cardinality, sample high-frequency metrics |
 
 ---
 
 ## AI Self-Check
 
-Before completing this process, verify:
-
 - [ ] Structured logging configured (JSON format)
 - [ ] Log levels properly used (debug, info, warn, error)
-- [ ] Request ID/correlation ID tracked
+- [ ] Request ID/correlation ID tracked across requests
 - [ ] No sensitive data in logs
 - [ ] Health check endpoint implemented
 - [ ] Metrics endpoint exposed (/metrics)
 - [ ] Error tracking configured (Sentry/Rollbar)
 - [ ] Distributed tracing enabled (if microservices)
 - [ ] Log aggregation configured
-- [ ] Alerts created with thresholds
-- [ ] Dashboards created for monitoring
-- [ ] Runbooks documented for alerts
-- [ ] Log rotation configured
-- [ ] Performance impact minimal (<5%)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during logging setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `observability`, `infrastructure`
-> - **NEVER fix production code during logging setup**
-> - Link bug to logging implementation branch
+- [ ] Alerts created with appropriate thresholds
 
 ---
 
@@ -478,4 +347,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

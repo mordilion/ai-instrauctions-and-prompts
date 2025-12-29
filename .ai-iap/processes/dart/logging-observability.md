@@ -1,15 +1,28 @@
 # Logging & Observability Implementation Process - Dart/Flutter
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Dart/Flutter applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
-> **Core Libraries**: logger, Firebase Crashlytics, Sentry, OpenTelemetry (server)
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working Dart/Flutter application
+> - Git repository
+
+---
+
+## Git Workflow Pattern
+
+> **Standard workflow**: Create branch → Changes → Commit → Push → Verify
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: logger package ⭐
-> **NEVER**: Use print() in production (strips in release mode), log passwords/tokens/PII
+**Branch**: `logging/structured`
+
+### 1.1 Use logger package
 
 **Install**:
 ```yaml
@@ -17,135 +30,149 @@ dependencies:
   logger: ^2.0.0
 ```
 
-**Configuration**:
+**Configure**:
 ```dart
 import 'package:logger/logger.dart';
 
 final logger = Logger(
-  printer: PrettyPrinter(
-    methodCount: 0,
-    errorMethodCount: 5,
-    lineLength: 120,
-    colors: true,
-    printEmojis: true,
-  ),
+  printer: PrettyPrinter(),
+  level: Level.info,
 );
 
-logger.i('Info message');
-logger.e('Error message', error: error, stackTrace: stackTrace);
+// Usage
+logger.i('User created', userId: user.id);
+logger.e('Error occurred', error, stackTrace);
 ```
 
-**Production Logger** (JSON format):
-```dart
-final logger = Logger(
-  printer: SimplePrinter(),
-  output: FileOutput(file: File('app.log')),
-);
-```
+**Production**: Use JSONPrinter for structured logs
 
-> **Git**: `git commit -m "feat: add structured logging with logger package"`
+### 1.2 Firebase Crashlytics (Mobile)
 
----
-
-## Phase 2: Application Monitoring
-
-> **ALWAYS include**:
-- Crash reporting (Firebase Crashlytics ⭐ or Sentry)
-- Performance monitoring (Firebase Performance)
-- Analytics (Firebase Analytics, Mixpanel)
-
-**Firebase Crashlytics**:
+**Install**:
 ```yaml
 dependencies:
   firebase_crashlytics: ^3.4.0
 ```
 
+**Configure**:
 ```dart
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-
-FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-PlatformDispatcher.instance.onError = (error, stack) {
-  FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-  return true;
-};
+await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 ```
 
-**Sentry**:
+**Verify**: Logs structured, crashes reported
+
+---
+
+## Phase 2: Application Monitoring
+
+**Branch**: `logging/monitoring`
+
+### 2.1 Health Checks (Server)
+
+**Dart server**:
+```dart
+router.get('/health', (Request request) {
+  return Response.ok('{"status": "healthy"}');
+});
+```
+
+### 2.2 Analytics (Mobile)
+
+**Firebase Analytics**:
 ```yaml
 dependencies:
-  sentry_flutter: ^7.0.0
+  firebase_analytics: ^10.7.0
 ```
 
 ```dart
-import 'package:sentry_flutter/sentry_flutter.dart';
-
-await SentryFlutter.init(
-  (options) => options.dsn = 'YOUR_DSN',
-  appRunner: () => runApp(MyApp()),
+await FirebaseAnalytics.instance.logEvent(
+  name: 'user_created',
+  parameters: {'user_id': userId},
 );
 ```
 
-> **Git**: `git commit -m "feat: add crash reporting and monitoring"`
+### 2.3 Error Tracking
+
+> **Mobile**: Firebase Crashlytics ⭐
+> **Server**: Sentry
+
+**Verify**: Health checks (server), analytics tracking (mobile), errors tracked
 
 ---
 
-## Phase 3: Distributed Tracing
+## Phase 3: Performance Monitoring
 
-> **ALWAYS use** (server-side Dart): OpenTelemetry
+**Branch**: `logging/performance`
 
-**Mobile**: Network tracing with dio_http_inspector or Firebase Performance
+### 3.1 Firebase Performance (Mobile)
 
-```dart
-// Firebase Performance for HTTP tracing
-final httpMetric = FirebasePerformance.instance.newHttpMetric(
-  url, HttpMethod.Get);
-await httpMetric.start();
-// ... make request ...
-await httpMetric.stop();
+**Install**:
+```yaml
+dependencies:
+  firebase_performance: ^0.9.3
 ```
 
-> **Git**: `git commit -m "feat: add performance tracing"`
+**Usage**:
+```dart
+final trace = FirebasePerformance.instance.newTrace('user_creation');
+await trace.start();
+// ... operation ...
+await trace.stop();
+```
+
+**Verify**: Performance metrics collected
 
 ---
 
-## Phase 4: Log Aggregation & Alerts
+## Phase 4: Log Aggregation
 
-> **ALWAYS use**:
-- **Mobile**: Firebase Crashlytics, Sentry (cloud-based)
-- **Server**: ELK Stack, Datadog, CloudWatch
+**Branch**: `logging/aggregation`
 
-**Alerts**: Crash-free rate <99%, ANR rate >0.5%, API error rate >1%
+### 4.1 Mobile Logs
 
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+> **Firebase**: Crashlytics + Analytics + Performance Monitor
+
+### 4.2 Server Logs
+
+> **Options**: ELK Stack, Datadog, CloudWatch
+
+### 4.3 Alerts
+
+> **Alert on**: Crash rate >0.1%, Error rate >1%
+
+**Verify**: Logs aggregated, alerts configured
 
 ---
 
-## Platform-Specific Notes
+## Platform Notes
 
-### Flutter (Mobile)
-- logger for debug logging
-- Firebase Crashlytics for crash reporting
-- Firebase Performance for monitoring
-- Firebase Analytics for user analytics
+| Platform | Logger | Monitoring |
+|----------|--------|------------|
+| **Flutter (Mobile)** | logger + Firebase | Crashlytics, Analytics |
+| **Dart (Server)** | logger | Sentry, Prometheus |
 
-### Dart (Server)
-- logger for structured logging
-- Prometheus metrics (shelf_prometheus)
-- OpenTelemetry for tracing
+---
+
+## Best Practices
+
+### What to Log/Not Log
+> **ALWAYS**: Structured data, User actions, Errors
+
+> **NEVER**: Passwords, Tokens, PII
 
 ---
 
 ## AI Self-Check
 
-- [ ] Structured logging configured (logger package)
-- [ ] No sensitive data in logs
-- [ ] Crash reporting enabled (Crashlytics/Sentry)
-- [ ] Performance monitoring configured
-- [ ] Analytics tracking implemented
-- [ ] Log aggregation setup
-- [ ] Alerts created (crash rate, ANR rate)
+- [ ] logger package configured
+- [ ] Firebase Crashlytics enabled (mobile)
+- [ ] No sensitive data logged
+- [ ] Error tracking configured
+- [ ] Analytics tracking (mobile)
+- [ ] Performance monitoring (mobile)
+- [ ] Alerts configured
 
 ---
 
 **Process Complete** ✅
-

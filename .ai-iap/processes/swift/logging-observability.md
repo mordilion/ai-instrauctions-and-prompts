@@ -1,18 +1,28 @@
 # Logging & Observability Implementation Process - Swift
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Swift applications (iOS, macOS, Server)
+> **Purpose**: Establish production-grade logging, monitoring, and observability for Swift applications
 
-> **Core Libraries**: os.Logger (Apple unified logging), SwiftLog, Prometheus (Vapor), Sentry
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working Swift application
+> - Git repository
+
+---
+
+## Git Workflow Pattern
+
+> **Standard workflow**: Create branch → Changes → Commit → Push → Verify
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: 
-- **os.Logger** ⭐ (iOS/macOS native)
-- **SwiftLog** (server-side, cross-platform)
+**Branch**: `logging/structured`
 
-> **NEVER**: Use print() in production, log passwords/tokens/PII
+### 1.1 Use os.Logger (iOS/macOS) or SwiftLog (Server)
 
 **iOS/macOS (os.Logger)**:
 ```swift
@@ -36,25 +46,51 @@ logger.info("Server started", metadata: [
 ])
 ```
 
-> **Git**: `git commit -m "feat: add structured logging"`
+**Verify**: Structured logging configured
 
 ---
 
 ## Phase 2: Application Monitoring
 
-> **ALWAYS include**:
-- /health endpoint (server-side)
-- Metrics (Vapor: Prometheus, iOS: MetricKit)
-- Error tracking (Sentry ⭐, Crashlytics)
+**Branch**: `logging/monitoring`
 
-**Vapor Health Check**:
+### 2.1 Health Checks
+
+**Vapor**:
 ```swift
 app.get("health") { req in
     return HTTPStatus.ok
 }
 ```
 
-**iOS Sentry**:
+### 2.2 Metrics
+
+**Vapor**: Use Prometheus
+```swift
+// Install: swift-prometheus
+```
+
+**iOS**: MetricKit
+```swift
+import MetricKit
+
+class MetricsManager: NSObject, MXMetricManagerSubscriber {
+    override init() {
+        super.init()
+        MXMetricManager.shared.add(self)
+    }
+    
+    func didReceive(_ payloads: [MXMetricPayload]) {
+        // Process metrics
+    }
+}
+```
+
+### 2.3 Error Tracking
+
+> **iOS**: **Sentry** ⭐ or Firebase Crashlytics
+
+**Sentry**:
 ```swift
 import Sentry
 
@@ -64,57 +100,70 @@ SentrySDK.start { options in
 }
 ```
 
-> **Git**: `git commit -m "feat: add health checks and error tracking"`
+**Verify**: Health checks (server), metrics collected, errors tracked
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-> **ALWAYS use** (server-side): OpenTelemetry
+**Branch**: `logging/tracing`
 
-**iOS**: Network request tracing with URLSessionTaskMetrics
+### 3.1 OpenTelemetry (Server)
 
-> **Git**: `git commit -m "feat: add distributed tracing"`
+**Vapor**: Use OpenTelemetry
 
----
+**iOS**: URLSessionTaskMetrics for network tracing
 
-## Phase 4: Log Aggregation & Alerts
-
-> **ALWAYS use**:
-- **iOS/macOS**: OSLog → Console.app, or ship to backend/Sentry
-- **Server**: ELK Stack, Datadog, CloudWatch
-
-**Alerts**: Crash rate >0.1%, API error rate >1%
-
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+**Verify**: Traces collected
 
 ---
 
-## Platform-Specific Notes
+## Phase 4: Log Aggregation
 
-### iOS/macOS
-- os.Logger for structured logging
-- MetricKit for performance metrics
-- Sentry/Firebase Crashlytics for crashes
+**Branch**: `logging/aggregation`
 
-### Vapor (Server)
-- SwiftLog for logging
-- Prometheus metrics
-- OpenTelemetry tracing
+### 4.1 Log Shipping
+
+**iOS/macOS**: OSLog → Console.app or ship to backend/Sentry
+
+**Vapor**: ELK Stack, Datadog, CloudWatch
+
+### 4.2 Alerts
+
+> **Alert on**: Crash rate >0.1%, API error rate >1%
+
+**Verify**: Logs aggregated, alerts configured
+
+---
+
+## Platform Notes
+
+| Platform | Logger | Monitoring |
+|----------|--------|------------|
+| **iOS/macOS** | os.Logger | MetricKit, Sentry |
+| **Vapor** | SwiftLog | Prometheus, OpenTelemetry |
+
+---
+
+## Best Practices
+
+### What to Log/Not Log
+> **ALWAYS**: Structured data, Errors, User actions
+
+> **NEVER**: Passwords, Tokens, PII
 
 ---
 
 ## AI Self-Check
 
-- [ ] Structured logging configured
-- [ ] No sensitive data in logs
-- [ ] Health checks implemented (server)
-- [ ] Error tracking enabled
-- [ ] Crash reporting configured (iOS)
-- [ ] Log aggregation setup
+- [ ] Logging configured (os.Logger/SwiftLog)
+- [ ] No sensitive data logged
+- [ ] Health checks (server)
+- [ ] Error tracking (Sentry/Crashlytics)
+- [ ] Metrics collected
+- [ ] Log aggregation configured
 - [ ] Alerts created
 
 ---
 
 **Process Complete** ✅
-

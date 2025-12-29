@@ -1,17 +1,37 @@
 # Logging & Observability Implementation Process - Java
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Java applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
-> **Core Libraries**: SLF4J + Logback/Log4j2, Micrometer, Spring Boot Actuator, OpenTelemetry
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working Java application
+> - Git repository
+> - Understanding of log levels
+
+---
+
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b logging/<phase-name>`
+> 2. Make changes, commit, push, verify
+
+Phases below reference this pattern.
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: SLF4J ⭐ facade with Logback or Log4j2 implementation
-> **NEVER**: Use System.out.println, log passwords/tokens/PII
+**Branch**: `logging/structured`
 
-**Maven Dependencies**:
+### 1.1 Use SLF4J + Logback
+
+> **ALWAYS use**: **SLF4J** ⭐ (facade) + **Logback** (implementation)
+
+**Dependencies** (Maven):
 ```xml
 <dependency>
     <groupId>ch.qos.logback</groupId>
@@ -20,25 +40,70 @@
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
+    <version>7.4</version>
 </dependency>
 ```
 
-**logback.xml Configuration**:
-- JSON format with LogstashEncoder
-- Rolling file appenders (daily, size-based)
-- MDC for correlation ID
-- Async appenders for performance
+**Configuration** (logback-spring.xml):
+```xml
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
+```
 
-> **Git**: `git commit -m "feat: add structured logging with SLF4J + Logback"`
+**Usage**:
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class UserService {
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    
+    public void createUser(String email) {
+        logger.info("Creating user: {}", email);
+    }
+}
+```
+
+### 1.2 Add MDC for Correlation IDs
+
+**Configure Filter**:
+```java
+@Component
+public class CorrelationIdFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
+        String correlationId = request.getHeader("X-Correlation-ID");
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString();
+        }
+        MDC.put("correlationId", correlationId);
+        response.setHeader("X-Correlation-ID", correlationId);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            MDC.clear();
+        }
+    }
+}
+```
+
+**Verify**: Logs structured (JSON), correlation IDs in every log, no sensitive data
 
 ---
 
 ## Phase 2: Application Monitoring
 
-> **ALWAYS include**:
-- Spring Boot Actuator (/actuator/health, /actuator/metrics)
-- Micrometer for metrics (Prometheus, Datadog, CloudWatch)
-- Health indicators (database, Redis, external APIs)
+**Branch**: `logging/monitoring`
+
+### 2.1 Health Checks
+
+> **Spring Boot**: Use Actuator
 
 **Dependencies**:
 ```xml
@@ -46,86 +111,159 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-actuator</artifactId>
 </dependency>
+```
+
+**Configuration** (application.properties):
+```properties
+management.endpoints.web.exposure.include=health,metrics
+management.endpoint.health.show-details=always
+```
+
+### 2.2 Metrics with Micrometer
+
+> **Spring Boot**: Micrometer built-in, exposes to Prometheus
+
+**Configuration**:
+```properties
+management.metrics.export.prometheus.enabled=true
+```
+
+**Custom Metrics**:
+```java
+@Autowired
+private MeterRegistry meterRegistry;
+
+public void trackUserCreation() {
+    meterRegistry.counter("users.created").increment();
+}
+```
+
+### 2.3 Error Tracking
+
+> **ALWAYS use**: **Sentry** ⭐ or Rollbar
+
+**Sentry Setup**:
+```xml
 <dependency>
-    <groupId>io.micrometer</groupId>
-    <artifactId>micrometer-registry-prometheus</artifactId>
+    <groupId>io.sentry</groupId>
+    <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
 </dependency>
 ```
 
-**Error Tracking**: Sentry (io.sentry:sentry-spring-boot-starter) or Rollbar
+```properties
+sentry.dsn=${SENTRY_DSN}
+sentry.environment=${SPRING_PROFILES_ACTIVE}
+```
 
-> **Git**: `git commit -m "feat: add health checks and metrics with Actuator"`
+**Verify**: Health at /actuator/health, metrics at /actuator/metrics, errors tracked
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-> **ALWAYS use**: OpenTelemetry ⭐, Jaeger, or Zipkin
+**Branch**: `logging/tracing`
+
+### 3.1 Configure OpenTelemetry or Sleuth
+
+> **Spring Boot 3+**: Use Micrometer Tracing + OpenTelemetry
 
 **Dependencies**:
 ```xml
 <dependency>
+    <groupId>io.micrometer</groupId>
+    <artifactId>micrometer-tracing-bridge-otel</artifactId>
+</dependency>
+<dependency>
     <groupId>io.opentelemetry</groupId>
-    <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+    <artifactId>opentelemetry-exporter-jaeger</artifactId>
 </dependency>
 ```
 
-**Spring Sleuth** (alternative for Spring Boot):
-- Auto-instruments HTTP, JDBC, messaging
-- Propagates trace/span IDs
-- Integrates with Zipkin/Jaeger
+**Configuration**:
+```properties
+management.tracing.sampling.probability=0.1
+management.otlp.tracing.endpoint=http://jaeger:4318/v1/traces
+```
 
-> **Git**: `git commit -m "feat: add distributed tracing"`
+**Verify**: Traces in Jaeger/Zipkin, trace IDs propagated
 
 ---
 
 ## Phase 4: Log Aggregation & Alerts
 
-> **ALWAYS use**: ELK Stack, Datadog, Splunk, or CloudWatch
+**Branch**: `logging/aggregation`
 
-**Logback Appender**:
-- LogstashTcpSocketAppender for direct shipping
-- Or file-based with Filebeat/Fluentd
+### 4.1 Configure Log Shipping
 
-**Alerts**: Error rate >10/min, p99 latency >2s, health check failures
+> **Options**: ELK Stack, Datadog, CloudWatch, Splunk
 
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+**Logstash Configuration** (logback-spring.xml):
+```xml
+<appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>logstash:5000</destination>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+</appender>
+```
+
+### 4.2 Alerts & Dashboards
+
+> **Alert on**: Error rate >1%, p99 latency >2s, Health failures, High JVM heap (>80%)
+
+> **Dashboards**: RED metrics, JVM metrics (heap, GC), Database query performance
+
+**Verify**: Logs aggregated, alerts configured, dashboards created
 
 ---
 
 ## Framework-Specific Notes
 
-### Spring Boot
-- Actuator for health/metrics
-- Micrometer for monitoring
-- Sleuth for tracing
-- Logback auto-configured
+| Framework | Logger | Health | Notes |
+|-----------|--------|--------|-------|
+| **Spring Boot** | SLF4J + Logback | Actuator | Auto-configured |
+| **Quarkus** | JBoss Logging | SmallRye Health | Reactive, fast startup |
+| **Micronaut** | SLF4J | Health endpoint | Compile-time DI |
 
-### Quarkus
-- SmallRye Health for /health
-- Micrometer for metrics
-- OpenTelemetry for tracing
+---
 
-### Micronaut
-- Built-in health endpoints
-- Micrometer integration
-- OpenTelemetry support
+## Best Practices
+
+### Log Levels
+- **TRACE**: Very detailed
+- **DEBUG**: Troubleshooting
+- **INFO**: General flow
+- **WARN**: Unexpected events
+- **ERROR**: Errors/exceptions
+
+### What to Log/Not Log
+> **ALWAYS log**: Structured data `logger.info("User {} created", userId)`, Request/response, Auth events
+
+> **NEVER log**: Passwords, API keys, Credit cards, PII without redaction
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Logs not JSON formatted** | Check logstash-logback-encoder dependency |
+| **MDC cleared unexpectedly** | Use try-finally, check async boundaries |
+| **High memory from logging** | Enable async appenders, reduce verbosity |
 
 ---
 
 ## AI Self-Check
 
-- [ ] SLF4J + Logback configured (JSON format)
-- [ ] MDC correlation ID implemented
-- [ ] No sensitive data in logs
-- [ ] Health checks configured
+- [ ] SLF4J + Logback configured
+- [ ] Structured logging (JSON)
+- [ ] Correlation IDs via MDC
+- [ ] No sensitive data logged
+- [ ] Health checks (/actuator/health)
 - [ ] Metrics exposed (/actuator/metrics)
-- [ ] Error tracking enabled
-- [ ] Distributed tracing configured
-- [ ] Log aggregation setup
+- [ ] Error tracking configured
+- [ ] Distributed tracing enabled
+- [ ] Log aggregation configured
 - [ ] Alerts created
 
 ---
 
 **Process Complete** ✅
-

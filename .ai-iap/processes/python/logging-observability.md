@@ -1,22 +1,40 @@
 # Logging & Observability Implementation Process - Python
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Python applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
-> **Core Libraries**: structlog/python-json-logger, Prometheus, Sentry, OpenTelemetry
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working Python application
+> - Git repository
+> - Understanding of log levels
+
+---
+
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow**: Create branch → Make changes → Commit → Push → Verify
+
+Phases below reference this pattern.
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: structlog ⭐ or python-json-logger
-> **NEVER**: Use print(), log passwords/tokens/PII
+**Branch**: `logging/structured`
+
+### 1.1 Use structlog
+
+> **ALWAYS use**: **structlog** ⭐ (structured logging) or Python's logging with JSON formatter
 
 **Install**:
 ```bash
 pip install structlog python-json-logger
 ```
 
-**Configuration**:
+**Configure**:
 ```python
 import structlog
 
@@ -25,141 +43,212 @@ structlog.configure(
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
         structlog.processors.JSONRenderer()
     ],
-    context_class=dict,
+    wrapper_class=structlog.stdlib.BoundLogger,
     logger_factory=structlog.stdlib.LoggerFactory(),
 )
 
 logger = structlog.get_logger()
 ```
 
-**Correlation ID Middleware** (Flask/FastAPI):
+**Usage**:
+```python
+logger.info("user_created", user_id=user.id, email=user.email)
+```
+
+### 1.2 Add Correlation IDs
+
+**Middleware** (Flask/FastAPI):
 ```python
 import uuid
 from contextvars import ContextVar
 
-request_id_var = ContextVar('request_id', default=None)
+correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
 
 @app.middleware("http")
 async def add_correlation_id(request, call_next):
-    request_id = request.headers.get('X-Correlation-ID') or str(uuid.uuid4())
-    request_id_var.set(request_id)
+    cid = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+    correlation_id.set(cid)
     response = await call_next(request)
-    response.headers["X-Correlation-ID"] = request_id
+    response.headers["X-Correlation-ID"] = cid
     return response
 ```
 
-> **Git**: `git commit -m "feat: add structured logging with structlog"`
+**Verify**: Logs structured (JSON), correlation IDs tracked, no sensitive data
 
 ---
 
 ## Phase 2: Application Monitoring
 
-> **ALWAYS include**:
-- /health endpoint (database, Redis checks)
-- Prometheus metrics with prometheus_client
-- Error tracking with Sentry
+**Branch**: `logging/monitoring`
 
-**Prometheus Setup**:
+### 2.1 Health Checks
+
+**FastAPI**:
+```python
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "database": await check_database(),
+        "redis": await check_redis()
+    }
+```
+
+### 2.2 Metrics with Prometheus
+
+**Install**:
 ```bash
 pip install prometheus-client
 ```
 
+**Configure**:
 ```python
 from prometheus_client import Counter, Histogram, make_asgi_app
 
-REQUEST_COUNT = Counter('http_requests_total', 'Total requests', ['method', 'endpoint'])
-REQUEST_DURATION = Histogram('http_request_duration_seconds', 'Request duration')
+requests_total = Counter('requests_total', 'Total requests', ['method', 'endpoint'])
+request_duration = Histogram('request_duration_seconds', 'Request duration')
 
-# Mount metrics endpoint
-app.mount("/metrics", make_asgi_app())
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 ```
 
-**Sentry Setup**:
+### 2.3 Error Tracking
+
+> **ALWAYS use**: **Sentry** ⭐
+
+**Setup**:
 ```bash
-pip install sentry-sdk[fastapi]
+pip install sentry-sdk
 ```
 
 ```python
 import sentry_sdk
-sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("ENV"))
+
+sentry_sdk.init(
+    dsn=os.environ["SENTRY_DSN"],
+    environment=os.environ.get("ENV", "development"),
+    traces_sample_rate=0.1
+)
 ```
 
-> **Git**: `git commit -m "feat: add health checks, metrics, and error tracking"`
+**Verify**: Health endpoint works, metrics exposed, errors tracked
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-> **ALWAYS use**: OpenTelemetry ⭐
+**Branch**: `logging/tracing`
+
+### 3.1 Configure OpenTelemetry
 
 **Install**:
 ```bash
 pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi
 ```
 
-**Configuration**:
+**Configure**:
 ```python
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 
 trace.set_tracer_provider(TracerProvider())
-FastAPIInstrumentor.instrument_app(app)
+jaeger_exporter = JaegerExporter(agent_host_name="jaeger", agent_port=6831)
+trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(jaeger_exporter))
 ```
 
-> **Git**: `git commit -m "feat: add distributed tracing with OpenTelemetry"`
+**Verify**: Traces in Jaeger/Zipkin, trace IDs propagated
 
 ---
 
 ## Phase 4: Log Aggregation & Alerts
 
-> **ALWAYS use**: Datadog, CloudWatch, or ELK Stack
+**Branch**: `logging/aggregation`
 
-**Python Logging Handler** (Datadog):
+### 4.1 Configure Log Shipping
+
+> **Options**: ELK Stack, Datadog, CloudWatch, Loguru (with external sink)
+
+**Loguru with external sink**:
 ```bash
-pip install datadog
+pip install loguru
 ```
 
-**Alerts**: Error rate >1%, p99 latency >2s, health check failures
+```python
+from loguru import logger
 
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+logger.add(
+    "logs/app.log",
+    rotation="500 MB",
+    retention="10 days",
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+    serialize=True  # JSON format
+)
+```
+
+### 4.2 Alerts & Dashboards
+
+> **Alert on**: Error rate >1%, p99 latency >2s, Health failures, High memory
+
+> **Dashboards**: RED metrics, Python process metrics, Database performance
+
+**Verify**: Logs aggregated, alerts configured, dashboards created
 
 ---
 
 ## Framework-Specific Notes
 
-### FastAPI
-- Built-in /health with dependencies
-- Prometheus middleware
-- Sentry ASGI integration
+| Framework | Logger | Health | Notes |
+|-----------|--------|--------|-------|
+| **FastAPI** | structlog | Built-in route | Async-first |
+| **Django** | logging | django-health-check | WSGI, sync |
+| **Flask** | structlog | Custom route | WSGI, sync |
 
-### Django
-- django-structlog for structured logging
-- django-prometheus for metrics
-- Health check views
+---
 
-### Flask
-- flask-healthz for health checks
-- prometheus_flask_exporter
-- Sentry Flask integration
+## Best Practices
+
+### Log Levels
+- **DEBUG**: Detailed troubleshooting
+- **INFO**: General flow
+- **WARNING**: Unexpected events
+- **ERROR**: Errors/exceptions
+- **CRITICAL**: System failures
+
+### What to Log/Not Log
+> **ALWAYS log**: Structured data, Request/response, Auth events
+
+> **NEVER log**: Passwords, API keys, Credit cards, PII
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Logs not JSON** | Configure JSON formatter or use structlog |
+| **Context lost in async** | Use contextvars for correlation IDs |
+| **High memory** | Enable log rotation, reduce verbosity |
 
 ---
 
 ## AI Self-Check
 
-- [ ] Structured logging configured (JSON)
-- [ ] Correlation ID tracked
-- [ ] No sensitive data in logs
+- [ ] Structured logging configured (structlog/JSON)
+- [ ] Correlation IDs tracked
+- [ ] No sensitive data logged
 - [ ] Health checks implemented
 - [ ] Metrics exposed (/metrics)
-- [ ] Error tracking enabled
-- [ ] Distributed tracing configured
-- [ ] Log aggregation setup
+- [ ] Error tracking configured (Sentry)
+- [ ] Distributed tracing enabled
+- [ ] Log aggregation configured
 - [ ] Alerts created
 
 ---
 
 **Process Complete** ✅
-

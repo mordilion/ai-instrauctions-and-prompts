@@ -1,22 +1,37 @@
 # Logging & Observability Implementation Process - PHP
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for PHP applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
-> **Core Libraries**: Monolog, Prometheus, Sentry, OpenTelemetry
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working PHP application
+> - Git repository
+
+---
+
+## Git Workflow Pattern
+
+> **Standard workflow**: Create branch → Changes → Commit → Push → Verify
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: Monolog ⭐
-> **NEVER**: Use error_log() or var_dump() in production, log passwords/tokens/PII
+**Branch**: `logging/structured`
+
+### 1.1 Use Monolog
+
+> **ALWAYS use**: **Monolog** ⭐ (PSR-3 compliant)
 
 **Install**:
 ```bash
 composer require monolog/monolog
 ```
 
-**Configuration**:
+**Configure**:
 ```php
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -28,37 +43,55 @@ $handler->setFormatter(new JsonFormatter());
 $logger->pushHandler($handler);
 ```
 
-**Correlation ID Middleware**:
+**Laravel**: Built-in, uses Monolog
+
+### 1.2 Add Correlation IDs
+
+**Middleware**:
 ```php
-use Ramsey\Uuid\Uuid;
-
-$correlationId = $_SERVER['HTTP_X_CORRELATION_ID'] ?? Uuid::uuid4()->toString();
-header("X-Correlation-ID: $correlationId");
-
-$logger->pushProcessor(function ($record) use ($correlationId) {
-    $record['extra']['correlation_id'] = $correlationId;
-    return $record;
-});
+class CorrelationIdMiddleware
+{
+    public function handle($request, Closure $next)
+    {
+        $correlationId = $request->header('X-Correlation-ID', Str::uuid());
+        $request->attributes->set('correlation_id', $correlationId);
+        
+        Log::shareContext(['correlation_id' => $correlationId]);
+        
+        $response = $next($request);
+        $response->headers->set('X-Correlation-ID', $correlationId);
+        return $response;
+    }
+}
 ```
 
-> **Git**: `git commit -m "feat: add structured logging with Monolog"`
+**Verify**: Structured logs (JSON), correlation IDs tracked
 
 ---
 
 ## Phase 2: Application Monitoring
 
-> **ALWAYS include**:
-- /health endpoint (database, Redis checks)
-- Prometheus metrics (promphp/prometheus_client_php)
-- Error tracking (Sentry ⭐)
+**Branch**: `logging/monitoring`
 
-**Health Check**:
-```php
-Route::get('/health', function () {
-    $dbOk = DB::connection()->getPdo() !== null;
-    return response()->json(['status' => $dbOk ? 'healthy' : 'unhealthy'], $dbOk ? 200 : 503);
-});
+### 2.1 Health Checks
+
+**Laravel**:
+```bash
+composer require spatie/laravel-health
 ```
+
+**Symfony**: FOSHealthCheckBundle
+
+### 2.2 Metrics
+
+**Install**:
+```bash
+composer require promphp/prometheus_client_php
+```
+
+### 2.3 Error Tracking
+
+> **ALWAYS use**: **Sentry** ⭐ or Bugsnag
 
 **Sentry**:
 ```bash
@@ -66,62 +99,81 @@ composer require sentry/sentry-laravel
 ```
 
 ```php
-\Sentry\init(['dsn' => env('SENTRY_DSN')]);
+Sentry\init(['dsn' => env('SENTRY_DSN')]);
 ```
 
-> **Git**: `git commit -m "feat: add health checks, metrics, and error tracking"`
+**Verify**: Health checks, metrics exposed, errors tracked
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-> **ALWAYS use**: OpenTelemetry ⭐
+**Branch**: `logging/tracing`
+
+### 3.1 OpenTelemetry
 
 **Install**:
 ```bash
-composer require open-telemetry/sdk open-telemetry/exporter-otlp
+composer require open-telemetry/opentelemetry
 ```
 
-> **Git**: `git commit -m "feat: add distributed tracing"`
+**Verify**: Traces collected
 
 ---
 
-## Phase 4: Log Aggregation & Alerts
+## Phase 4: Log Aggregation
 
-> **ALWAYS use**: ELK Stack, Datadog, or CloudWatch
+**Branch**: `logging/aggregation`
 
-**Monolog Handler**: LogstashHandler or ElasticsearchHandler
+### 4.1 Log Shipping
 
-**Alerts**: Error rate >1%, p99 latency >2s, health check failures
+> **Options**: ELK Stack, Datadog, CloudWatch, Papertrail
 
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+**Monolog + Logstash**:
+```php
+use Monolog\Handler\SocketHandler;
+
+$handler = new SocketHandler('tcp://logstash:5000');
+$logger->pushHandler($handler);
+```
+
+### 4.2 Alerts
+
+> **Alert on**: Error rate >1%, p99 >2s, Health failures
+
+**Verify**: Logs aggregated, alerts configured
 
 ---
 
-## Framework-Specific Notes
+## Framework Notes
 
-### Laravel
-- Monolog built-in (config/logging.php)
-- Laravel Telescope for local debugging
-- Laravel Health package for /health
+| Framework | Logger | Health |
+|-----------|--------|--------|
+| **Laravel** | Monolog (built-in) | spatie/laravel-health |
+| **Symfony** | Monolog | FOSHealthCheckBundle |
 
-### Symfony
-- Monolog integration (config/packages/monolog.yaml)
-- symfony/http-client for external health checks
+---
+
+## Best Practices
+
+### What to Log/Not Log
+> **ALWAYS**: Structured data, Request/response, Auth events
+
+> **NEVER**: Passwords, API keys, Credit cards, PII
 
 ---
 
 ## AI Self-Check
 
-- [ ] Structured logging configured (Monolog, JSON)
-- [ ] Correlation ID tracked
-- [ ] No sensitive data in logs
+- [ ] Monolog configured
+- [ ] Structured logging (JSON)
+- [ ] Correlation IDs tracked
+- [ ] No sensitive data logged
 - [ ] Health checks implemented
-- [ ] Error tracking enabled (Sentry)
-- [ ] Log aggregation setup
-- [ ] Alerts created
+- [ ] Metrics exposed
+- [ ] Error tracking configured
+- [ ] Log aggregation configured
 
 ---
 
 **Process Complete** ✅
-

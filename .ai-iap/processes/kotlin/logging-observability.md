@@ -1,113 +1,180 @@
 # Logging & Observability Implementation Process - Kotlin
 
-> **Purpose**: Establish production-grade logging, monitoring, and observability for Kotlin applications
+> **Purpose**: Establish production-grade logging, monitoring, and observability
 
-> **Core Libraries**: SLF4J + Logback, Micrometer, Ktor/Spring Boot tools, OpenTelemetry
+---
+
+## Prerequisites
+
+> **BEFORE starting**:
+> - Working Kotlin application
+> - Git repository
+
+---
+
+## Git Workflow Pattern
+
+> **Standard workflow**: Create branch → Changes → Commit → Push → Verify
 
 ---
 
 ## Phase 1: Structured Logging
 
-> **ALWAYS use**: SLF4J ⭐ with Logback (same as Java)
-> **NEVER**: Use println(), log passwords/tokens/PII
+**Branch**: `logging/structured`
 
-**Kotlin Logging DSL**: kotlin-logging (mu.KotlinLogging)
+### 1.1 Use SLF4J + Logback
 
+> **Same as Java**: SLF4J facade + Logback implementation
+
+**Dependencies** (Gradle):
 ```kotlin
-import mu.KotlinLogging
+implementation("ch.qos.logback:logback-classic")
+implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+```
+
+**Usage**:
+```kotlin
+import org.slf4j.LoggerFactory
+
+class UserService {
+    private val logger = LoggerFactory.getLogger(UserService::class.java)
+    
+    fun createUser(email: String) {
+        logger.info("Creating user: {}", email)
+    }
+}
+```
+
+### 1.2 Kotlin Logging (Alternative)
+
+**Install**:
+```kotlin
+implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+```
+
+**Usage**:
+```kotlin
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-logger.info { "Request processed" }
-logger.error(exception) { "Error occurred" }
+fun createUser(email: String) {
+    logger.info { "Creating user: $email" }
+}
 ```
 
-**logback.xml**: JSON format with LogstashEncoder, MDC for correlation ID
+### 1.3 Add MDC for Correlation IDs
 
-> **Git**: `git commit -m "feat: add structured logging with Kotlin Logging"`
+> **Same as Java**: Use SLF4J MDC in filter/interceptor
+
+**Verify**: Structured logs (JSON), correlation IDs tracked
 
 ---
 
 ## Phase 2: Application Monitoring
 
-> **ALWAYS include**:
-- Health endpoint (/health)
-- Micrometer for metrics (Prometheus)
-- Error tracking (Sentry)
+**Branch**: `logging/monitoring`
 
-**Ktor Health Check**:
+### 2.1 Health Checks
+
+**Spring Boot**: Use Actuator (same as Java)
+
+**Ktor**:
 ```kotlin
 routing {
     get("/health") {
-        call.respond(HttpStatusCode.OK, "Healthy")
+        call.respond(mapOf("status" to "healthy"))
     }
 }
 ```
 
-**Micrometer**:
+### 2.2 Metrics
+
+**Spring Boot**: Micrometer (built-in)
+
+**Ktor**: Use Micrometer
 ```kotlin
 install(MicrometerMetrics) {
     registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 }
 ```
 
-> **Git**: `git commit -m "feat: add health checks and metrics"`
+### 2.3 Error Tracking
+
+> **Sentry**: Same setup as Java
+
+**Verify**: Health checks, metrics exposed, errors tracked
 
 ---
 
 ## Phase 3: Distributed Tracing
 
-> **ALWAYS use**: OpenTelemetry ⭐ or Spring Sleuth (if Spring Boot)
+**Branch**: `logging/tracing`
 
-**OpenTelemetry Ktor Plugin**:
+### 3.1 OpenTelemetry
+
+> **Spring Boot**: Same as Java
+
+**Ktor**:
 ```kotlin
 install(OpenTelemetry) {
-    serviceName = "my-app"
+    // Configuration
 }
 ```
 
-> **Git**: `git commit -m "feat: add distributed tracing"`
+**Verify**: Traces visible, trace IDs propagated
 
 ---
 
-## Phase 4: Log Aggregation & Alerts
+## Phase 4: Log Aggregation
 
-> **ALWAYS use**: ELK Stack, Datadog, or CloudWatch
+**Branch**: `logging/aggregation`
 
-**Logback Appender**: LogstashTcpSocketAppender
+### 4.1 Log Shipping
 
-**Alerts**: Error rate >10/min, p99 latency >2s
+> **Options**: ELK, Datadog, CloudWatch
 
-> **Git**: `git commit -m "feat: add log aggregation and alerting"`
+**Logback configuration**: Same as Java
+
+### 4.2 Alerts & Dashboards
+
+> **Alert on**: Error rate >1%, p99 >2s, Health failures
+
+**Verify**: Logs aggregated, alerts configured
 
 ---
 
 ## Framework-Specific Notes
 
-### Ktor
-- Custom health endpoint
-- Micrometer plugin
-- OpenTelemetry plugin
+| Framework | Logger | Health |
+|-----------|--------|--------|
+| **Spring Boot** | SLF4J + Logback | Actuator |
+| **Ktor** | kotlin-logging | Custom route |
+| **Android** | Logcat + Timber | N/A |
 
-### Spring Boot (Kotlin)
-- Same as Java Spring Boot
-- Actuator, Micrometer, Sleuth
+---
+
+## Best Practices
+
+### What to Log/Not Log
+> **ALWAYS**: Structured data, Request/response, Auth events
+
+> **NEVER**: Passwords, API keys, PII
 
 ---
 
 ## AI Self-Check
 
-- [ ] Structured logging configured
-- [ ] Correlation ID tracked
-- [ ] No sensitive data in logs
+- [ ] SLF4J + Logback or kotlin-logging configured
+- [ ] Structured logging (JSON)
+- [ ] Correlation IDs (MDC)
+- [ ] No sensitive data logged
 - [ ] Health checks implemented
 - [ ] Metrics exposed
-- [ ] Error tracking enabled
-- [ ] Distributed tracing configured
-- [ ] Log aggregation setup
-- [ ] Alerts created
+- [ ] Error tracking configured
+- [ ] Distributed tracing enabled
+- [ ] Log aggregation configured
 
 ---
 
 **Process Complete** ✅
-
