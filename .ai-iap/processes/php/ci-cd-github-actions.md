@@ -17,26 +17,30 @@
 
 ---
 
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
+
+---
+
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `php.yml` or `laravel.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
 > - PHP version from project (read from composer.json `require.php` or `platform.php`)
 > - Setup with shivammathur/setup-php@v2
 > - Composer caching (~/.composer/cache)
-> - Install dependencies (`composer install --prefer-dist --no-progress`)
+> - Install dependencies: `composer install --prefer-dist --no-progress`
 > - Run linter (PHP_CodeSniffer, PHP CS Fixer)
 > - Run tests with PHPUnit/Pest
 > - Collect coverage with Xdebug or PCOV
@@ -55,10 +59,10 @@ main → ci/basic-pipeline
 **Key Workflow Structure**:
 - Trigger: push (main/develop), pull_request
 - Jobs: lint → test → build
-- Setup: shivammathur/setup-php with extensions
+- Setup: shivammathur/setup-php with extensions (mbstring, xml, ctype, iconv, pdo, etc.)
 - Cache: Composer dependencies
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
 > - Use PHPUnit with Xdebug or PCOV
@@ -72,47 +76,26 @@ vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
 # Or with PCOV: php -d pcov.enabled=1 vendor/bin/phpunit --coverage-xml=coverage
 ```
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic PHP build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - Builds succeed across PHP versions
-> - Tests execute with results
-> - Coverage report generated
-> - Composer cache working
+**Verify**: Pipeline runs, builds succeed across PHP versions, tests execute with results, coverage report generated, Composer cache working
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Code Quality Analysis
 
 > **ALWAYS include**:
 > - PHP_CodeSniffer (phpcs) with PSR-12 standard
 > - PHP CS Fixer for auto-formatting
-> - PHPStan or Psalm for static analysis
+> - PHPStan or Psalm for static analysis (level 8+)
 > - Fail build on violations
 
-> **NEVER**:
-> - Suppress errors globally
-> - Skip static analysis
-> - Allow critical issues in new code
+> **NEVER**: Suppress errors globally, skip static analysis, allow critical issues in new code
 
-**PHP_CodeSniffer Configuration**:
+**PHP_CodeSniffer Configuration** (`phpcs.xml`):
 ```xml
-<!-- phpcs.xml -->
 <?xml version="1.0"?>
 <ruleset name="Project">
     <rule ref="PSR12"/>
@@ -121,9 +104,8 @@ main → ci/quality-security
 </ruleset>
 ```
 
-**PHPStan Configuration**:
+**PHPStan Configuration** (`phpstan.neon`):
 ```neon
-# phpstan.neon
 parameters:
     level: 8
     paths:
@@ -135,13 +117,18 @@ parameters:
 
 > **ALWAYS include**:
 > - Dependabot configuration (`.github/dependabot.yml`)
-> - Composer audit (`composer audit`)
+> - Composer audit: `composer audit`
 > - Fail on known vulnerabilities
 
-> **Dependabot Config**:
-> - Package ecosystem: composer
-> - Schedule: weekly
-> - Open PR limit: 5
+**Dependabot Config**:
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
 **Security Commands**:
 ```bash
@@ -153,38 +140,18 @@ composer audit
 
 > **ALWAYS**:
 > - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: php (javascript if includes frontend)
+> - Configure language: php
 > - Run on schedule (weekly) + push to main
-> - Review alerts in GitHub Security tab
 
-> **Optional but recommended**:
-> - SonarCloud/SonarQube integration
-> - Snyk for vulnerability scanning
+> **Optional but recommended**: SonarCloud, Snyk
 
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml phpcs.xml phpstan.neon
-> git commit -m "ci: add code quality and security scanning"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - phpcs, PHPStan run during CI
-> - Violations cause build failures
-> - Dependabot creates update PRs
-> - CodeQL scan completes
-> - Vulnerabilities reported
+**Verify**: phpcs/PHPStan pass, Dependabot creates update PRs, CodeQL scan completes, vulnerabilities reported
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
@@ -194,10 +161,7 @@ main → ci/deployment
 > - Store secrets per environment (.env files as secrets)
 > - Never commit .env files
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop
-> - Development: auto-deploy on feature branches
+**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy on merge to develop), Development (auto-deploy on feature branches)
 
 ### 3.2 Build & Optimize
 
@@ -207,11 +171,7 @@ main → ci/deployment
 > - Compile assets (npm run build)
 > - Version with Git SHA or semantic version
 
-> **NEVER**:
-> - Include vendor/ directory in git
-> - Deploy without autoloader optimization
-> - Ship development dependencies
-> - Forget to clear old caches
+> **NEVER**: Include vendor/ directory in git, deploy without autoloader optimization, ship development dependencies, forget to clear old caches
 
 **Build Commands**:
 ```bash
@@ -225,38 +185,15 @@ npm run build # If frontend assets
 
 > **Platform-specific** (choose one or more):
 
-**Shared Hosting (FTP/SFTP)**:
-- Use SamKirkland/FTP-Deploy-Action
-- Upload via SFTP with SSH keys
-- Exclude .git, .env, tests/
-
-**VPS / Dedicated Server**:
-- SSH deploy with rsync or scp
-- Run deployment script (composer install, migrations)
-- Reload PHP-FPM or restart Apache/Nginx
-
-**AWS (Elastic Beanstalk / ECS / Lambda)**:
-- Use aws-actions/configure-aws-credentials
-- Package application as ZIP or Docker
-- Deploy to Elastic Beanstalk or ECS
-
-**Azure (App Service)**:
-- Use azure/webapps-deploy@v2
-- Upload via FTP or Azure CLI
-- Configure PHP version in portal
-
-**Heroku**:
-- Use Procfile: `web: vendor/bin/heroku-php-apache2 public/`
-- Deploy with Heroku CLI or GitHub integration
-
-**Laravel Forge / Envoyer**:
-- Trigger deployment via webhook
-- Use Forge/Envoyer API
-
-**Docker Registry**:
-- Build Dockerfile (multi-stage: Composer → PHP-FPM/Apache)
-- Push to Docker Hub, GHCR
-- Deploy to Kubernetes, Docker Swarm
+| Platform | Tool/Method | Notes |
+|----------|-------------|-------|
+| **Shared Hosting (FTP/SFTP)** | SamKirkland/FTP-Deploy-Action | Upload via SFTP, exclude .git, .env, tests/ |
+| **VPS / Dedicated Server** | SSH + rsync or scp | Run deployment script, reload PHP-FPM/Apache/Nginx |
+| **AWS** | aws-actions/configure-aws-credentials | Elastic Beanstalk, ECS, Lambda |
+| **Azure App Service** | azure/webapps-deploy@v2 | Upload via FTP or Azure CLI |
+| **Heroku** | Heroku CLI | Procfile: `web: vendor/bin/heroku-php-apache2 public/` |
+| **Laravel Forge / Envoyer** | Webhook API | Trigger deployment via webhook |
+| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile |
 
 ### 3.4 Database Migrations
 
@@ -266,10 +203,7 @@ npm run build # If frontend assets
 > - Test migrations in staging first
 > - Create rollback migrations
 
-> **NEVER**:
-> - Run migrations on app boot in production
-> - Skip migration testing
-> - Deploy app before migrations complete
+> **NEVER**: Run migrations on app boot in production, skip migration testing, deploy app before migrations complete
 
 **Migration Commands**:
 ```bash
@@ -286,49 +220,26 @@ vendor/bin/phinx migrate
 ### 3.5 Smoke Tests Post-Deploy
 
 > **ALWAYS include**:
-> - Health check endpoint (`/health` or `/api/health`)
+> - Health check endpoint test (`/health`, `/api/health`)
 > - Database connectivity check
 > - Cache (Redis/Memcached) connectivity
 > - External API integration check
 
-> **NEVER**:
-> - Run full E2E tests in deployment job
-> - Block rollback on smoke test failures
-
-### 3.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml
-> git commit -m "ci: add deployment pipeline with database migrations"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Environment secrets accessible
-> - Build optimized correctly
-> - Deployment succeeds to staging
-> - Migrations applied
-> - Smoke tests pass
-> - Rollback procedure tested
+**Verify**: Manual trigger works, environment secrets accessible, build optimized correctly, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
 > **ALWAYS**:
 > - Load testing with k6, Apache Bench, or Gatling
-> - Track response times and memory usage
+> - Memory profiling with Xdebug or Blackfire
+> - Track response times
 > - Fail if performance degrades >10%
-> - Profile with Blackfire or Xdebug
 
 ### 4.2 Integration Testing
 
@@ -338,10 +249,7 @@ main → ci/advanced
 > - Run on schedule (nightly) + release tags
 > - Separate test database
 
-> **NEVER**:
-> - Use real production databases
-> - Skip cleanup after tests
-> - Run on every PR (too slow)
+> **NEVER**: Use real production databases, skip cleanup after tests, run on every PR (too slow)
 
 ### 4.3 Release Automation
 
@@ -359,112 +267,50 @@ main → ci/advanced
 > - Include README.md, LICENSE
 > - Follow semver strictly
 
-> **ALWAYS**:
-> - Set name, description, license in composer.json
-> - Include autoload configuration
-> - Tag releases with semantic version
+> **ALWAYS**: Set name, description, license in composer.json; Include autoload configuration; Tag releases with semantic version
 
 ### 4.5 Notifications
 
-> **ALWAYS**:
-> - Slack/Teams webhook on deploy success/failure
-> - GitHub Status Checks for PR reviews
-> - Email notifications for security alerts
+> **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
 
-> **NEVER**:
-> - Expose webhook URLs in public repos
-> - Spam notifications for every commit
-
-### 4.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, integration tests, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Performance tests run and tracked
-> - Integration tests pass in isolation
-> - Releases created automatically
-> - Packagist auto-updates (if applicable)
-> - Notifications received
+**Verify**: Performance tests run and tracked, integration tests pass in isolation, releases created automatically, Packagist auto-updates (if applicable), notifications received
 
 ---
 
 ## Framework-Specific Notes
 
-### Laravel
-- Cache: `php artisan config:cache`, `php artisan route:cache`, `php artisan view:cache`
-- Queue: `php artisan queue:work` (use Supervisor)
-- Migrations: `php artisan migrate --force`
-- Health: Laravel built-in health checks or custom route
-
-### Symfony
-- Cache: `php bin/console cache:clear --env=prod`
-- Assets: `php bin/console assets:install --env=prod`
-- Migrations: `php bin/console doctrine:migrations:migrate --no-interaction`
-- Health: FOSHealthCheckBundle or custom route
-
-### WordPress
-- Use Composer for plugin/theme dependencies
-- Deploy with wp-cli for updates
-- Use WP-CLI for cache clearing
-- Avoid committing wp-content/uploads/
+| Framework | Notes |
+|-----------|-------|
+| **Laravel** | Cache: `php artisan config:cache`, `route:cache`, `view:cache`; Queue: `php artisan queue:work` (use Supervisor); Migrations: `php artisan migrate --force`; Health: Laravel built-in health checks |
+| **Symfony** | Cache: `php bin/console cache:clear --env=prod`; Assets: `php bin/console assets:install --env=prod`; Migrations: `php bin/console doctrine:migrations:migrate --no-interaction`; Health: FOSHealthCheckBundle |
+| **WordPress** | Use Composer for plugin/theme dependencies; Deploy with wp-cli; Use WP-CLI for cache clearing; Avoid committing wp-content/uploads/ |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: Composer install fails with memory limit
-- **Solution**: Increase memory: `php -d memory_limit=-1 $(which composer) install`
-
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check .env.testing, database config, file permissions
-
-### Issue: Coverage not collected
-- **Solution**: Install Xdebug or PCOV, verify phpunit.xml coverage config
-
-### Issue: Deployment fails with permission error
-- **Solution**: Set correct ownership (www-data), chmod storage/ and bootstrap/cache/
-
-### Issue: Migrations fail with timeout
-- **Solution**: Increase timeout, optimize migrations, check database connection
+| Issue | Solution |
+|-------|----------|
+| **Composer install fails with memory limit** | Increase memory: `php -d memory_limit=-1 $(which composer) install` |
+| **Tests pass locally but fail in CI** | Check .env.testing, database config, file permissions |
+| **Coverage not collected** | Install Xdebug or PCOV, verify phpunit.xml coverage config |
+| **Deployment fails with permission error** | Set correct ownership (www-data), chmod storage/ and bootstrap/cache/ |
+| **Migrations fail with timeout** | Increase timeout, optimize migrations, check database connection |
 
 ---
 
 ## AI Self-Check
 
-Before completing this process, verify:
-
 - [ ] CI pipeline runs on push and PR
-- [ ] PHP version pinned
+- [ ] PHP version pinned or matrix tested
 - [ ] Composer dependencies cached
 - [ ] All tests pass with coverage ≥80%
 - [ ] Code quality tools enabled (phpcs, PHPStan)
 - [ ] Security scanning enabled (CodeQL, Dependabot, composer audit)
-- [ ] Dependencies up to date
 - [ ] Build optimized (--no-dev, --optimize-autoloader)
 - [ ] Deployment to at least one environment works
 - [ ] Database migrations tested and automated
-- [ ] Environment secrets properly configured
 - [ ] Smoke tests validate deployment health
-- [ ] Rollback procedure documented
-- [ ] Performance tests tracked (if applicable)
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
 
 ---
 
@@ -474,7 +320,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -491,4 +336,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

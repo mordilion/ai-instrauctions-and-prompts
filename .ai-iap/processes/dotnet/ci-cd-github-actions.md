@@ -17,20 +17,24 @@
 
 ---
 
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
+
+---
+
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `dotnet.yml` or `build.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
 > - .NET version from project (read from `global.json` or .csproj `<TargetFramework>`)
@@ -56,7 +60,7 @@ main → ci/basic-pipeline
 - Setup: actions/setup-dotnet@v3
 - Cache: NuGet packages by packages.lock.json
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
 > - Use coverlet.collector or coverlet.msbuild
@@ -71,30 +75,13 @@ dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 reportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./coverage/report -reporttypes:Html
 ```
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic .NET build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - All projects build successfully
-> - Tests execute with results displayed
-> - Coverage report generated
-> - NuGet cache working
+**Verify**: Pipeline runs, all projects build, tests execute with results, coverage report generated, NuGet cache working
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Code Quality Analysis
 
@@ -117,11 +104,15 @@ main → ci/quality-security
 > - Target framework updates
 > - Fail on known vulnerabilities
 
-> **Dependabot Config**:
-> - Package ecosystem: nuget
-> - Directory: "/" (or specific project path)
-> - Schedule: weekly
-> - Open PR limit: 5
+**Dependabot Config**:
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
 ### 2.3 Static Analysis (SAST)
 
@@ -129,37 +120,16 @@ main → ci/quality-security
 > - Add CodeQL analysis (`.github/workflows/codeql.yml`)
 > - Configure language: csharp
 > - Run on schedule (weekly) + push to main
-> - Review alerts in GitHub Security tab
 
-> **Optional but recommended**:
-> - SonarCloud integration
-> - Security Code Scan analyzer
-> - Meziantou.Analyzer for additional rules
+> **Optional but recommended**: SonarCloud, Security Code Scan analyzer, Meziantou.Analyzer
 
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml
-> git commit -m "ci: add code quality and security scanning"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - Analyzers run during build
-> - Warnings treated as errors
-> - Dependabot creates update PRs
-> - CodeQL scan completes
-> - Security vulnerabilities reported
+**Verify**: Analyzers run during build, warnings treated as errors, Dependabot creates update PRs, CodeQL scan completes
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
@@ -169,10 +139,10 @@ main → ci/deployment
 > - Store secrets per environment (connection strings, API keys)
 > - Use User Secrets for local dev
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop
-> - Development: auto-deploy on feature branches
+**Protection Rules**:
+- Production: require approval, restrict to main branch
+- Staging: auto-deploy on merge to develop
+- Development: auto-deploy on feature branches
 
 ### 3.2 Build & Publish Artifacts
 
@@ -198,30 +168,13 @@ dotnet publish -c Release -o ./publish --no-restore
 
 > **Platform-specific** (choose one or more):
 
-**Azure App Service**:
-- Use azure/webapps-deploy@v2
-- Configure publish profile or service principal
-- Use deployment slots (staging → production swap)
-
-**Azure Container Apps / AKS**:
-- Build Docker image
-- Push to Azure Container Registry (ACR)
-- Deploy with az containerapp update or kubectl
-
-**AWS (Elastic Beanstalk / ECS / Lambda)**:
-- Use aws-actions/configure-aws-credentials
-- Package with `dotnet lambda package` (Lambda)
-- Deploy to ECS with task definition update
-
-**Docker Registry**:
-- Build multi-stage Dockerfile
-- Push to Docker Hub, GHCR, ACR, ECR
-- Tag with git SHA + semantic version
-
-**IIS / Windows Server**:
-- Use Web Deploy (MSDeploy)
-- PowerShell remoting for deployment
-- Or sftp/scp artifacts + restart IIS
+| Platform | Tool | Notes |
+|----------|------|-------|
+| **Azure App Service** | azure/webapps-deploy@v2 | Use deployment slots (staging → production swap) |
+| **Azure Container Apps/AKS** | Docker + ACR | Deploy with az containerapp update or kubectl |
+| **AWS** | aws-actions/configure-aws-credentials | Elastic Beanstalk, ECS, or Lambda |
+| **Docker Registry** | docker/build-push-action | Push to Docker Hub, GHCR, ACR, ECR |
+| **IIS / Windows Server** | Web Deploy (MSDeploy) | PowerShell remoting or sftp/scp artifacts |
 
 ### 3.4 Database Migrations
 
@@ -250,36 +203,13 @@ dotnet ef migrations script --idempotent --output migration.sql
 > - Cache/Redis connectivity
 > - External API integration check
 
-> **NEVER**:
-> - Run full integration tests in deployment job
-> - Block rollback on smoke test failures
-
-### 3.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml
-> git commit -m "ci: add deployment pipeline with database migrations"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Environment secrets accessible
-> - Artifacts published correctly
-> - Deployment succeeds to staging
-> - Migrations applied
-> - Smoke tests pass
-> - Rollback procedure tested
+**Verify**: Manual trigger works, environment secrets accessible, artifacts published, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
@@ -310,10 +240,7 @@ main → ci/advanced
 > - Create GitHub Releases with notes
 > - Publish NuGet packages (if library)
 
-> **Version Strategies**:
-> - Mainline mode: continuous delivery
-> - GitFlow mode: release branches
-> - Tag-based: manual version bumps
+**Version Strategies**: Mainline mode (continuous delivery), GitFlow mode (release branches), Tag-based (manual version bumps)
 
 ### 4.4 NuGet Package Publishing
 
@@ -323,10 +250,7 @@ main → ci/advanced
 > - Publish to NuGet.org or private feed (Azure Artifacts, GitHub Packages)
 > - Validate package contents before publish
 
-> **ALWAYS**:
-> - Set PackageVersion, Authors, Description, License
-> - Include README.md in package
-> - Sign packages with certificate (optional but recommended)
+> **ALWAYS**: Set PackageVersion, Authors, Description, License; Include README.md in package; Sign packages (optional but recommended)
 
 ### 4.5 Notifications
 
@@ -335,90 +259,36 @@ main → ci/advanced
 > - GitHub Status Checks for PR reviews
 > - Email notifications for security alerts
 
-> **NEVER**:
-> - Expose webhook URLs in public repos
-> - Spam notifications for every commit
-
-### 4.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, integration tests, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Benchmarks run and tracked
-> - Integration tests pass in isolation
-> - Releases created automatically
-> - NuGet packages published (if applicable)
-> - Notifications received
+**Verify**: Benchmarks run and tracked, integration tests pass in isolation, releases created automatically, NuGet packages published (if applicable), notifications received
 
 ---
 
 ## Framework-Specific Notes
 
-### ASP.NET Core Web API
-- Publish: `dotnet publish -c Release`
-- Health checks: `app.MapHealthChecks("/health")`
-- Swagger/OpenAPI generation
-- Use Kestrel for production with reverse proxy (nginx/IIS)
-
-### ASP.NET Core MVC / Razor Pages
-- Publish with runtime assets (`-r linux-x64` or framework-dependent)
-- Static files bundling (CSS/JS minification)
-- Use CDN for static assets in production
-
-### Blazor (Server / WebAssembly)
-- Blazor Server: standard publish
-- Blazor WASM: `dotnet publish -c Release` (outputs to wwwroot)
-- Pre-compression (Brotli) for WASM files
-- Deploy WASM to static hosting (Azure Static Web Apps, Cloudflare Pages)
-
-### .NET MAUI
-- Build: `dotnet build -f net8.0-android` or `-ios` or `-windows`
-- Sign Android APK/AAB with keystore
-- Sign iOS with provisioning profile
-- Publish to App Store / Google Play
-
-### Worker Services / Background Jobs
-- Publish as self-contained or with runtime
-- Use systemd (Linux) or Windows Service
-- Health check port for monitoring
-- Graceful shutdown handling
+| Framework | Notes |
+|-----------|-------|
+| **ASP.NET Core Web API** | Health checks: `app.MapHealthChecks("/health")`, Swagger/OpenAPI, Use Kestrel with reverse proxy (nginx/IIS) |
+| **ASP.NET Core MVC / Razor Pages** | Static files bundling (CSS/JS minification), Use CDN for static assets in production |
+| **Blazor (Server / WebAssembly)** | Blazor Server: standard publish; Blazor WASM: outputs to wwwroot, pre-compression (Brotli), deploy to Azure Static Web Apps or Cloudflare Pages |
+| **.NET MAUI** | Sign Android APK/AAB with keystore, Sign iOS with provisioning profile, Publish to App Store / Google Play |
+| **Worker Services** | Use systemd (Linux) or Windows Service, Health check port for monitoring, Graceful shutdown handling |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: NuGet restore fails in CI
-- **Solution**: Commit packages.lock.json, use authenticated feeds with secrets
-
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check timezone, culture info, connection strings in appsettings.json
-
-### Issue: Coverage not collected
-- **Solution**: Install coverlet.collector, use `--collect:"XPlat Code Coverage"`
-
-### Issue: Deployment fails with permission error
-- **Solution**: Verify service principal roles (Azure), IAM policies (AWS)
-
-### Issue: Migrations fail with timeout
-- **Solution**: Increase command timeout, split large migrations, check firewall rules
-
-### Issue: Want to use Azure DevOps / GitLab CI / CircleCI instead
-- **Solution**: Adapt workflow syntax to target platform:
-  - **Azure DevOps**: Native .NET support with `DotNetCoreCLI@2` tasks in azure-pipelines.yml
-  - **GitLab CI**: Use `mcr.microsoft.com/dotnet/sdk` image in .gitlab-ci.yml
-  - **CircleCI**: Use `cimg/dotnet` Docker image in .circleci/config.yml
-  - Core concepts remain the same: restore, build, test, publish
+| Issue | Solution |
+|-------|----------|
+| **NuGet restore fails in CI** | Commit packages.lock.json, use authenticated feeds with secrets |
+| **Tests pass locally but fail in CI** | Check timezone, culture info, connection strings in appsettings.json |
+| **Coverage not collected** | Install coverlet.collector, use `--collect:"XPlat Code Coverage"` |
+| **Deployment fails with permission error** | Verify service principal roles (Azure), IAM policies (AWS) |
+| **Migrations fail with timeout** | Increase command timeout, split large migrations, check firewall rules |
+| **Want to use Azure DevOps / GitLab CI** | Azure DevOps: Use `DotNetCoreCLI@2` tasks in azure-pipelines.yml; GitLab CI: Use `mcr.microsoft.com/dotnet/sdk` image - core concepts remain same |
 
 ---
 
 ## AI Self-Check
-
-Before completing this process, verify:
 
 - [ ] CI pipeline runs on push and PR
 - [ ] .NET SDK version pinned (global.json)
@@ -426,27 +296,10 @@ Before completing this process, verify:
 - [ ] All tests pass with coverage ≥80%
 - [ ] Code analyzers enabled (StyleCop, Roslynator)
 - [ ] Security scanning enabled (CodeQL, Dependabot)
-- [ ] NuGet packages up to date
 - [ ] Artifacts published with correct versioning
 - [ ] Deployment to at least one environment works
 - [ ] Database migrations tested and automated
-- [ ] Environment secrets properly configured
 - [ ] Smoke tests validate deployment health
-- [ ] Rollback procedure documented
-- [ ] Performance benchmarks tracked (if applicable)
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
 
 ---
 
@@ -456,7 +309,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -473,4 +325,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

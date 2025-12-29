@@ -11,54 +11,58 @@
 > **BEFORE starting**:
 > - Working Python application
 > - Git repository with remote (GitHub)
-> - Dependency management (requirements.txt, pyproject.toml, or poetry)
-> - Tests exist (pytest, unittest)
-> - Python version defined in pyproject.toml, .python-version, or runtime.txt
+> - requirements.txt or pyproject.toml configured
+> - Tests exist (pytest)
+> - Python version defined in pyproject.toml, setup.py, or .python-version
+
+---
+
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
 
 ---
 
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `python.yml` or `ci.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Python version from project (read from `.python-version`, `pyproject.toml`, or `runtime.txt`)
+> - Python version from project (read from `.python-version`, `pyproject.toml`, or `setup.py`)
 > - Setup with actions/setup-python@v4
-> - Dependency caching (pip, poetry, pipenv)
-> - Install dependencies (`pip install -r requirements.txt` or `poetry install`)
-> - Run linter (ruff, flake8, pylint)
+> - Dependency caching (pip cache)
+> - Install dependencies (`pip install -r requirements.txt`)
+> - Run linter (Ruff, Black, flake8)
 > - Run tests with pytest
 > - Collect coverage with pytest-cov
 
 > **Version Strategy**:
-> - **Best**: Use `.python-version` file (pyenv standard) or `pyproject.toml` requires-python
-> - **Good**: Use runtime.txt (Heroku standard) or matrix with supported versions
-> - **Matrix**: Test against multiple versions (3.10, 3.11, 3.12) if library
+> - **Best**: Use `.python-version` or `pyproject.toml` python requirement
+> - **Good**: Use matrix with supported versions (3.10, 3.11, 3.12)
+> - **Avoid**: Hardcoding version without project config
 
 > **NEVER**:
-> - Use `pip install` without pinning versions
-> - Skip virtual environment in local dev
-> - Ignore linter errors
-> - Run without specifying Python version
+> - Skip virtual environment in CI
+> - Use `pip install` without pinned versions
+> - Ignore linting errors
+> - Run tests without isolation
 
 **Key Workflow Structure**:
 - Trigger: push (main/develop), pull_request
 - Jobs: lint → test → build
-- Setup: actions/setup-python@v4
-- Cache: pip cache by requirements.txt hash
+- Cache: pip cache directory
+- Virtual environment: automatic with setup-python
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
 > - Use pytest-cov or coverage.py
@@ -68,83 +72,53 @@ main → ci/basic-pipeline
 
 **Coverage Commands**:
 ```bash
-pytest --cov=src --cov-report=xml --cov-report=html --cov-fail-under=80
+pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term
 ```
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic Python build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - Builds succeed across Python versions
-> - Tests execute with results
-> - Coverage report generated
-> - Cache working (check run times)
+**Verify**: Pipeline runs, linting passes, all tests pass, coverage report generated, pip cache working
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Code Quality Analysis
 
 > **ALWAYS include**:
-> - Ruff (fast linter + formatter, replaces Flake8 + Black + isort)
+> - Ruff (fast linter/formatter) or flake8 + black
 > - mypy for type checking
+> - isort for import sorting
 > - Fail build on violations
 
-> **NEVER**:
-> - Ignore type errors globally
-> - Skip formatter configuration
-> - Allow critical issues in new code
+> **NEVER**: Suppress errors globally, skip type hints, allow unused imports
 
-**Ruff Configuration**:
-```toml
-# pyproject.toml
-[tool.ruff]
-line-length = 120
-select = ["E", "F", "I", "N", "W", "B", "UP"]
-ignore = []
-```
-
-**mypy Configuration**:
-```ini
-# mypy.ini
-[mypy]
-python_version = 3.11
-strict = True
-warn_return_any = True
-warn_unused_configs = True
-```
+**Tools**:
+- **Ruff** ⭐: All-in-one linter (replaces flake8, black, isort)
+- **mypy**: Static type checker
+- **bandit**: Security linter
 
 ### 2.2 Dependency Security Scanning
 
 > **ALWAYS include**:
 > - Dependabot configuration (`.github/dependabot.yml`)
-> - pip-audit or safety for vulnerability scanning
+> - `pip-audit` or `safety` for vulnerability scanning
 > - Fail on known vulnerabilities
 
-> **Dependabot Config**:
-> - Package ecosystem: pip
-> - Directory: "/" (or specific path)
-> - Schedule: weekly
-> - Open PR limit: 5
+**Dependabot Config**:
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
-**Vulnerability Scanning**:
+**Security Commands**:
 ```bash
-pip install pip-audit
-pip-audit --desc --fix
-# Or: safety check --json
+pip-audit
+# Or: safety check --full-report
 ```
 
 ### 2.3 Static Analysis (SAST)
@@ -153,105 +127,55 @@ pip-audit --desc --fix
 > - Add CodeQL analysis (`.github/workflows/codeql.yml`)
 > - Configure language: python
 > - Run on schedule (weekly) + push to main
-> - Review alerts in GitHub Security tab
 
-> **Optional but recommended**:
-> - Bandit for security linting
-> - SonarCloud integration
-> - Snyk for dependency scanning
+> **Optional but recommended**: SonarCloud, Snyk
 
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml pyproject.toml
-> git commit -m "ci: add code quality and security scanning"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - Ruff and mypy run during CI
-> - Violations cause build failures
-> - Dependabot creates update PRs
-> - CodeQL scan completes
-> - Vulnerabilities reported
+**Verify**: Linting passes, type checking succeeds, Dependabot creates PRs, CodeQL scan completes, security issues reported
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
 > **ALWAYS**:
 > - Define environments: development, staging, production
 > - Use GitHub Environments with protection rules
-> - Store secrets per environment (DB credentials, API keys)
+> - Store secrets per environment (API keys, DB URLs)
 > - Use python-dotenv for local .env files
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop
-> - Development: auto-deploy on feature branches
+**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy on merge to develop), Development (auto-deploy on feature branches)
 
-### 3.2 Build & Package Artifacts
+### 3.2 Build & Package
 
 > **ALWAYS**:
-> - Create requirements.txt from poetry/pipenv (if using)
-> - Package as wheel (`python -m build`)
-> - Version with setuptools-scm or poetry
+> - Build wheel: `python -m build` or `pip wheel`
+> - Create requirements.txt with pinned versions
 > - Upload artifacts with retention policy
+> - Version with setuptools-scm or bumpversion
 
-> **NEVER**:
-> - Include .env files in artifacts
-> - Ship development dependencies
-> - Package __pycache__ directories
+> **NEVER**: Include .env files in artifacts, ship dev dependencies, deploy without freezing versions
 
-**Package Commands**:
+**Build Commands**:
 ```bash
-# Poetry
-poetry build
-
-# setuptools
-python -m build
-
-# Output: dist/*.whl and dist/*.tar.gz
+python -m build  # Creates dist/*.whl and dist/*.tar.gz
+pip freeze > requirements-prod.txt
 ```
 
 ### 3.3 Deployment Jobs
 
 > **Platform-specific** (choose one or more):
 
-**AWS (Elastic Beanstalk / Lambda / ECS)**:
-- Use aws-actions/configure-aws-credentials
-- Package with Zappa (Lambda) or Chalice
-- Deploy to Elastic Beanstalk with eb deploy
-- Or containerize and deploy to ECS
-
-**Azure (App Service / Functions / Container Apps)**:
-- Use azure/webapps-deploy@v2
-- Upload via FTP or Azure CLI
-- Deploy to Azure Functions (Python runtime)
-
-**Google Cloud (App Engine / Cloud Run / Functions)**:
-- Use google-github-actions/setup-gcloud
-- Deploy to App Engine: `gcloud app deploy`
-- Cloud Run: containerize and deploy
-- Cloud Functions: `gcloud functions deploy`
-
-**Heroku**:
-- Use Procfile: `web: gunicorn app:app` or `uvicorn main:app`
-- Deploy with Heroku CLI or GitHub integration
-- Include runtime.txt for Python version
-
-**Docker Registry**:
-- Build Dockerfile (multi-stage: deps → app)
-- Push to Docker Hub, GHCR, ECR, GCR
-- Tag with git SHA + semver
+| Platform | Tool/Method | Notes |
+|----------|-------------|-------|
+| **AWS Lambda** | aws-actions/configure-aws-credentials | Package with zappa or AWS SAM |
+| **Azure Functions** | azure/functions-action | Deploy Python function apps |
+| **Google Cloud Run** | google-github-actions/deploy-cloudrun | Containerize Flask/FastAPI |
+| **Heroku** | Heroku CLI | Procfile: `web: gunicorn app:app` |
+| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile |
+| **PythonAnywhere / VPS** | SSH deploy | rsync + systemd restart |
 
 ### 3.4 Database Migrations
 
@@ -261,67 +185,39 @@ python -m build
 > - Test migrations in staging first
 > - Version control all migration files
 
-> **NEVER**:
-> - Run migrations on app start in production
-> - Skip migration testing
-> - Deploy app before migrations complete
+> **NEVER**: Run migrations on app start in production, skip migration testing, deploy app before migrations complete
 
-**Alembic Commands**:
+**Migration Commands**:
 ```bash
+# Alembic
 alembic upgrade head
-# Rollback: alembic downgrade -1
-```
 
-**Django Commands**:
-```bash
-python manage.py migrate
+# Django
+python manage.py migrate --no-input
 ```
 
 ### 3.5 Smoke Tests Post-Deploy
 
 > **ALWAYS include**:
-> - Health check endpoint test (`/health` or `/healthz`)
+> - Health check endpoint test (`/health`, `/api/health`)
 > - Database connectivity check
-> - Redis/Celery connectivity check
+> - Redis/Celery connectivity (if applicable)
 > - External API integration check
 
-> **NEVER**:
-> - Run full E2E tests in deployment job
-> - Block rollback on smoke test failures
-
-### 3.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml
-> git commit -m "ci: add deployment pipeline with database migrations"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Environment secrets accessible
-> - Artifacts packaged correctly
-> - Deployment succeeds to staging
-> - Migrations applied
-> - Smoke tests pass
-> - Rollback procedure tested
+**Verify**: Manual trigger works, environment secrets accessible, wheel built successfully, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
 > **ALWAYS**:
-> - pytest-benchmark for micro-benchmarks
-> - Locust or k6 for load testing
-> - Track response times and memory usage
+> - Load testing with Locust, k6, or Apache Bench
+> - Memory profiling with memory_profiler
+> - Track response times
 > - Fail if performance degrades >10%
 
 ### 4.2 Integration Testing
@@ -329,141 +225,74 @@ main → ci/advanced
 > **ALWAYS**:
 > - Separate workflow (`integration-tests.yml`)
 > - Use pytest-docker or testcontainers-python
+> - Django: use test database
 > - Run on schedule (nightly) + release tags
-> - Separate test database
 
-> **NEVER**:
-> - Use real production databases
-> - Skip cleanup after tests
-> - Run on every PR (too slow)
+> **NEVER**: Use real production databases, skip cleanup after tests, run on every PR (too slow)
 
 ### 4.3 Release Automation
 
 > **Semantic Versioning**:
-> - Use python-semantic-release
+> - Use python-semantic-release or bump2version
 > - Generate CHANGELOG from conventional commits
 > - Create GitHub Releases with notes
 > - Publish to PyPI (if library)
 
-### 4.4 PyPI Package Publishing
+### 4.4 PyPI Publishing
 
-> **If creating libraries**:
-> - Build with poetry or setuptools
-> - Publish to PyPI with twine or poetry publish
-> - Include README.md, LICENSE
-> - Configure PyPI trusted publishing (OIDC)
+> **If creating packages**:
+> - Build with `python -m build`
+> - Publish with twine: `twine upload dist/*`
+> - Use trusted publishing (no token needed)
+> - Validate package with `twine check dist/*`
 
-> **ALWAYS**:
-> - Set version, author, description in pyproject.toml
-> - Include classifiers (Python version, license)
-> - Test on TestPyPI first
+> **ALWAYS**: Set name, version, description in setup.py/pyproject.toml; Include LICENSE, README.md; Use semantic versioning
 
 ### 4.5 Notifications
 
-> **ALWAYS**:
-> - Slack/Teams webhook on deploy success/failure
-> - GitHub Status Checks for PR reviews
-> - Email notifications for security alerts
+> **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
 
-> **NEVER**:
-> - Expose webhook URLs in public repos
-> - Spam notifications for every commit
-
-### 4.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, integration tests, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Benchmarks run and tracked
-> - Integration tests pass in isolation
-> - Releases created automatically
-> - PyPI package published (if applicable)
-> - Notifications received
+**Verify**: Load tests run and tracked, integration tests pass in isolation, releases created automatically, PyPI publish works (if applicable), notifications received
 
 ---
 
 ## Framework-Specific Notes
 
-### Django
-- Collect static: `python manage.py collectstatic --noinput`
-- Migrations: `python manage.py migrate`
-- WSGI: gunicorn with Procfile
-- Health check: django-health-check app
-
-### FastAPI
-- ASGI server: uvicorn or hypercorn
-- Startup: `uvicorn main:app --host 0.0.0.0 --port 8000`
-- Health: custom `/health` endpoint
-- OpenAPI auto-generated
-
-### Flask
-- WSGI server: gunicorn or waitress
-- Startup: `gunicorn app:app -w 4`
-- Health: custom `/health` route
-- Production: never use `flask run`
-
-### Celery (Background Jobs)
-- Start worker: `celery -A app worker -l info`
-- Beat scheduler: `celery -A app beat -l info`
-- Monitor with Flower: `celery -A app flower`
+| Framework | Notes |
+|-----------|-------|
+| **FastAPI** | Health: built-in `/docs`; Deploy: Uvicorn with Gunicorn; Docker: tiangolo/uvicorn-gunicorn image |
+| **Django** | Static files: `python manage.py collectstatic`; WSGI: Gunicorn or uWSGI; Migrations: `python manage.py migrate` |
+| **Flask** | WSGI server: Gunicorn or Waitress; Blueprints for modular structure; Use Flask-Migrate for DB |
+| **Celery** | Background tasks: Deploy workers separately; Use Redis/RabbitMQ; Monitor with Flower |
+| **Data Science** | Jupyter notebooks: Convert to scripts with nbconvert; Deploy models: FastAPI + MLflow |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: Dependencies fail to install in CI
-- **Solution**: Pin versions in requirements.txt, use pip-tools for compilation
-
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check timezone, file paths, environment variables
-
-### Issue: Coverage not collected
-- **Solution**: Install pytest-cov, use `--cov` flag, check .coveragerc
-
-### Issue: Deployment fails with "module not found"
-- **Solution**: Verify PYTHONPATH, check installed packages, use absolute imports
-
-### Issue: Database migrations timeout
-- **Solution**: Increase timeout, optimize migration SQL, check firewall
+| Issue | Solution |
+|-------|----------|
+| **Dependencies not installing in CI** | Use `pip install --upgrade pip`, commit requirements.txt with pinned versions |
+| **Tests pass locally but fail in CI** | Check Python version match, timezone, locale, file paths |
+| **Coverage not collected** | Install pytest-cov, use `--cov` flag, check coverage config in pytest.ini |
+| **Import errors in CI** | Ensure PYTHONPATH set correctly, install package in editable mode: `pip install -e .` |
+| **Deployment fails with module not found** | Include all dependencies in requirements.txt, check virtual environment activation |
+| **Want to use GitLab CI / Azure Pipelines** | GitLab CI: Use `python:3.11` image; Azure: Use `UsePythonVersion@0` task - core concepts remain same |
 
 ---
 
 ## AI Self-Check
 
-Before completing this process, verify:
-
 - [ ] CI pipeline runs on push and PR
-- [ ] Python version pinned (in workflow + runtime.txt)
-- [ ] Dependencies pinned in requirements.txt
+- [ ] Python version pinned or matrix tested
+- [ ] Linting passes (Ruff/flake8/black)
+- [ ] Type checking succeeds (mypy)
 - [ ] All tests pass with coverage ≥80%
-- [ ] Linting enforced (Ruff, mypy)
-- [ ] Security scanning enabled (CodeQL, Dependabot, pip-audit)
-- [ ] Dependencies up to date
-- [ ] Artifacts packaged with correct versioning
+- [ ] Security scanning enabled (pip-audit, Dependabot, CodeQL)
+- [ ] Wheel/package built successfully
 - [ ] Deployment to at least one environment works
 - [ ] Database migrations tested and automated
-- [ ] Environment secrets properly configured
 - [ ] Smoke tests validate deployment health
-- [ ] Rollback procedure documented
-- [ ] Performance benchmarks tracked (if applicable)
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
 
 ---
 
@@ -473,7 +302,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -490,4 +318,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

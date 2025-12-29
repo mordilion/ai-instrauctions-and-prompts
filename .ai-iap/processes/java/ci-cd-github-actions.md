@@ -17,20 +17,24 @@
 
 ---
 
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
+
+---
+
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `maven.yml` or `gradle.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
 > - Java version from project (read from pom.xml `<java.version>` or build.gradle `sourceCompatibility`)
@@ -51,19 +55,11 @@ main → ci/basic-pipeline
 > - Ignore compiler warnings
 > - Commit wrapper binaries (mvnw, gradlew) without verification
 
-**Maven Workflow**:
-- Restore: automatic with actions/setup-java cache
-- Build: `mvn clean install -B`
-- Test: included in install phase
-- Verify: `mvn verify -B`
+**Maven Workflow**: Restore (automatic with actions/setup-java cache), Build (`mvn clean install -B`), Verify (`mvn verify -B`)
 
-**Gradle Workflow**:
-- Restore: `gradle dependencies`
-- Build: `gradle build`
-- Test: `gradle test`
-- Validate: `gradle check`
+**Gradle Workflow**: Restore (`gradle dependencies`), Build (`gradle build`), Test (`gradle test`), Validate (`gradle check`)
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
 > - Use JaCoCo plugin
@@ -71,35 +67,15 @@ main → ci/basic-pipeline
 > - Upload to Codecov/Coveralls
 > - Set minimum coverage threshold (80%+)
 
-**JaCoCo Configuration**:
-- Maven: jacoco-maven-plugin
-- Gradle: jacoco plugin
-- Reports: XML for CI, HTML for review
+**JaCoCo Configuration**: Maven (jacoco-maven-plugin), Gradle (jacoco plugin), Reports (XML for CI, HTML for review)
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic Java build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - Builds succeed across Java versions
-> - Tests execute with results
-> - Coverage report generated
-> - Cache working (check run times)
+**Verify**: Pipeline runs, builds succeed across Java versions, tests execute with results, coverage report generated, cache working
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Code Quality Analysis
 
@@ -109,20 +85,11 @@ main → ci/quality-security
 > - SpotBugs for bug detection
 > - Fail build on violations
 
-> **NEVER**:
-> - Suppress warnings globally
-> - Skip linter configuration
-> - Allow critical bugs in new code
+> **NEVER**: Suppress warnings globally, skip linter configuration, allow critical bugs in new code
 
-**Maven Plugins**:
-- maven-checkstyle-plugin
-- maven-pmd-plugin
-- spotbugs-maven-plugin
+**Maven Plugins**: maven-checkstyle-plugin, maven-pmd-plugin, spotbugs-maven-plugin
 
-**Gradle Plugins**:
-- checkstyle
-- pmd
-- com.github.spotbugs
+**Gradle Plugins**: checkstyle, pmd, com.github.spotbugs
 
 ### 2.2 Dependency Security Scanning
 
@@ -131,15 +98,17 @@ main → ci/quality-security
 > - OWASP Dependency-Check
 > - Fail on known vulnerabilities (CVSS ≥7)
 
-> **Dependabot Config**:
-> - Package ecosystem: maven or gradle
-> - Schedule: weekly
-> - Open PR limit: 5
+**Dependabot Config**:
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "maven" # or "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
-**Dependency Check**:
-- Maven: `dependency-check-maven`
-- Gradle: `org.owasp.dependencycheck`
-- Generate reports, fail on high severity
+**Dependency Check**: Maven (`dependency-check-maven`), Gradle (`org.owasp.dependencycheck`), Generate reports, fail on high severity
 
 ### 2.3 Static Analysis (SAST)
 
@@ -147,36 +116,16 @@ main → ci/quality-security
 > - Add CodeQL analysis (`.github/workflows/codeql.yml`)
 > - Configure language: java
 > - Run on schedule (weekly) + push to main
-> - Review alerts in GitHub Security tab
 
-> **Optional but recommended**:
-> - SonarCloud/SonarQube integration
-> - Snyk for vulnerability scanning
+> **Optional but recommended**: SonarCloud/SonarQube, Snyk
 
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml pom.xml
-> git commit -m "ci: add code quality and security scanning"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - Checkstyle, PMD, SpotBugs run
-> - Violations cause build failures
-> - Dependabot creates update PRs
-> - CodeQL scan completes
-> - Vulnerabilities reported
+**Verify**: Checkstyle/PMD/SpotBugs run, violations cause build failures, Dependabot creates update PRs, CodeQL scan completes, vulnerabilities reported
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
@@ -186,10 +135,7 @@ main → ci/deployment
 > - Store secrets per environment (DB credentials, API keys)
 > - Use Spring Profiles or application.properties per environment
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop
-> - Dev: auto-deploy on feature branches
+**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy on merge to develop), Dev (auto-deploy on feature branches)
 
 ### 3.2 Build & Package Artifacts
 
@@ -199,51 +145,23 @@ main → ci/deployment
 > - Upload artifacts with retention policy
 > - Create executable JAR (Spring Boot, fat JAR)
 
-> **NEVER**:
-> - Include application-local.properties in artifacts
-> - Package without optimization
-> - Ship test dependencies
+> **NEVER**: Include application-local.properties in artifacts, package without optimization, ship test dependencies
 
-**Maven Package**:
-```bash
-mvn clean package -DskipTests -B
-# Output: target/*.jar or target/*.war
-```
+**Maven Package**: `mvn clean package -DskipTests -B` → Output: target/*.jar or target/*.war
 
-**Gradle Package**:
-```bash
-gradle bootJar --no-daemon
-# Output: build/libs/*.jar
-```
+**Gradle Package**: `gradle bootJar --no-daemon` → Output: build/libs/*.jar
 
 ### 3.3 Deployment Jobs
 
 > **Platform-specific** (choose one or more):
 
-**AWS (Elastic Beanstalk / ECS / Lambda)**:
-- Use aws-actions/configure-aws-credentials
-- Upload JAR to S3
-- Deploy to Elastic Beanstalk or ECS
-- Lambda: package with AWS Lambda Java runtime
-
-**Azure (App Service / Container Apps)**:
-- Use azure/webapps-deploy@v2
-- Upload JAR via FTP or Azure CLI
-- Deploy to Azure Spring Apps (optimized for Spring Boot)
-
-**Google Cloud (App Engine / Cloud Run)**:
-- Use google-github-actions/setup-gcloud
-- Deploy JAR to App Engine standard/flexible
-- Cloud Run: containerize JAR and deploy
-
-**Docker Registry**:
-- Build Dockerfile (multi-stage: Maven/Gradle build → JRE runtime)
-- Push to Docker Hub, GHCR, ECR, GCR
-- Tag with git SHA + semver
-
-**Heroku**:
-- Use Procfile: `web: java -jar target/*.jar`
-- Deploy with Heroku CLI or GitHub integration
+| Platform | Tool/Method | Notes |
+|----------|-------------|-------|
+| **AWS** | aws-actions/configure-aws-credentials | Upload JAR to S3, deploy to Elastic Beanstalk/ECS/Lambda |
+| **Azure** | azure/webapps-deploy@v2 | Upload JAR via FTP or Azure CLI, Azure Spring Apps |
+| **Google Cloud** | google-github-actions/setup-gcloud | Deploy to App Engine/Cloud Run |
+| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile (Maven/Gradle build → JRE runtime) |
+| **Heroku** | Heroku CLI/GitHub integration | Procfile: `web: java -jar target/*.jar` |
 
 ### 3.4 Database Migrations
 
@@ -253,10 +171,7 @@ gradle bootJar --no-daemon
 > - Test migrations in staging first
 > - Version control all migration scripts
 
-> **NEVER**:
-> - Run migrations on app start in production (security risk)
-> - Skip migration testing
-> - Deploy app before migrations complete
+> **NEVER**: Run migrations on app start in production (security risk), skip migration testing, deploy app before migrations complete
 
 **Flyway/Liquibase Commands**:
 ```bash
@@ -275,36 +190,13 @@ mvn liquibase:update -Dliquibase.url=$DB_URL
 > - Cache/Redis connectivity
 > - External API integration check
 
-> **NEVER**:
-> - Run full E2E tests in deployment job
-> - Block rollback on smoke test failures
-
-### 3.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml
-> git commit -m "ci: add deployment pipeline with database migrations"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Environment secrets accessible
-> - JAR packaged correctly
-> - Deployment succeeds to staging
-> - Migrations applied
-> - Smoke tests pass
-> - Rollback procedure tested
+**Verify**: Manual trigger works, environment secrets accessible, JAR packaged correctly, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
@@ -322,10 +214,7 @@ main → ci/advanced
 > - Spring Boot: @SpringBootTest with test profiles
 > - Run on schedule (nightly) + release tags
 
-> **NEVER**:
-> - Use real production databases
-> - Skip cleanup after tests
-> - Run on every PR (too slow)
+> **NEVER**: Use real production databases, skip cleanup after tests, run on every PR (too slow)
 
 ### 4.3 Release Automation
 
@@ -344,102 +233,42 @@ main → ci/advanced
 > - Include sources and javadoc JARs
 > - Validate POM metadata
 
-> **ALWAYS**:
-> - Set groupId, artifactId, version
-> - Include license, developers, SCM
-> - Sign artifacts with GPG key
+> **ALWAYS**: Set groupId, artifactId, version; Include license, developers, SCM; Sign artifacts with GPG key
 
 ### 4.5 Notifications
 
-> **ALWAYS**:
-> - Slack/Teams webhook on deploy success/failure
-> - GitHub Status Checks for PR reviews
-> - Email notifications for security alerts
+> **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
 
-> **NEVER**:
-> - Expose webhook URLs in public repos
-> - Spam notifications for every commit
-
-### 4.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, integration tests, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Benchmarks run and tracked
-> - Integration tests pass in isolation
-> - Releases created automatically
-> - Maven Central publish works (if applicable)
-> - Notifications received
+**Verify**: Benchmarks run and tracked, integration tests pass in isolation, releases created automatically, Maven Central publish works (if applicable), notifications received
 
 ---
 
 ## Framework-Specific Notes
 
-### Spring Boot
-- Package: `mvn spring-boot:build-image` for OCI image
-- Health: `/actuator/health`
-- Metrics: `/actuator/metrics` (Prometheus, Micrometer)
-- Profile: `-Dspring.profiles.active=production`
-
-### Quarkus
-- Native build: `mvn package -Pnative` (GraalVM)
-- JVM build: `mvn package` (uber-jar)
-- Dev mode: not for production
-- Extremely fast startup (ideal for serverless)
-
-### Micronaut
-- Build: `gradle shadowJar` (fat JAR)
-- Native: GraalVM native-image
-- Health: `/health`
-- Lightweight and cloud-native
-
-### Jakarta EE / Java EE
-- Package as WAR for application servers (WildFly, Payara)
-- Deploy to server using CLI or web console
-- Use MicroProfile for cloud-native features
-
-### Android
-- Build APK: `gradle assembleRelease`
-- Build AAB: `gradle bundleRelease`
-- Sign with keystore
-- Upload to Google Play Console
+| Framework | Notes |
+|-----------|-------|
+| **Spring Boot** | Package: `mvn spring-boot:build-image` for OCI image; Health: `/actuator/health`; Metrics: `/actuator/metrics` (Prometheus, Micrometer); Profile: `-Dspring.profiles.active=production` |
+| **Quarkus** | Native build: `mvn package -Pnative` (GraalVM); JVM build: `mvn package` (uber-jar); Extremely fast startup (ideal for serverless) |
+| **Micronaut** | Build: `gradle shadowJar` (fat JAR); Native: GraalVM native-image; Health: `/health`; Lightweight and cloud-native |
+| **Jakarta EE / Java EE** | Package as WAR for application servers (WildFly, Payara); Deploy using CLI or web console; Use MicroProfile for cloud-native features |
+| **Android** | Build APK: `gradle assembleRelease`; Build AAB: `gradle bundleRelease`; Sign with keystore; Upload to Google Play Console |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: Maven dependencies not resolving in CI
-- **Solution**: Check settings.xml for auth, commit .mvn/wrapper files
-
-### Issue: Gradle build fails with "daemon not found"
-- **Solution**: Use `--no-daemon` flag in CI
-
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check timezone, locale, file paths (absolute vs relative)
-
-### Issue: Deployment fails with "port already in use"
-- **Solution**: Gracefully stop old process before starting new one
-
-### Issue: Coverage reports not generated
-- **Solution**: Ensure JaCoCo plugin configured, run `verify` phase (Maven)
-
-### Issue: Want to use Jenkins / GitLab CI / Azure DevOps instead
-- **Solution**: Adapt workflow syntax to target platform:
-  - **Jenkins**: Use Jenkinsfile with Maven/Gradle plugins, `withMaven {}` or `withGradle {}`
-  - **GitLab CI**: Use `maven:3.9-eclipse-temurin-21` or `gradle:jdk21` image
-  - **Azure DevOps**: Use `Maven@3` or `Gradle@2` tasks in azure-pipelines.yml
-  - Core concepts remain the same: build, test, package, deploy
+| Issue | Solution |
+|-------|----------|
+| **Maven dependencies not resolving in CI** | Check settings.xml for auth, commit .mvn/wrapper files |
+| **Gradle build fails with "daemon not found"** | Use `--no-daemon` flag in CI |
+| **Tests pass locally but fail in CI** | Check timezone, locale, file paths (absolute vs relative) |
+| **Deployment fails with "port already in use"** | Gracefully stop old process before starting new one |
+| **Coverage reports not generated** | Ensure JaCoCo plugin configured, run `verify` phase (Maven) |
+| **Want to use Jenkins / GitLab CI / Azure DevOps** | Jenkins: Use Jenkinsfile with Maven/Gradle plugins; GitLab CI: Use `maven:3.9-eclipse-temurin-21` or `gradle:jdk21` image; Azure DevOps: Use `Maven@3` or `Gradle@2` tasks - core concepts remain same |
 
 ---
 
 ## AI Self-Check
-
-Before completing this process, verify:
 
 - [ ] CI pipeline runs on push and PR
 - [ ] Java version pinned (in workflow)
@@ -447,27 +276,10 @@ Before completing this process, verify:
 - [ ] All tests pass with coverage ≥80%
 - [ ] Code quality tools enabled (Checkstyle, PMD, SpotBugs)
 - [ ] Security scanning enabled (CodeQL, Dependabot, OWASP)
-- [ ] Dependencies up to date
 - [ ] Artifacts packaged with correct versioning
 - [ ] Deployment to at least one environment works
 - [ ] Database migrations tested and automated
-- [ ] Environment secrets properly configured
 - [ ] Smoke tests validate deployment health
-- [ ] Rollback procedure documented
-- [ ] Performance benchmarks tracked (if applicable)
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
 
 ---
 
@@ -477,7 +289,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -494,4 +305,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

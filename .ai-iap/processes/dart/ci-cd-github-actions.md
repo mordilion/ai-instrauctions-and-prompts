@@ -2,7 +2,7 @@
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Dart/Flutter applications
 
-> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Codemagic, Bitrise, or CircleCI, adapt the workflow syntax accordingly.
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Bitrise, Codemagic, or CircleCI, adapt the workflow syntax accordingly.
 
 ---
 
@@ -12,435 +12,316 @@
 > - Working Dart/Flutter application
 > - Git repository with remote (GitHub)
 > - pubspec.yaml configured
-> - Tests exist (flutter_test, mocktail)
+> - Tests exist (flutter test, dart test)
 > - Flutter/Dart version defined in pubspec.yaml or .fvmrc
+
+---
+
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
 
 ---
 
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `flutter.yml` or `dart.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Flutter version from project (read from `.fvmrc`, pubspec.yaml `environment.sdk`, or pin to stable)
+> - Flutter/Dart version from project (read from `.fvmrc`, `pubspec.yaml`, or use stable channel)
 > - Setup with subosito/flutter-action@v2
-> - Dependency caching (~/.pub-cache)
-> - Install dependencies (`flutter pub get`)
-> - Run analyzer (`flutter analyze`)
-> - Run tests (`flutter test`)
-> - Collect coverage with lcov
+> - Dependency caching (pub cache)
+> - Get dependencies: `flutter pub get`
+> - Run linter/analyzer: `flutter analyze` or `dart analyze`
+> - Run tests: `flutter test` or `dart test`
+> - Collect coverage: `flutter test --coverage`
 
 > **Version Strategy**:
-> - **Best**: Use FVM (Flutter Version Management) with `.fvmrc` file
-> - **Good**: Specify in pubspec.yaml `environment: sdk: ">=3.0.0 <4.0.0"`
-> - **Channel**: Use `stable` for production, `beta` for early features
+> - **Best**: Use `.fvmrc` to pin Flutter version (if using FVM)
+> - **Good**: Specify in workflow with `flutter-version` parameter
+> - **Matrix**: Test against multiple versions (stable, beta) if package
 
 > **NEVER**:
-> - Skip `flutter pub get` before tests
-> - Use outdated Flutter SDK
+> - Skip dependency installation
 > - Ignore analyzer warnings
-> - Run without specifying Flutter channel
+> - Run tests without proper device/emulator setup (for integration tests)
+> - Hardcode Flutter version without project config
 
 **Key Workflow Structure**:
 - Trigger: push (main/develop), pull_request
 - Jobs: analyze → test → build
-- Setup: subosito/flutter-action@v2
-- Cache: pub cache by pubspec.lock
+- Cache: Flutter SDK and pub cache
+- Platform-specific jobs: Android, iOS, Web, Desktop
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
-> - Use `flutter test --coverage`
-> - Generate lcov.info report
-> - Upload to Codecov/Coveralls
+> - Generate coverage with `flutter test --coverage`
+> - Upload coverage/lcov.info to Codecov/Coveralls
 > - Set minimum coverage threshold (80%+)
 
 **Coverage Commands**:
 ```bash
 flutter test --coverage
-# Convert to HTML: genhtml coverage/lcov.info -o coverage/html
+# Generate HTML report: genhtml coverage/lcov.info -o coverage/html
 ```
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic Flutter build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - Builds succeed on Ubuntu runner
-> - Tests execute with results
-> - Coverage report generated
-> - Pub cache working
+**Verify**: Pipeline runs, analyzer passes, all tests pass, coverage report generated, dependencies cached
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Code Quality Analysis
 
 > **ALWAYS include**:
-> - Dart analyzer with strict analysis_options.yaml
-> - dart format for formatting checks
-> - Fail build on analyzer errors
+> - flutter analyze (built-in)
+> - dart format --output=none --set-exit-if-changed (formatting check)
+> - Custom lint rules (analysis_options.yaml)
+> - Fail build on analysis issues
 
-> **NEVER**:
-> - Ignore analyzer errors globally
-> - Skip formatter configuration
-> - Allow warnings in new code
+> **NEVER**: Suppress all lints, ignore type safety, allow unused imports
 
-**analysis_options.yaml**:
+**Analysis Options** (`analysis_options.yaml`):
 ```yaml
 include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
-    - always_declare_return_types
-    - avoid_print
     - prefer_const_constructors
-    - use_key_in_widget_constructors
-
-analyzer:
-  errors:
-    invalid_annotation_target: ignore
+    - prefer_final_fields
+    - avoid_print
+    - unnecessary_null_checks
 ```
 
 ### 2.2 Dependency Security Scanning
 
 > **ALWAYS include**:
 > - Dependabot configuration (`.github/dependabot.yml`)
-> - `flutter pub outdated` to check updates
-> - Fail on known vulnerabilities (if tool available)
+> - Check for outdated dependencies: `flutter pub outdated`
+> - Audit for security issues
 
-> **Dependabot Config**:
-> - Package ecosystem: pub
-> - Schedule: weekly
-> - Open PR limit: 5
+**Dependabot Config**:
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
-### 2.3 Static Analysis (SAST)
+### 2.3 Static Analysis
 
 > **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: dart (or javascript if web)
-> - Run on schedule (weekly) + push to main
-> - Review alerts in GitHub Security tab
+> - Run dart analyze with strict mode
+> - Check for deprecated API usage
+> - Verify no TODOs/FIXMEs in main branch
 
-> **Optional but recommended**:
-> - SonarCloud integration
-> - DCM (Dart Code Metrics) for advanced analysis
-
-### 2.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml analysis_options.yaml
-> git commit -m "ci: add code quality and security scanning"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - Analyzer runs during CI
-> - Violations cause build failures
-> - Dependabot creates update PRs
-> - CodeQL scan completes
-> - Vulnerabilities reported
+**Verify**: flutter analyze passes with no issues, formatting correct, Dependabot creates PRs
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
 > **ALWAYS**:
 > - Define environments: development, staging, production
 > - Use GitHub Environments with protection rules
-> - Store secrets per environment (API keys, signing keys)
-> - Use dart-define for build-time constants
+> - Store secrets: Android keystore, iOS certificates, API keys
+> - Use flavor-specific configurations (--flavor prod)
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop
-> - Development: auto-deploy on feature branches
+**Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy to internal testing), Development (ad-hoc builds)
 
-### 3.2 Build Artifacts
+### 3.2 Build Android
 
 > **ALWAYS**:
-> - Build release artifacts (APK, AAB, IPA, web)
-> - Version with pubspec.yaml (version: 1.0.0+1)
-> - Upload artifacts with retention policy
-> - Sign Android/iOS apps with keystore/certificates
+> - Build APK or AAB: `flutter build apk --release` or `flutter build appbundle`
+> - Sign with keystore (store keystore as secret)
+> - Version with build number (pubspec.yaml version)
+> - Upload to Google Play Console or Firebase App Distribution
 
-> **NEVER**:
-> - Include .env files in builds
-> - Ship debug builds to production
-> - Skip obfuscation for release builds
+> **NEVER**: Commit keystore to repository, ship debug builds to production, skip ProGuard/R8 optimization
 
-**Build Commands**:
-
-**Android**:
+**Android Build Commands**:
 ```bash
-flutter build apk --release
-flutter build appbundle --release
-# With obfuscation: --obfuscate --split-debug-info=build/app/outputs/symbols
+flutter build appbundle --release --flavor production
+# Or APK: flutter build apk --release --split-per-abi
 ```
 
-**iOS**:
+**Keystore Setup**:
 ```bash
-flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+# Decode keystore from secret
+echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+
+# Configure signing in android/key.properties
 ```
 
-**Web**:
-```bash
-flutter build web --release
-```
+### 3.3 Build iOS
 
-### 3.3 Code Signing
-
-**Android**:
 > **ALWAYS**:
-> - Store keystore.jks in GitHub Secrets (base64)
-> - Store key.properties values as secrets
-> - Configure signing in android/app/build.gradle
+> - Build IPA: `flutter build ipa --release`
+> - Sign with certificates and provisioning profiles
+> - Upload to App Store Connect or TestFlight
+> - Use fastlane for automation
 
-**iOS**:
+> **NEVER**: Include development certificates in production, ship without bitcode (if required), forget to increment build number
+
+**iOS Build Commands**:
+```bash
+flutter build ipa --release --flavor production --export-options-plist=ios/ExportOptions.plist
+```
+
+**Code Signing Setup** (similar to Swift CI/CD):
+```bash
+# Import certificates to keychain
+security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}"
+```
+
+### 3.4 Build Web
+
 > **ALWAYS**:
-> - Store certificates in GitHub Secrets (base64)
-> - Store provisioning profiles in GitHub Secrets
-> - Use Fastlane Match or manual cert management
+> - Build web: `flutter build web --release`
+> - Deploy to Firebase Hosting, Netlify, or GitHub Pages
+> - Configure base href for proper routing
 
-### 3.4 Deployment Jobs
+**Web Build Commands**:
+```bash
+flutter build web --release --base-href /
+```
+
+### 3.5 Deployment Jobs
 
 > **Platform-specific** (choose one or more):
 
-**Google Play Store (Android)**:
-- Use r0adkll/upload-google-play@v1
-- Upload AAB to internal/beta/production track
-- Configure Service Account JSON as secret
-- Automated rollout percentage (optional)
+| Platform | Tool/Method | Notes |
+|----------|-------------|-------|
+| **Google Play Store** | fastlane or upload via API | Upload AAB to internal/beta/production track |
+| **App Store Connect** | fastlane or altool | Upload IPA to TestFlight or App Store |
+| **Firebase App Distribution** | firebase-tools CLI | Internal testing for Android/iOS |
+| **Web (Firebase Hosting)** | firebase-tools CLI | Deploy web build |
+| **GitHub Pages** | peaceiris/actions-gh-pages | Deploy web build to gh-pages branch |
 
-**App Store (iOS)**:
-- Use Fastlane deliver or pilot (TestFlight)
-- Upload IPA with xcrun altool or Transporter
-- Configure App Store Connect API key
+**Fastlane Example** (Android):
+```ruby
+lane :beta do
+  gradle(task: "bundle", build_type: "Release")
+  upload_to_play_store(track: "beta")
+end
+```
 
-**Firebase App Distribution**:
-- Use wzieba/Firebase-Distribution-Github-Action
-- Distribute to testers
-- Upload APK/IPA with release notes
-
-**Web Hosting**:
-- Firebase Hosting: `firebase deploy --only hosting`
-- Netlify/Vercel: deploy build/web/
-- AWS S3 + CloudFront
-- GitHub Pages: upload build/web/ to gh-pages branch
-
-### 3.5 Smoke Tests Post-Deploy
+### 3.6 Smoke Tests Post-Deploy
 
 > **ALWAYS include** (for web/backend):
 > - Health check endpoint test
-> - Critical API endpoint validation
+> - API connectivity check
 
-> **Mobile**:
-> - Automated UI tests with integration_test (optional)
-> - Manual QA checklist for store submissions
+> **Mobile**: Use Firebase Test Lab or App Center for automated UI tests
 
-> **NEVER**:
-> - Run full integration tests in deployment job
-> - Block upload on test failures
-
-### 3.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml fastlane/
-> git commit -m "ci: add deployment pipeline with app signing"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Secrets accessible (keystores, certificates)
-> - Build succeeds (APK/AAB/IPA)
-> - Upload to Play Store/TestFlight works
-> - Web deployment succeeds
-> - Rollback procedure documented
+**Verify**: Android build succeeds, iOS build succeeds, web build succeeds, uploads to stores work, smoke tests pass
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
-### 4.1 Performance Testing
+### 4.1 Integration Testing
 
 > **ALWAYS**:
-> - flutter_driver for performance tests
-> - Track frame rendering times
-> - Memory usage profiling
+> - Separate workflow for integration tests (`integration_test/`)
+> - Run on emulators/simulators (Android emulator, iOS simulator)
+> - Use `flutter drive` or `integration_test` package
+> - Record test results and screenshots
+
+> **NEVER**: Run integration tests on every PR (too slow), skip device-specific tests
+
+### 4.2 Performance Testing
+
+> **ALWAYS**:
+> - Flutter driver performance tests
+> - Track app startup time, frame rendering
+> - Monitor memory usage
 > - Fail if performance degrades >10%
-
-### 4.2 Integration Testing
-
-> **ALWAYS**:
-> - Separate workflow (`integration-tests.yml`)
-> - Use integration_test package
-> - Run on emulator/simulator (macos runner for iOS)
-> - Record videos/screenshots on failure
-
-> **NEVER**:
-> - Run integration tests on every PR (too slow)
-> - Skip device farm testing before release
 
 ### 4.3 Release Automation
 
 > **Semantic Versioning**:
-> - Update pubspec.yaml version field (1.0.0+buildNumber)
-> - Generate CHANGELOG from conventional commits
-> - Create GitHub Releases with notes
-> - Attach APK/AAB/IPA to release
+> - Update pubspec.yaml version automatically
+> - Generate release notes from commits
+> - Create GitHub Releases
+> - Publish to pub.dev (if package)
 
-### 4.4 Package Publishing (Pub.dev)
+### 4.4 pub.dev Publishing
 
-> **If creating Dart/Flutter package**:
-> - Publish to pub.dev with `flutter pub publish`
-> - Use pana for package analysis score
-> - Include README.md, CHANGELOG.md, LICENSE
-> - Follow pub.dev best practices
+> **If creating package**:
+> - Validate with `flutter pub publish --dry-run`
+> - Publish with `flutter pub publish`
+> - Use pub-dev-publish GitHub Action
+> - Follow pub.dev package guidelines
 
-> **ALWAYS**:
-> - Set name, description, version in pubspec.yaml
-> - Include example/ directory
-> - Document public API
+> **ALWAYS**: Set name, description, version in pubspec.yaml; Include README.md, CHANGELOG.md, LICENSE; Follow semantic versioning; Add example/
 
 ### 4.5 Notifications
 
-> **ALWAYS**:
-> - Slack/Teams webhook on deploy success/failure
-> - GitHub Status Checks for PR reviews
-> - Email notifications for store review status
+> **ALWAYS**: Slack webhook on build success/failure, Email for store uploads
 
-> **NEVER**:
-> - Expose webhook URLs in public repos
-> - Spam notifications for every commit
-
-### 4.6 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, integration tests, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Performance tests run and tracked
-> - Integration tests pass on emulators
-> - Releases created automatically
-> - Pub.dev package published (if applicable)
-> - Notifications received
+**Verify**: Integration tests run on schedule, performance tracked, releases automated, pub.dev publish works (if applicable), notifications received
 
 ---
 
 ## Platform-Specific Notes
 
-### Flutter (Mobile)
-- Build Android: flutter build apk/appbundle
-- Build iOS: flutter build ipa
-- Integration tests: integration_test package
-- Device farms: Firebase Test Lab, AWS Device Farm
-
-### Flutter (Web)
-- Build: flutter build web --release
-- Hosting: Firebase, Netlify, Vercel, S3
-- PWA support: manifest.json, service worker
-- CanvasKit vs HTML renderer
-
-### Dart (Server)
-- Build: dart compile exe bin/server.dart
-- Deploy: Docker, Heroku, Cloud Run
-- Health check: custom /health endpoint
-- Use shelf, shelf_router for HTTP
+| Platform | Notes |
+|-----------|-------|
+| **Android** | Sign with keystore; Upload AAB to Play Console; Use fastlane for automation; Enable R8 shrinking |
+| **iOS** | Sign with certificates and provisioning profiles; Upload to TestFlight; Use fastlane; Enable bitcode if required |
+| **Web** | Build with `flutter build web`; Deploy to Firebase Hosting, Netlify, GitHub Pages; Configure routing |
+| **Desktop (Windows/macOS/Linux)** | Build with `flutter build windows/macos/linux`; Package as installer; Code sign for distribution |
+| **Dart Package** | Build with `dart pub get`; Test with `dart test`; Publish to pub.dev |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: pub get fails with version conflict
-- **Solution**: Update dependencies, use `flutter pub outdated`, resolve conflicts in pubspec.yaml
-
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check test environment (network access), mock external dependencies
-
-### Issue: iOS build fails with code signing error
-- **Solution**: Verify certificate base64 encoding, provisioning profile, bundle ID
-
-### Issue: Android build fails with Gradle error
-- **Solution**: Update Gradle version, check Android SDK, verify keystore config
-
-### Issue: Coverage not collected
-- **Solution**: Run `flutter test --coverage`, ensure test files imported correctly
+| Issue | Solution |
+|-------|----------|
+| **Flutter doctor shows issues** | Ensure all required tools installed (Android SDK, Xcode), run flutter doctor --android-licenses |
+| **Tests fail only in CI** | Check Flutter version match, ensure assets included, verify environment variables |
+| **Android signing fails** | Verify keystore decoded correctly, check key.properties path, ensure passwords correct |
+| **iOS signing fails** | Check certificate validity, verify provisioning profile matches bundle ID, ensure keychain unlocked |
+| **Web build missing assets** | Verify assets declared in pubspec.yaml, check pubspec.yaml indentation |
+| **Want to use Codemagic / Bitrise** | Codemagic/Bitrise: Specialized for Flutter, better device support, simpler setup - core concepts remain same |
 
 ---
 
 ## AI Self-Check
 
-Before completing this process, verify:
-
 - [ ] CI pipeline runs on push and PR
-- [ ] Flutter SDK version pinned
-- [ ] Dependencies cached (pub cache)
+- [ ] Flutter/Dart version pinned or specified
+- [ ] flutter analyze passes with no warnings
 - [ ] All tests pass with coverage ≥80%
-- [ ] Analyzer enforced (strict analysis_options.yaml)
-- [ ] Security scanning enabled (CodeQL, Dependabot)
-- [ ] Dependencies up to date
-- [ ] Artifacts built with correct versioning
-- [ ] Code signing configured (Android keystore, iOS certificates)
-- [ ] Deployment to at least one platform works
-- [ ] Environment secrets properly configured
-- [ ] Smoke tests validate deployment (if applicable)
-- [ ] Rollback procedure documented
-- [ ] Performance tests tracked (if applicable)
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
+- [ ] Code formatting enforced (dart format)
+- [ ] Android build succeeds and signs correctly
+- [ ] iOS build succeeds and signs correctly (if iOS app)
+- [ ] Web build succeeds (if web app)
+- [ ] Upload to stores works (Android/iOS)
+- [ ] Integration tests run on schedule
 
 ---
 
@@ -450,7 +331,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -467,4 +347,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-

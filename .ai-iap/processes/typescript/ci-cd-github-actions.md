@@ -17,20 +17,24 @@
 
 ---
 
+## Git Workflow Pattern (All Phases)
+
+> **Standard workflow for each phase**:
+> 1. Create branch: `git checkout -b ci/<phase-name>`
+> 2. Make changes according to phase requirements
+> 3. Commit: `git commit -m "ci: <description>"`
+> 4. Push: `git push origin ci/<phase-name>`
+> 5. Verify: Check CI/CD pipeline runs successfully
+
+Phases below reference this pattern instead of repeating it.
+
+---
+
 ## Phase 1: Basic CI Pipeline
 
-### Branch Strategy
-```
-main → ci/basic-pipeline
-```
+**Branch**: `ci/basic-pipeline`
 
-### 1.1 Create Workflow Directory
-
-> **ALWAYS**:
-> - Create `.github/workflows/` directory
-> - Name workflow file `ci.yml` or `build.yml`
-
-### 1.2 Basic Build & Test Workflow
+### 1.1 Basic Build & Test Workflow
 
 > **ALWAYS include**:
 > - Node.js version from project (read from `.nvmrc`, `package.json` engines, or matrix with LTS versions)
@@ -57,37 +61,21 @@ main → ci/basic-pipeline
 - Artifacts: coverage reports, build output
 - Cache: node_modules by lock file hash
 
-### 1.3 Coverage Reporting
+### 1.2 Coverage Reporting
 
 > **ALWAYS**:
 > - Upload coverage to Codecov/Coveralls (if configured)
-> - Set minimum coverage threshold (e.g., 80%)
+> - Set minimum coverage threshold (80%+)
 > - Fail build if coverage drops below threshold
 > - Generate HTML reports as artifacts
 
-### 1.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add basic build and test pipeline"
-> git push origin ci/basic-pipeline
-> ```
-
-> **Verify**:
-> - Pipeline runs on push
-> - All jobs pass (lint, test, build)
-> - Coverage report generated
-> - Cache working (check run times)
+**Verify**: Pipeline runs, all jobs pass, coverage generated, cache working
 
 ---
 
 ## Phase 2: Code Quality & Security
 
-### Branch Strategy
-```
-main → ci/quality-security (or continue on ci/basic-pipeline)
-```
+**Branch**: `ci/quality-security`
 
 ### 2.1 Dependency Security Scanning
 
@@ -95,13 +83,16 @@ main → ci/quality-security (or continue on ci/basic-pipeline)
 > - `npm audit` or `yarn audit` step
 > - Dependabot configuration (`.github/dependabot.yml`)
 > - Fail on high/critical vulnerabilities
-> - Auto-update patch versions
 
-> **Dependabot Config**:
-> - Package ecosystem: npm
-> - Update schedule: weekly
-> - Review reviewers/assignees
-> - Semantic versioning rules
+**Dependabot Config** (`.github/dependabot.yml`):
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
 ### 2.2 Static Analysis (SAST)
 
@@ -112,32 +103,17 @@ main → ci/quality-security (or continue on ci/basic-pipeline)
 > - Review security alerts in GitHub Security tab
 
 > **Optional but recommended**:
-> - SonarCloud/SonarQube integration
+> - SonarCloud/SonarQube
 > - ESLint security plugin (eslint-plugin-security)
 > - TypeScript strict mode enforcement
 
-### 2.3 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml
-> git commit -m "ci: add dependency scanning and CodeQL analysis"
-> git push origin ci/quality-security
-> ```
-
-> **Verify**:
-> - Dependabot creates PRs for outdated deps
-> - CodeQL scan completes successfully
-> - Security alerts visible in repo
+**Verify**: Dependabot creates PRs, CodeQL scan completes, security alerts visible
 
 ---
 
 ## Phase 3: Deployment Pipeline
 
-### Branch Strategy
-```
-main → ci/deployment
-```
+**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
@@ -147,10 +123,10 @@ main → ci/deployment
 > - Store secrets per environment (API keys, tokens)
 > - Use environment variables for config
 
-> **Protection Rules**:
-> - Production: require approval, restrict to main branch
-> - Staging: auto-deploy on merge to develop/staging
-> - Dev: auto-deploy on any push
+**Protection Rules**:
+- Production: require approval, restrict to main branch
+- Staging: auto-deploy on merge to develop/staging
+- Dev: auto-deploy on any push
 
 ### 3.2 Build Artifacts
 
@@ -169,26 +145,12 @@ main → ci/deployment
 
 > **Platform-specific** (choose one or more):
 
-**Vercel/Netlify**:
-- Use official GitHub Actions (vercel/actions, netlify/actions)
-- Deploy previews for PRs
-- Production deploy on main branch merge
-
-**AWS (S3 + CloudFront / ECS / Lambda)**:
-- Use aws-actions/configure-aws-credentials
-- Deploy static assets to S3
-- Invalidate CloudFront cache
-- Or deploy Docker image to ECR + ECS
-
-**Azure (App Service / Static Web Apps)**:
-- Use azure/webapps-deploy
-- Configure publish profile secrets
-- Deployment slots for staging
-
-**Docker Registry**:
-- Build multi-stage Dockerfile
-- Push to Docker Hub, GHCR, ECR
-- Tag with git SHA + semver
+| Platform | Tool | Notes |
+|----------|------|-------|
+| **Vercel/Netlify** | Official GitHub Actions | Deploy previews for PRs, production on main |
+| **AWS** | aws-actions/configure-aws-credentials | S3+CloudFront, ECS, or Lambda |
+| **Azure** | azure/webapps-deploy | App Service or Static Web Apps |
+| **Docker** | docker/build-push-action | Push to Docker Hub, GHCR, ECR |
 
 ### 3.4 Smoke Tests Post-Deploy
 
@@ -202,30 +164,13 @@ main → ci/deployment
 > - Run full E2E suite in deployment job (separate workflow)
 > - Block rollback on smoke test failures (alert + rollback)
 
-### 3.5 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/deploy*.yml
-> git commit -m "ci: add deployment pipeline with smoke tests"
-> git push origin ci/deployment
-> ```
-
-> **Verify**:
-> - Manual trigger works (workflow_dispatch)
-> - Environment secrets accessible
-> - Deployment succeeds to dev/staging
-> - Smoke tests pass
-> - Rollback procedure tested
+**Verify**: Manual trigger works, environment secrets accessible, deployment succeeds, smoke tests pass, rollback tested
 
 ---
 
 ## Phase 4: Advanced Features
 
-### Branch Strategy
-```
-main → ci/advanced
-```
+**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
@@ -255,10 +200,7 @@ main → ci/advanced
 > - GitHub Releases with notes
 > - npm publish (if library)
 
-> **Tools**:
-> - semantic-release
-> - release-please
-> - changesets
+**Tools**: semantic-release, release-please, or changesets
 
 ### 4.4 Notifications
 
@@ -271,77 +213,32 @@ main → ci/advanced
 > - Spam notifications for every commit
 > - Expose webhook URLs in public repos
 
-### 4.5 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/
-> git commit -m "ci: add performance tests, E2E, and release automation"
-> git push origin ci/advanced
-> ```
-
-> **Verify**:
-> - Performance budgets enforced
-> - E2E tests run on schedule
-> - Release created on version bump
-> - Notifications received
+**Verify**: Performance budgets enforced, E2E tests run on schedule, releases created on version bump, notifications received
 
 ---
 
 ## Framework-Specific Notes
 
-### React/Next.js
-- Use `next build` and `next export` (if static)
-- Vercel CLI for deployment (`vercel --prod`)
-- Analyze bundle with `@next/bundle-analyzer`
-
-### NestJS
-- Build: `npm run build`
-- Start: `node dist/main.js`
-- Docker-friendly (single executable)
-- Use PM2 for production process management
-
-### Express/Fastify
-- Build TypeScript: `tsc` or `tsc -p tsconfig.build.json`
-- Use `node -r dotenv/config dist/index.js` for production
-- Health check route: `/health` or `/api/health`
-
-### Angular
-- Build: `ng build --configuration production`
-- Analyze: `ng build --stats-json` + webpack-bundle-analyzer
-- Deploy to Firebase Hosting, Azure Static Web Apps
-
-### Vue.js
-- Build: `npm run build` (Vite/Webpack)
-- Preview: `npm run preview`
-- Deploy to Netlify, Firebase Hosting
+| Framework | Build Command | Deployment | Notes |
+|-----------|---------------|------------|-------|
+| **React/Next.js** | `next build` + `next export` | Vercel CLI | Use `@next/bundle-analyzer` |
+| **NestJS** | `npm run build` | Docker-friendly | Single executable, use PM2 |
+| **Express/Fastify** | `tsc` or build script | Node process | Health check at `/health` |
+| **Angular** | `ng build --configuration production` | Firebase, Azure | Use `webpack-bundle-analyzer` |
+| **Vue.js** | `npm run build` (Vite/Webpack) | Netlify, Firebase | Preview with `npm run preview` |
 
 ---
 
-## Common Issues & Solutions
+## Troubleshooting
 
-### Issue: `npm ci` fails with lockfile mismatch
-- **Solution**: Commit updated `package-lock.json`, use exact versions
-
-### Issue: Tests fail only in CI
-- **Solution**: Check timezone, env vars, ensure `CI=true` flag set
-
-### Issue: Cache not working
-- **Solution**: Verify cache key includes lock file hash, check runner OS
-
-### Issue: Deployment secrets not found
-- **Solution**: Verify environment name matches workflow, check secret names
-
-### Issue: Build works locally but fails in CI
-- **Solution**: Use `.nvmrc` or `package.json` engines to specify Node version, check global dependencies
-
-### Issue: Want to use GitLab CI / Azure DevOps / CircleCI instead
-- **Solution**: Adapt workflow syntax to target platform:
-  - **GitLab CI**: Use `.gitlab-ci.yml` with `image: node:lts`, `script:` blocks
-  - **Azure DevOps**: Use `azure-pipelines.yml` with `pool: ubuntu-latest`, `steps:` tasks
-  - **CircleCI**: Use `.circleci/config.yml` with `docker: - image: cimg/node:lts`, `steps:` commands
-  - **Jenkins**: Use `Jenkinsfile` with `docker.image('node:lts').inside {}`
-  - Core concepts remain the same: cache deps, run tests, build, deploy
+| Issue | Solution |
+|-------|----------|
+| **`npm ci` fails with lockfile mismatch** | Commit updated `package-lock.json`, use exact versions |
+| **Tests fail only in CI** | Check timezone, env vars, ensure `CI=true` flag set |
+| **Cache not working** | Verify cache key includes lock file hash, check runner OS |
+| **Deployment secrets not found** | Verify environment name matches workflow, check secret names |
+| **Build works locally but fails in CI** | Use `.nvmrc` or `package.json` engines to specify Node version |
+| **Want to use GitLab CI / Azure DevOps** | Adapt workflow syntax: GitLab (`.gitlab-ci.yml`), Azure (`azure-pipelines.yml`), CircleCI (`.circleci/config.yml`) - core concepts remain same |
 
 ---
 
@@ -350,30 +247,15 @@ main → ci/advanced
 Before completing this process, verify:
 
 - [ ] CI pipeline runs on push and PR
-- [ ] Linting enforced (ESLint/Biome)
-- [ ] Tests run with coverage reporting
-- [ ] Coverage threshold met (≥80%)
-- [ ] Security scanning enabled (npm audit, CodeQL)
-- [ ] Dependabot configured for updates
+- [ ] Linting enforced, tests pass with ≥80% coverage
+- [ ] Security scanning enabled (npm audit, CodeQL, Dependabot)
 - [ ] Build artifacts generated and versioned
 - [ ] Deployment to at least one environment works
 - [ ] Environment secrets properly configured
 - [ ] Smoke tests validate deployment health
-- [ ] Rollback procedure documented
 - [ ] Performance budgets tracked
-- [ ] Notifications configured
-- [ ] All workflows have timeout limits
-- [ ] Documentation updated (README.md)
-
----
-
-## Bug Logging
-
-> **ALWAYS log bugs found during CI setup**:
-> - Create ticket/issue for each bug
-> - Tag with `bug`, `ci`, `infrastructure`
-> - **NEVER fix production code during CI setup**
-> - Link bug to CI implementation branch
+- [ ] Rollback procedure documented
+- [ ] Documentation updated (README.md with badges)
 
 ---
 
@@ -383,7 +265,6 @@ Before completing this process, verify:
 > - Update README.md with CI/CD badges
 > - Document deployment process
 > - Add runbook for common issues
-> - Link to workflow files
 > - Onboarding guide for new developers
 
 ---
@@ -400,4 +281,3 @@ git push origin main --tags
 ---
 
 **Process Complete** ✅
-
