@@ -1,65 +1,43 @@
 # Ktor Framework
 
-> **Scope**: Apply these rules when working with Ktor applications
+> **Scope**: Ktor applications
 > **Applies to**: Kotlin files in Ktor projects
 > **Extends**: kotlin/architecture.md, kotlin/code-style.md
-> **Precedence**: Framework rules OVERRIDE Kotlin rules for Ktor-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use suspend functions for all I/O operations
-> **ALWAYS**: Use content negotiation for JSON (kotlinx.serialization)
+> **ALWAYS**: Use suspend functions for I/O
+> **ALWAYS**: Use content negotiation for JSON
 > **ALWAYS**: Use routing DSL for endpoints
-> **ALWAYS**: Use dependency injection (Koin recommended)
-> **ALWAYS**: Use typed routes with type-safe routing
+> **ALWAYS**: Use DI (Koin recommended)
 > 
-> **NEVER**: Use blocking I/O in route handlers
-> **NEVER**: Skip content negotiation setup
-> **NEVER**: Use global mutable state
-> **NEVER**: Forget to install plugins (ContentNegotiation, etc.)
+> **NEVER**: Use blocking I/O in handlers
 > **NEVER**: Skip authentication for protected routes
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Routing DSL | Define endpoints | `routing { get("/") {} }` |
-| Content Negotiation | JSON/XML serialization | `install(ContentNegotiation)` |
-| Type-safe Routing | Type-safe URLs | Resources, typed routes |
-| Koin DI | Dependency injection | `inject()`, modules |
-| Suspend Functions | Async operations | `suspend fun`, coroutines |
+> **NEVER**: Use global mutable state
 
 ## Core Patterns
 
-### Application Setup
+### Setup
+
 ```kotlin
 fun Application.module() {
-    install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-        })
-    }
-    
+    install(ContentNegotiation) { json() }
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             call.respondText("Error: ${cause.message}", status = HttpStatusCode.InternalServerError)
         }
     }
-    
-    routing {
-        userRoutes()
-    }
+    routing { userRoutes() }
 }
 ```
 
 ### Routing
+
 ```kotlin
 fun Route.userRoutes() {
     route("/users") {
         get {
-            val users = userService.getAll()
-            call.respond(users)
+            call.respond(userService.getAll())
         }
         
         get("/{id}") {
@@ -72,179 +50,106 @@ fun Route.userRoutes() {
         
         post {
             val user = call.receive<CreateUserRequest>()
-            val created = userService.create(user)
-            call.respond(HttpStatusCode.Created, created)
+            call.respond(HttpStatusCode.Created, userService.create(user))
         }
     }
 }
 ```
 
-### Data Classes with Serialization
-```kotlin
-import kotlinx.serialization.Serializable
+### DI (Koin)
 
-@Serializable
-data class User(
-    val id: Int,
-    val name: String,
-    val email: String
-)
-
-@Serializable
-data class CreateUserRequest(
-    val name: String,
-    val email: String
-)
-```
-
-### Dependency Injection (Koin)
 ```kotlin
 val appModule = module {
-    single { UserRepository() }
-    single { UserService(get()) }
+    single<UserRepository> { UserRepositoryImpl(get()) }
+    single<UserService> { UserService(get()) }
 }
 
-fun Application.module() {
+fun Application.configureDI() {
     install(Koin) {
         modules(appModule)
     }
-    
-    routing {
-        get("/users") {
-            val userService by inject<UserService>()
-            call.respond(userService.getAll())
-        }
-    }
-}
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Blocking I/O** | Regular functions for DB/HTTP | `suspend fun` | Blocks coroutines |
-| **No ContentNegotiation** | Manual JSON parsing | `install(ContentNegotiation)` | No auto-serialization |
-| **Global State** | `val db = Database()` at top level | Dependency injection | Not thread-safe |
-| **Missing Plugins** | Forget to install features | Install all needed plugins | Features don't work |
-| **String Routes Only** | All routes as strings | Type-safe routing | No compile-time safety |
-
-### Anti-Pattern: Blocking I/O (KILLS PERFORMANCE)
-```kotlin
-// ❌ WRONG - Blocking I/O
-get("/users") {
-    val users = database.query("SELECT * FROM users")  // Blocks!
-    call.respond(users)
 }
 
-// ✅ CORRECT - Suspend function
-get("/users") {
-    val users = database.queryAsync("SELECT * FROM users")  // Non-blocking
-    call.respond(users)
-}
-```
-
-### Anti-Pattern: No Content Negotiation
-```kotlin
-// ❌ WRONG - Manual JSON
-get("/users") {
-    val users = userService.getAll()
-    val json = Json.encodeToString(users)  // Manual!
-    call.respondText(json, ContentType.Application.Json)
-}
-
-// ✅ CORRECT - Auto-serialization
-install(ContentNegotiation) {
-    json()
-}
-
-get("/users") {
-    val users = userService.getAll()
-    call.respond(users)  // Auto-serialized to JSON
-}
-```
-
-## AI Self-Check (Verify BEFORE generating Ktor code)
-
-- [ ] Using suspend functions for I/O?
-- [ ] ContentNegotiation installed and configured?
-- [ ] Routing DSL for endpoints?
-- [ ] @Serializable on data classes?
-- [ ] Dependency injection (Koin)?
-- [ ] StatusPages for error handling?
-- [ ] Type-safe routing where appropriate?
-- [ ] No blocking I/O?
-- [ ] Authentication configured for protected routes?
-- [ ] Following Ktor conventions?
-
-## Plugins
-
-```kotlin
-install(CallLogging) {
-    level = Level.INFO
-}
-
-install(CORS) {
-    anyHost()
-    allowHeader(HttpHeaders.ContentType)
-}
-
-install(Authentication) {
-    jwt("auth-jwt") {
-        verifier(JWTVerifier())
-        validate { credential ->
-            if (credential.payload.audience.contains("app"))
-                JWTPrincipal(credential.payload)
-            else null
-        }
-    }
-}
-```
-
-## Type-Safe Routing
-
-```kotlin
-@Resource("/users")
-class Users {
-    @Resource("{id}")
-    class Id(val parent: Users = Users(), val id: Int)
-}
-
-fun Route.userRoutes() {
-    get<Users> {
+fun Route.userRoutesWithDI() {
+    val userService by inject<UserService>()
+    get("/users") {
         call.respond(userService.getAll())
     }
-    
-    get<Users.Id> { user ->
-        call.respond(userService.getById(user.id))
-    }
 }
 ```
 
-## Testing
+### Auth
 
 ```kotlin
-@Test
-fun testGetUsers() = testApplication {
-    client.get("/users").apply {
-        assertEquals(HttpStatusCode.OK, status)
-        assertTrue(bodyAsText().contains("users"))
+install(Authentication) {
+    jwt("auth-jwt") {
+        verifier(JWK...)
+        validate { credential ->
+            if (credential.payload.getClaim("username").asString() != "") {
+                JWTPrincipal(credential.payload)
+            } else null
+        }
+    }
+}
+
+routing {
+    authenticate("auth-jwt") {
+        get("/protected") {
+            val principal = call.principal<JWTPrincipal>()
+            call.respondText("Hello ${principal?.payload?.getClaim("username")}")
+        }
     }
 }
 ```
 
-## Key Features
+## Common AI Mistakes
 
-| Feature | Purpose | Plugin |
-|---------|---------|--------|
-| Routing | Define endpoints | Built-in |
-| ContentNegotiation | Serialization | `ContentNegotiation` |
-| Authentication | Auth/authz | `Authentication` |
-| WebSockets | Real-time | `WebSockets` |
-| StatusPages | Error handling | `StatusPages` |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Blocking I/O** | `Thread.sleep()` | `delay()` |
+| **No Content Negotiation** | Manual JSON | `install(ContentNegotiation)` |
+| **No DI** | `UserService()` | `inject<UserService>()` |
+| **No Error Handling** | Ignore exceptions | `install(StatusPages)` |
 
-## Key Libraries
+### Anti-Pattern: Blocking I/O
 
-- **kotlinx.serialization**: JSON serialization
-- **Koin**: Dependency injection
-- **Exposed**: SQL database
-- **ktor-client**: HTTP client
+```kotlin
+// ❌ WRONG
+get("/users") {
+    Thread.sleep(1000)  // Blocks thread!
+    call.respond(users)
+}
+
+// ✅ CORRECT
+get("/users") {
+    delay(1000)  // Suspends, non-blocking
+    call.respond(users)
+}
+```
+
+## AI Self-Check
+
+- [ ] suspend functions for I/O?
+- [ ] ContentNegotiation installed?
+- [ ] Routing DSL used?
+- [ ] DI configured (Koin)?
+- [ ] Authentication for protected routes?
+- [ ] StatusPages for error handling?
+- [ ] No blocking operations?
+- [ ] call.respond() for responses?
+
+## Key Plugins
+
+| Plugin | Purpose |
+|--------|---------|
+| ContentNegotiation | JSON/XML serialization |
+| StatusPages | Error handling |
+| Authentication | JWT, OAuth |
+| Koin | Dependency injection |
+| CORS | Cross-origin requests |
+
+## Best Practices
+
+**MUST**: suspend functions, Content Negotiation, routing DSL, DI
+**SHOULD**: StatusPages, Authentication, type-safe routing
+**AVOID**: Blocking I/O, global state, skipping auth
