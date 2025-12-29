@@ -1,36 +1,59 @@
 # Exposed ORM Framework
 
-## Overview
-Exposed: lightweight SQL library for Kotlin with DSL and DAO APIs.
+> **Scope**: Lightweight SQL library for Kotlin with DSL and DAO APIs
+> **Applies to**: Kotlin files using Exposed
+> **Extends**: kotlin/architecture.md, kotlin/code-style.md
 
-## Database Configuration
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+
+> **ALWAYS**: Use transactions for all database operations
+> **ALWAYS**: Use suspend functions with `dbQuery { }` for async operations
+> **ALWAYS**: Define tables as objects extending `Table` or `IntIdTable`
+> **ALWAYS**: Use `DatabaseFactory.init()` to setup connection
+> **ALWAYS**: Use HikariCP for connection pooling in production
+> 
+> **NEVER**: Perform database operations outside transactions
+> **NEVER**: Block threads with synchronous queries (use `dbQuery`)
+> **NEVER**: Skip table schema creation (`SchemaUtils.create`)
+> **NEVER**: Use string literals for column names
+> **NEVER**: Expose database exceptions to API layer
+
+## Pattern Selection
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| **DSL API** | Type-safe SQL queries | `select`, `insert`, `update` |
+| **DAO API** | Object-oriented approach | Entity classes |
+| **Transactions** | All DB operations | `transaction { }` |
+| **dbQuery** | Async operations | Coroutines, non-blocking |
+
+## Core Patterns
+
+### Database Setup
 
 ```kotlin
 object DatabaseFactory {
     fun init() {
-        Database.connect(
-            url = "jdbc:postgresql://localhost:5432/db",
-            driver = "org.postgresql.Driver",
-            user = "user",
+        val config = HikariConfig().apply {
+            jdbcUrl = "jdbc:postgresql://localhost:5432/db"
+            driverClassName = "org.postgresql.Driver"
+            username = "user"
             password = "password"
-        )
-        transaction { SchemaUtils.create(Users) }
+            maximumPoolSize = 10
+        }
+        Database.connect(HikariDataSource(config))
+        transaction { SchemaUtils.create(Users, Orders) }
     }
 }
 
-// With HikariCP
-fun initDatabase() {
-    val config = HikariConfig().apply {
-        jdbcUrl = "jdbc:postgresql://localhost:5432/db"
-        maximumPoolSize = 10
+suspend fun <T> dbQuery(block: () -> T): T =
+    withContext(Dispatchers.IO) {
+        transaction { block() }
     }
-    Database.connect(HikariDataSource(config))
-}
 ```
 
-## Table Definitions
+### Table Definitions
 
-### DSL Tables
 ```kotlin
 object Users : Table("users") {
     val id = long("id").autoIncrement()
@@ -48,9 +71,8 @@ object Orders : Table("orders") {
 }
 ```
 
-## DSL Queries
+### DSL Queries (CRUD)
 
-### CRUD Operations
 ```kotlin
 class UserRepository {
     suspend fun findAll(): List<User> = dbQuery {
@@ -58,191 +80,116 @@ class UserRepository {
     }
     
     suspend fun findById(id: Long): User? = dbQuery {
-        Users.select { Users.id eq id }.map { toUser(it) }.singleOrNull()
+        Users.select { Users.id eq id }
+            .mapNotNull { toUser(it) }
+            .singleOrNull()
     }
     
-    suspend fun create(user: User): User = dbQuery {
+    suspend fun create(name: String, email: String): User = dbQuery {
         val id = Users.insert {
-            it[name] = user.name
-            it[email] = user.email
+            it[Users.name] = name
+            it[Users.email] = email
         } get Users.id
-        user.copy(id = id)
+        User(id, name, email)
     }
     
-    suspend fun update(id: Long, user: User): Int = dbQuery {
+    suspend fun update(id: Long, name: String): Boolean = dbQuery {
         Users.update({ Users.id eq id }) {
-            it[name] = user.name
-            it[email] = user.email
+            it[Users.name] = name
+        } > 0
+    }
+    
+    suspend fun delete(id: Long): Boolean = dbQuery {
+        Users.deleteWhere { Users.id eq id } > 0
+    }
+}
+```
+
+### Joins & Relationships
+
+```kotlin
+suspend fun getUserWithOrders(userId: Long): UserWithOrders? = dbQuery {
+    (Users innerJoin Orders)
+        .select { Users.id eq userId }
+        .map { row ->
+            UserWithOrders(
+                user = toUser(row),
+                orders = toOrder(row)
+            )
         }
-    }
-    
-    suspend fun delete(id: Long): Int = dbQuery {
-        Users.deleteWhere { Users.id eq id }
-    }
-}
-
-suspend fun <T> dbQuery(block: suspend () -> T): T =
-    newSuspendedTransaction(Dispatchers.IO) { block() }
-```
-
-### Complex Queries
-```kotlin
-suspend fun findUserOrders(userId: Long): List<OrderWithUser> = dbQuery {
-    (Orders innerJoin Users)
-        .select { Orders.userId eq userId }
-        .map { toOrderWithUser(it) }
-}
-
-suspend fun searchOrders(
-    status: OrderStatus? = null,
-    minTotal: BigDecimal? = null
-): List<Order> = dbQuery {
-    Orders.selectAll()
-        .apply {
-            status?.let { andWhere { Orders.status eq it } }
-            minTotal?.let { andWhere { Orders.total greaterEq it } }
-        }
-        .map { toOrder(it) }
+        .singleOrNull()
 }
 ```
 
-## DAO API
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
 
-### Entity Classes
-```kotlin
-class UserEntity(id: EntityID<Long>) : LongEntity(id) {
-    companion object : LongEntityClass<UserEntity>(Users)
-    
-    var name by Users.name
-    var email by Users.email
-    val orders by OrderEntity referrersOn Orders.userId
-    
-    fun toModel() = User(id.value, name, email)
-}
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **No Transaction** | Direct `Users.select()` | `transaction { Users.select() }` | Data consistency |
+| **Blocking Calls** | `transaction { }` | `dbQuery { }` | Thread blocking |
+| **No Connection Pool** | Direct `Database.connect()` | HikariCP | Performance |
+| **No Schema Creation** | Skip `SchemaUtils.create` | Create schema | Missing tables |
 
-class UserDaoRepository {
-    suspend fun findAll(): List<User> = dbQuery {
-        UserEntity.all().map { it.toModel() }
-    }
-    
-    suspend fun create(user: User): User = dbQuery {
-        UserEntity.new {
-            name = user.name
-            email = user.email
-        }.toModel()
-    }
-}
-```
-
-## Transactions
+### Anti-Pattern: No Transaction (DATA CORRUPTION)
 
 ```kotlin
-suspend fun <T> dbTransaction(block: suspend Transaction.() -> T): T =
-    newSuspendedTransaction(Dispatchers.IO) { block() }
+// ❌ WRONG: No transaction
+suspend fun createUser(name: String): User {
+    Users.insert {
+        it[Users.name] = name
+    }  // Not in transaction!
+}
 
-suspend fun transferOrder(orderId: Long, newUserId: Long) = dbTransaction {
-    val order = OrderEntity.findById(orderId) ?: throw NotFoundException()
-    val newUser = UserEntity.findById(newUserId) ?: throw NotFoundException()
-    order.user = newUser
-    order.toModel()
+// ✅ CORRECT: In transaction
+suspend fun createUser(name: String): User = dbQuery {
+    val id = Users.insert {
+        it[Users.name] = name
+    } get Users.id
+    User(id, name)
 }
 ```
 
-## Migrations
+## AI Self-Check (Verify BEFORE generating Exposed code)
 
-```kotlin
-object DatabaseMigrations {
-    fun runMigrations() {
-        transaction {
-            SchemaUtils.create(Users, Orders)
-            exec("CREATE INDEX idx_users_email ON users(email);")
-        }
-    }
-}
-```
+- [ ] All operations in transactions?
+- [ ] Using dbQuery for async operations?
+- [ ] Tables defined as objects?
+- [ ] HikariCP for connection pooling?
+- [ ] Schema created with SchemaUtils?
+- [ ] Using DSL operators (eq, like, etc.)?
+- [ ] Proper error handling?
+- [ ] No string literals for columns?
+- [ ] Joins for relationships?
+- [ ] Non-blocking operations?
+
+## Key Features
+
+| Feature | Purpose | Keywords |
+|---------|---------|----------|
+| **DSL API** | Type-safe queries | `select`, `where`, `join` |
+| **Transactions** | Consistency | `transaction { }` |
+| **SchemaUtils** | DDL operations | `create`, `drop`, `createMissingTablesAndColumns` |
+| **References** | Foreign keys | `references`, `onDelete` |
+| **Async** | Non-blocking | `dbQuery`, coroutines |
 
 ## Best Practices
 
 **MUST**:
-- Use `newSuspendedTransaction` for async code (Ktor, coroutines)
-- Use `transaction` for blocking code only
-- Define table schema with proper indices
-- Use HikariCP for connection pooling in production
-- Close/dispose database connections properly
+- Transactions for all operations
+- dbQuery for async
+- HikariCP connection pooling
+- Schema creation
+- Object-based table definitions
 
 **SHOULD**:
-- Use DSL API for flexibility (NOT DAO unless needed)
-- Use batch operations for multiple inserts/updates
-- Define foreign keys with proper cascade behavior
-- Use SchemaUtils for development (migrations for production)
-- Add indices to frequently queried columns
+- Use DSL API for queries
+- Proper indexes
+- Cascade deletes
+- Error handling
 
 **AVOID**:
-- Running queries outside transactions
-- N+1 query problems (no automatic eager loading)
-- Using DAO API unless you need object mapping
-- Forgetting to configure connection pool
-- Direct SQL strings (use DSL for type safety)
-
-## Common Patterns
-
-### Connection Pooling (Production)
-```kotlin
-// ✅ GOOD: HikariCP configuration
-val config = HikariConfig().apply {
-    jdbcUrl = "jdbc:postgresql://localhost/db"
-    driverClassName = "org.postgresql.Driver"
-    username = "user"
-    password = "password"
-    maximumPoolSize = 10
-    minimumIdle = 2
-    connectionTimeout = 30000
-}
-Database.connect(HikariDataSource(config))
-
-// ❌ BAD: No pooling (development only)
-Database.connect(
-    url = "jdbc:postgresql://localhost/db",
-    driver = "org.postgresql.Driver"
-)
-```
-
-### Batch Operations
-```kotlin
-// ✅ GOOD: Batch insert (single query)
-suspend fun createMany(users: List<User>): List<Long> = dbQuery {
-    Users.batchInsert(users) { user ->
-        this[Users.name] = user.name
-        this[Users.email] = user.email
-    }.map { it[Users.id] }
-}
-
-// ❌ BAD: Multiple individual inserts
-suspend fun createMany(users: List<User>) = dbQuery {
-    users.forEach { user ->
-        Users.insert {  // Separate query each time!
-            it[name] = user.name
-            it[email] = user.email
-        }
-    }
-}
-```
-
-### Index Definition
-```kotlin
-// ✅ GOOD: Proper indices
-object Users : Table("users") {
-    val id = long("id").autoIncrement()
-    val email = varchar("email", 100).uniqueIndex()  // Unique + indexed
-    val name = varchar("name", 100).index()  // Regular index for searches
-    val createdAt = timestamp("created_at").index()  // Index for sorting
-    override val primaryKey = PrimaryKey(id)
-}
-
-// ❌ BAD: No indices (slow queries)
-object Users : Table("users") {
-    val id = long("id").autoIncrement()
-    val email = varchar("email", 100)  // No index! Slow lookups
-    val name = varchar("name", 100)
-}
-```
+- Operations outside transactions
+- Blocking synchronous calls
+- Direct database connections
+- String literals
+- N+1 queries
