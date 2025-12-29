@@ -74,12 +74,165 @@ public function getUser(int $id): Response { }
 
 ---
 
+## Phase 3: Security & Versioning
+
+### 3.1 Document JWT Authentication
+
+**Laravel (L5-Swagger)**:
+```php
+/**
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT"
+ * )
+ */
+class Controller extends BaseController
+{
+    /**
+     * @OA\Get(
+     *     path="/api/users",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=401, description="Unauthorized")
+     * )
+     */
+    public function index() { }
+}
+```
+
+**Symfony (Nelmio)**:
+```php
+use OpenApi\Attributes as OA;
+
+#[OA\SecurityScheme(
+    securityScheme: 'bearerAuth',
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT'
+)]
+class SecurityConfig {}
+
+#[OA\Get(path: '/api/users', security: [['bearerAuth' => []]])]
+public function getUsers(): Response { }
+```
+
+### 3.2 API Versioning
+
+**URL-based**:
+```php
+/**
+ * @OA\Get(
+ *     path="/api/v1/users",
+ *     tags={"Users V1"},
+ *     deprecated=false
+ * )
+ */
+Route::prefix('v1')->group(function () {
+    Route::get('/users', [UserController::class, 'index']);
+});
+
+/**
+ * @OA\Get(
+ *     path="/api/v2/users",
+ *     tags={"Users V2"},
+ *     description="V2 includes additional email field"
+ * )
+ */
+Route::prefix('v2')->group(function () {
+    Route::get('/users', [UserControllerV2::class, 'index']);
+});
+```
+
+### 3.3 Rate Limiting Documentation
+
+**Document Headers**:
+```php
+/**
+ * @OA\Get(
+ *     path="/api/users",
+ *     @OA\Header(
+ *         header="X-RateLimit-Limit",
+ *         description="Request limit per hour",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(response=429, description="Too Many Requests")
+ * )
+ */
+```
+
+---
+
+## Phase 4: CI/CD Integration
+
+> **ALWAYS**:
+> - Generate OpenAPI spec in CI/CD
+> - Validate with Spectral or swagger-cli
+> - Export as artifact
+
+**Laravel**:
+```yaml
+- name: Generate API Docs
+  run: |
+    php artisan l5-swagger:generate
+    npx @openapitools/openapi-generator-cli validate -i storage/api-docs/api-docs.json
+```
+
+**Symfony**:
+```yaml
+- name: Generate API Docs
+  run: |
+    php bin/console nelmio:apidoc:dump > openapi.json
+    npx swagger-cli validate openapi.json
+```
+
+---
+
+## Best Practices
+
+> **ALWAYS**:
+> - Annotate all endpoints with `@OA\` or `#[OA\]`
+> - Document request validation rules
+> - Include realistic examples
+> - Document all status codes (200, 400, 401, 403, 404, 422, 500)
+> - Use resource classes for consistent response formats (Laravel)
+
+> **NEVER**:
+> - Include API keys or passwords in examples
+> - Skip documenting validation errors (422)
+> - Expose internal/admin endpoints without security annotations
+> - Forget to regenerate docs after API changes
+
+---
+
+## Troubleshooting
+
+### Issue: Swagger UI shows 404
+- **Solution**: Run `php artisan l5-swagger:generate`, check config/l5-swagger.php routes
+
+### Issue: Annotations not appearing in docs
+- **Solution**: Verify annotation syntax, ensure controllers scanned in config, regenerate docs
+
+### Issue: CORS errors in Try-it-out
+- **Solution**: Configure CORS middleware, ensure Swagger UI origin allowed
+
+### Issue: Want to exclude endpoints from docs
+- **Solution**: Use `@OA\PathItem(path="/internal/...", description="Internal")` or configure exclude patterns
+
+---
+
 ## AI Self-Check
 
-- [ ] L5-Swagger or Nelmio configured
-- [ ] All endpoints annotated
-- [ ] Swagger UI accessible
-- [ ] JWT auth documented
+- [ ] L5-Swagger (Laravel) or Nelmio (Symfony) installed
+- [ ] Swagger UI accessible at `/api/documentation` or `/api/doc`
+- [ ] All endpoints annotated with OpenAPI attributes
+- [ ] JWT authentication documented with security scheme
+- [ ] Request/response schemas documented
+- [ ] Validation error responses documented (422)
+- [ ] Error responses documented (400, 401, 404, 500)
+- [ ] API versioning configured (if multi-version)
+- [ ] Try-it-out functionality works
+- [ ] OpenAPI spec can be exported for CI/CD
 
 ---
 

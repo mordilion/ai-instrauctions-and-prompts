@@ -53,11 +53,117 @@ install(SwaggerUI) {
 
 ---
 
+## Phase 3: Security & Versioning
+
+### 3.1 Document JWT Authentication (Spring Boot)
+
+**Security Configuration**:
+```kotlin
+@Bean
+fun customOpenAPI(): OpenAPI {
+    return OpenAPI()
+        .info(Info().title("My API").version("1.0"))
+        .addSecurityItem(SecurityRequirement().addList("Bearer"))
+        .components(Components()
+            .addSecuritySchemes("Bearer", SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")))
+}
+```
+
+### 3.2 API Versioning
+
+**URL-based**:
+```kotlin
+@RestController
+@RequestMapping("/api/v1/users")
+@Tag(name = "Users V1")
+class UserControllerV1
+
+@RestController
+@RequestMapping("/api/v2/users")
+@Tag(name = "Users V2")
+class UserControllerV2
+```
+
+### 3.3 Ktor Security Documentation
+
+**Configure JWT**:
+```kotlin
+install(SwaggerUI) {
+    security {
+        securityScheme("JWT") {
+            type = HttpSecuritySchemeType.HTTP
+            scheme = HttpAuthScheme.BEARER
+            bearerFormat = "JWT"
+        }
+    }
+}
+```
+
+---
+
+## Phase 4: CI/CD Integration
+
+> **ALWAYS**:
+> - Generate OpenAPI spec during build
+> - Validate with Spectral or swagger-cli
+> - Export as artifact
+
+**Gradle Task**:
+```kotlin
+tasks.register("generateOpenApi") {
+    dependsOn("build")
+    doLast {
+        // Export OpenAPI JSON from running app or use springdoc plugin
+        println("OpenAPI spec generated")
+    }
+}
+```
+
+---
+
+## Best Practices
+
+> **ALWAYS**:
+> - Use data classes for request/response models
+> - Add KDoc comments to endpoints (included in docs)
+> - Document all HTTP status codes
+> - Group endpoints with `@Tag`
+> - Use `@Parameter` for path/query params
+
+> **NEVER**:
+> - Expose internal endpoints without security
+> - Include tokens/passwords in examples
+> - Skip error response documentation
+
+---
+
+## Troubleshooting
+
+### Issue: Swagger UI not loading (Spring Boot)
+- **Solution**: Check `springdoc.swagger-ui.enabled=true`, verify path
+
+### Issue: Endpoints missing (Ktor)
+- **Solution**: Ensure routes are registered before SwaggerUI plugin
+
+### Issue: Security schemes not appearing
+- **Solution**: Verify both security scheme and requirement configured
+
+---
+
 ## AI Self-Check
 
 - [ ] OpenAPI documentation configured
 - [ ] Swagger UI accessible
-- [ ] All endpoints documented
+- [ ] All endpoints documented with summaries
+- [ ] JWT/OAuth security documented
+- [ ] Request/response schemas defined
+- [ ] Error responses documented (400, 401, 404, 500)
+- [ ] API versioning configured (if needed)
+- [ ] Try-it-out functionality works
+- [ ] OpenAPI spec can be exported
 
 ---
 

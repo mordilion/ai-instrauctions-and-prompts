@@ -99,29 +99,146 @@ app.get('/users/:id', getUser);
 
 ---
 
-## Phase 3: Best Practices
+## Phase 3: Security & Versioning
+
+### 3.1 Document Authentication
+
+> **ALWAYS document**:
+> - JWT bearer token format
+> - OAuth 2.0 flows (if applicable)
+> - API key requirements
+> - Refresh token endpoints
+
+**NestJS Security**:
+```typescript
+@ApiSecurity('bearer')
+@ApiBearerAuth()
+@Controller('protected')
+export class ProtectedController { }
+```
+
+**Express.js Security**:
+```typescript
+/**
+ * @openapi
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ * security:
+ *   - bearerAuth: []
+ */
+```
+
+### 3.2 API Versioning
+
+> **ALWAYS include version in**:
+> - URL path (`/api/v1/users`)
+> - Or header (`Accept: application/vnd.myapi.v1+json`)
+
+**Document Version Changes**:
+```typescript
+@ApiOperation({
+  summary: 'Get user',
+  deprecated: false,
+  description: 'v2: Added email field. v1: Only returns id and name'
+})
+```
+
+### 3.3 Rate Limiting Documentation
+
+> **Document rate limits**:
+```typescript
+@ApiHeader({
+  name: 'X-RateLimit-Limit',
+  description: 'Request limit per hour'
+})
+@ApiHeader({
+  name: 'X-RateLimit-Remaining',
+  description: 'Remaining requests'
+})
+```
+
+---
+
+## Phase 4: CI/CD Integration
+
+### 4.1 Auto-Generate & Validate
 
 > **ALWAYS**:
-> - Document all endpoints
-> - Include request/response examples
-> - Document authentication
-> - Version your API
+> - Generate OpenAPI spec in CI/CD
+> - Validate spec (use Spectral, openapi-generator-cli)
+> - Export spec as artifact
+> - Version control generated spec
+
+**CI/CD Example**:
+```yaml
+- name: Generate OpenAPI Spec
+  run: |
+    npm run build
+    npm run generate-openapi
+    npx @openapitools/openapi-generator-cli validate -i openapi.json
+```
+
+### 4.2 Publish Documentation
+
+> **Options**:
+> - **Swagger UI**: Self-hosted on `/docs`
+> - **ReDoc**: Alternative UI at `/redoc`
+> - **Postman**: Import OpenAPI spec
+> - **API Portal**: AWS API Gateway, Azure APIM
+
+---
+
+## Best Practices
+
+> **ALWAYS**:
+> - Document all endpoints (including internal APIs)
+> - Include realistic request/response examples
+> - Document all error codes (400, 401, 403, 404, 500)
+> - Add descriptions to parameters and schemas
+> - Use tags to group related endpoints
+> - Keep docs in sync with code (auto-generation preferred)
 
 > **NEVER**:
-> - Expose sensitive data in examples
-> - Skip error responses
-> - Forget to update docs with API changes
+> - Hardcode sensitive data in examples (use `"<API_KEY>"` placeholders)
+> - Skip documenting deprecated endpoints (mark as deprecated)
+> - Forget to document query parameters and headers
+> - Use vague descriptions ("Gets data")
+
+---
+
+## Troubleshooting
+
+### Issue: Swagger UI not loading
+- **Solution**: Check CORS settings, ensure `/docs` route not blocked, verify base URL
+
+### Issue: Endpoints not appearing in docs
+- **Solution**: Verify decorators/annotations present, check include/exclude paths, rebuild docs
+
+### Issue: Authentication not working in Try-it-out
+- **Solution**: Add `@ApiSecurity` decorator, configure auth in OpenAPI config, check CORS
+
+### Issue: Schemas not showing types
+- **Solution**: Use DTO/Schema classes with decorators, enable metadata reflection
 
 ---
 
 ## AI Self-Check
 
-- [ ] Swagger/OpenAPI configured
-- [ ] All endpoints documented
-- [ ] Authentication documented
-- [ ] Request/response schemas defined
-- [ ] Try-it-out works
-- [ ] Docs accessible at /api-docs or /api/docs
+- [ ] OpenAPI/Swagger configured and accessible
+- [ ] All endpoints documented with summaries
+- [ ] Authentication/security schemes documented
+- [ ] Request/response schemas defined with examples
+- [ ] Error responses documented (400, 401, 404, 500)
+- [ ] Rate limiting documented (if applicable)
+- [ ] API versioning strategy documented
+- [ ] Try-it-out functionality works
+- [ ] OpenAPI spec validates without errors
+- [ ] CI/CD generates and validates spec
+- [ ] Docs kept in sync with code changes
 
 ---
 

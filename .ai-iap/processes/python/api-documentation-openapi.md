@@ -97,12 +97,135 @@ def get_user(user_id):
 
 ---
 
+## Phase 4: Security & Versioning
+
+### 4.1 Document Authentication (FastAPI)
+
+**JWT Security**:
+```python
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
+
+@app.get("/protected", dependencies=[Depends(security)])
+async def protected_route():
+    """Protected endpoint requiring JWT token"""
+    pass
+```
+
+**OAuth 2.0**:
+```python
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.get("/users/me")
+async def read_users_me(token: str = Depends(oauth2_scheme)):
+    """Get current user. Requires OAuth 2.0 token"""
+    pass
+```
+
+### 4.2 API Versioning
+
+**URL Versioning**:
+```python
+app = FastAPI()
+
+v1 = FastAPI(title="My API V1", version="1.0.0")
+v2 = FastAPI(title="My API V2", version="2.0.0")
+
+app.mount("/api/v1", v1)
+app.mount("/api/v2", v2)
+```
+
+### 4.3 Rate Limiting Documentation
+
+**Document Limits**:
+```python
+@app.get("/users", 
+    summary="Get users",
+    description="Rate limit: 100 requests/minute per user",
+    responses={
+        200: {"description": "Success"},
+        429: {"description": "Too Many Requests"}
+    })
+async def get_users():
+    pass
+```
+
+---
+
+## Phase 5: CI/CD Integration
+
+> **ALWAYS**:
+> - Export OpenAPI JSON/YAML
+> - Validate spec in CI/CD
+> - Version control the spec
+
+**Export Spec** (FastAPI):
+```python
+import json
+from app import app
+
+with open("openapi.json", "w") as f:
+    json.dump(app.openapi(), f)
+```
+
+**CI/CD**:
+```yaml
+- name: Generate OpenAPI Spec
+  run: |
+    python -c "import json; from app import app; json.dump(app.openapi(), open('openapi.json', 'w'))"
+    npx @openapitools/openapi-generator-cli validate -i openapi.json
+```
+
+---
+
+## Best Practices
+
+> **ALWAYS**:
+> - Use Pydantic models for request/response schemas
+> - Add docstrings to all endpoints (auto-included in docs)
+> - Document all response codes with `responses` parameter
+> - Use `tags` to group related endpoints
+> - Provide examples with `example` in schema fields
+
+> **NEVER**:
+> - Return raw dict without Pydantic model (breaks schema generation)
+> - Include sensitive data in examples
+> - Skip documenting error responses
+> - Use generic descriptions ("Get data")
+
+---
+
+## Troubleshooting
+
+### Issue: Docs not showing at /docs
+- **Solution**: Ensure `docs_url="/docs"` in FastAPI(), check if disabled in production
+
+### Issue: Schemas not appearing correctly
+- **Solution**: Use Pydantic models, not plain dicts; ensure `response_model` specified
+
+### Issue: Authentication not working in Try-it-out
+- **Solution**: Add security scheme configuration, check CORS settings
+
+### Issue: Want to customize Swagger UI
+- **Solution**: Use `swagger_ui_parameters` in FastAPI() for custom configuration
+
+---
+
 ## AI Self-Check
 
-- [ ] OpenAPI docs auto-generated
-- [ ] Swagger UI accessible
-- [ ] All endpoints documented
-- [ ] Schemas defined with Pydantic/Marshmallow
+- [ ] OpenAPI documentation auto-generated
+- [ ] Swagger UI accessible at `/docs`
+- [ ] ReDoc accessible at `/redoc` (FastAPI)
+- [ ] All endpoints documented with docstrings
+- [ ] Pydantic models used for schemas
+- [ ] Authentication/security documented
+- [ ] Error responses documented (400, 401, 404, 422, 500)
+- [ ] API versioning configured (if needed)
+- [ ] OpenAPI spec can be exported for CI/CD
+- [ ] Try-it-out functionality works
 
 ---
 
