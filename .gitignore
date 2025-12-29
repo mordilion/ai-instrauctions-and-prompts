@@ -36,7 +36,12 @@ DOCUMENTATION_UPDATES.md
 COMPREHENSIVE_SYSTEM_ANALYSIS.md
 PROCESS_FILES_REVIEW.md
 OPTIMIZATIONS_COMPLETE.md
-COMPREHENSIVE_CONFLICT_ANALYSIS.md
+
+# AI compatibility test results
+.github/scripts/test-results/
+.github/scripts/analysis-report.md
+.github/scripts/node_modules/
+.github/scripts/package-lock.json
 
 # ============================================================================
 # Development Files
