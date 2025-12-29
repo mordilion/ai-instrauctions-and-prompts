@@ -1,305 +1,250 @@
 # Ktor Framework
 
-## Overview
-Ktor: Lightweight, Kotlin-native asynchronous web framework built by JetBrains, fully embracing coroutines.
-Unopinionated and modular - you choose components (routing, serialization, auth) you need.
-Best for microservices, APIs, and when you want a lightweight Kotlin-first framework without Spring's complexity.
+> **Scope**: Apply these rules when working with Ktor applications
+> **Applies to**: Kotlin files in Ktor projects
+> **Extends**: kotlin/architecture.md, kotlin/code-style.md
+> **Precedence**: Framework rules OVERRIDE Kotlin rules for Ktor-specific patterns
 
-## Application Setup
+## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
 
+> **ALWAYS**: Use suspend functions for all I/O operations
+> **ALWAYS**: Use content negotiation for JSON (kotlinx.serialization)
+> **ALWAYS**: Use routing DSL for endpoints
+> **ALWAYS**: Use dependency injection (Koin recommended)
+> **ALWAYS**: Use typed routes with type-safe routing
+> 
+> **NEVER**: Use blocking I/O in route handlers
+> **NEVER**: Skip content negotiation setup
+> **NEVER**: Use global mutable state
+> **NEVER**: Forget to install plugins (ContentNegotiation, etc.)
+> **NEVER**: Skip authentication for protected routes
+
+## Pattern Selection
+
+| Pattern | Use When | Keywords |
+|---------|----------|----------|
+| Routing DSL | Define endpoints | `routing { get("/") {} }` |
+| Content Negotiation | JSON/XML serialization | `install(ContentNegotiation)` |
+| Type-safe Routing | Type-safe URLs | Resources, typed routes |
+| Koin DI | Dependency injection | `inject()`, modules |
+| Suspend Functions | Async operations | `suspend fun`, coroutines |
+
+## Core Patterns
+
+### Application Setup
 ```kotlin
-fun main() {
-    embeddedServer(Netty, port = 8080) {
-        configureRouting()
-        configureSerialization()
-        configureSecurity()
-    }.start(wait = true)
-}
-
-fun Application.configureSerialization() {
+fun Application.module() {
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
-            ignoreUnknownKeys = true
+            isLenient = true
         })
+    }
+    
+    install(StatusPages) {
+        exception<Throwable> { call, cause ->
+            call.respondText("Error: ${cause.message}", status = HttpStatusCode.InternalServerError)
+        }
+    }
+    
+    routing {
+        userRoutes()
     }
 }
 ```
 
-## Routing
-
+### Routing
 ```kotlin
-fun Route.userRoutes(service: UserService) {
+fun Route.userRoutes() {
     route("/users") {
         get {
-            call.respond(HttpStatusCode.OK, service.findAll())
+            val users = userService.getAll()
+            call.respond(users)
         }
         
         get("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            call.respond(HttpStatusCode.OK, service.findById(id))
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val user = userService.getById(id)
+                ?: return@get call.respond(HttpStatusCode.NotFound)
+            call.respond(user)
         }
         
         post {
-            val request = call.receive<CreateUserRequest>()
-            call.respond(HttpStatusCode.Created, service.create(request))
-        }
-        
-        put("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@put call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            val request = call.receive<UpdateUserRequest>()
-            call.respond(HttpStatusCode.OK, service.update(id, request))
-        }
-        
-        delete("/{id}") {
-            val id = call.parameters["id"]?.toLongOrNull()
-                ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            service.delete(id)
-            call.respond(HttpStatusCode.NoContent)
+            val user = call.receive<CreateUserRequest>()
+            val created = userService.create(user)
+            call.respond(HttpStatusCode.Created, created)
         }
     }
 }
 ```
 
-### Authentication
+### Data Classes with Serialization
 ```kotlin
-fun Route.authenticatedRoutes() {
-    authenticate("auth-jwt") {
-        get("/profile") {
-            val principal = call.principal<JWTPrincipal>()
-            val username = principal?.payload?.getClaim("username")?.asString()
-                ?: return@get call.respond(HttpStatusCode.Unauthorized)
-            call.respond(service.findByUsername(username))
-        }
-    }
-}
-```
-
-## Request Handling
-
-### Validation
-```kotlin
-sealed class ValidationResult {
-    data object Valid : ValidationResult()
-    data class Invalid(val errors: List<String>) : ValidationResult()
-}
-
-fun CreateUserRequest.validate(): ValidationResult {
-    val errors = mutableListOf<String>()
-    if (name.isBlank()) errors.add("Name required")
-    if (!email.matches(Regex(".+@.+"))) errors.add("Invalid email")
-    return if (errors.isEmpty()) ValidationResult.Valid else ValidationResult.Invalid(errors)
-}
-
-post {
-    val request = call.receive<CreateUserRequest>()
-    when (val result = request.validate()) {
-        is ValidationResult.Valid -> call.respond(HttpStatusCode.Created, service.create(request))
-        is ValidationResult.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("errors" to result.errors))
-    }
-}
-```
-
-## Services
-
-```kotlin
-class UserService(
-    private val repository: UserRepository,
-    private val emailService: EmailService
-) {
-    suspend fun findAll(): List<UserDTO> = withContext(Dispatchers.IO) {
-        repository.findAll().map { it.toDTO() }
-    }
-    
-    suspend fun create(request: CreateUserRequest): UserDTO = withContext(Dispatchers.IO) {
-        val user = User(name = request.name, email = request.email)
-        val saved = repository.save(user)
-        launch { emailService.sendWelcome(saved.email) }
-        saved.toDTO()
-    }
-}
-```
-
-## Exception Handling
-
-```kotlin
-sealed class AppException(message: String) : RuntimeException(message) {
-    class NotFoundException(message: String) : AppException(message)
-    class ConflictException(message: String) : AppException(message)
-}
-
-fun Application.configureStatusPages() {
-    install(StatusPages) {
-        exception<NotFoundException> { call, cause ->
-            call.respond(HttpStatusCode.NotFound, ErrorResponse(404, cause.message ?: ""))
-        }
-        exception<ConflictException> { call, cause ->
-            call.respond(HttpStatusCode.Conflict, ErrorResponse(409, cause.message ?: ""))
-        }
-        exception<Throwable> { call, cause ->
-            call.application.log.error("Unhandled", cause)
-            call.respond(HttpStatusCode.InternalServerError, ErrorResponse(500, "Internal error"))
-        }
-    }
-}
+import kotlinx.serialization.Serializable
 
 @Serializable
-data class ErrorResponse(val status: Int, val message: String, val timestamp: String = Instant.now().toString())
+data class User(
+    val id: Int,
+    val name: String,
+    val email: String
+)
+
+@Serializable
+data class CreateUserRequest(
+    val name: String,
+    val email: String
+)
 ```
 
-## Authentication & Security
-
-### JWT
+### Dependency Injection (Koin)
 ```kotlin
-fun Application.configureSecurity() {
-    val jwtSecret = environment.config.property("jwt.secret").getString()
-    val jwtAudience = environment.config.property("jwt.audience").getString()
+val appModule = module {
+    single { UserRepository() }
+    single { UserService(get()) }
+}
+
+fun Application.module() {
+    install(Koin) {
+        modules(appModule)
+    }
     
-    install(Authentication) {
-        jwt("auth-jwt") {
-            verifier(JWT.require(Algorithm.HMAC256(jwtSecret)).build())
-            validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience))
-                    JWTPrincipal(credential.payload)
-                else null
-            }
+    routing {
+        get("/users") {
+            val userService by inject<UserService>()
+            call.respond(userService.getAll())
         }
     }
 }
+```
 
-class JwtService(private val secret: String, private val audience: String) {
-    fun generateToken(username: String): String =
-        JWT.create()
-            .withAudience(audience)
-            .withClaim("username", username)
-            .withExpiresAt(Date(System.currentTimeMillis() + 3_600_000))
-            .sign(Algorithm.HMAC256(secret))
+## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+
+| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
+|---------|---------|-----------|--------------|
+| **Blocking I/O** | Regular functions for DB/HTTP | `suspend fun` | Blocks coroutines |
+| **No ContentNegotiation** | Manual JSON parsing | `install(ContentNegotiation)` | No auto-serialization |
+| **Global State** | `val db = Database()` at top level | Dependency injection | Not thread-safe |
+| **Missing Plugins** | Forget to install features | Install all needed plugins | Features don't work |
+| **String Routes Only** | All routes as strings | Type-safe routing | No compile-time safety |
+
+### Anti-Pattern: Blocking I/O (KILLS PERFORMANCE)
+```kotlin
+// ❌ WRONG - Blocking I/O
+get("/users") {
+    val users = database.query("SELECT * FROM users")  // Blocks!
+    call.respond(users)
+}
+
+// ✅ CORRECT - Suspend function
+get("/users") {
+    val users = database.queryAsync("SELECT * FROM users")  // Non-blocking
+    call.respond(users)
+}
+```
+
+### Anti-Pattern: No Content Negotiation
+```kotlin
+// ❌ WRONG - Manual JSON
+get("/users") {
+    val users = userService.getAll()
+    val json = Json.encodeToString(users)  // Manual!
+    call.respondText(json, ContentType.Application.Json)
+}
+
+// ✅ CORRECT - Auto-serialization
+install(ContentNegotiation) {
+    json()
+}
+
+get("/users") {
+    val users = userService.getAll()
+    call.respond(users)  // Auto-serialized to JSON
+}
+```
+
+## AI Self-Check (Verify BEFORE generating Ktor code)
+
+- [ ] Using suspend functions for I/O?
+- [ ] ContentNegotiation installed and configured?
+- [ ] Routing DSL for endpoints?
+- [ ] @Serializable on data classes?
+- [ ] Dependency injection (Koin)?
+- [ ] StatusPages for error handling?
+- [ ] Type-safe routing where appropriate?
+- [ ] No blocking I/O?
+- [ ] Authentication configured for protected routes?
+- [ ] Following Ktor conventions?
+
+## Plugins
+
+```kotlin
+install(CallLogging) {
+    level = Level.INFO
+}
+
+install(CORS) {
+    anyHost()
+    allowHeader(HttpHeaders.ContentType)
+}
+
+install(Authentication) {
+    jwt("auth-jwt") {
+        verifier(JWTVerifier())
+        validate { credential ->
+            if (credential.payload.audience.contains("app"))
+                JWTPrincipal(credential.payload)
+            else null
+        }
+    }
+}
+```
+
+## Type-Safe Routing
+
+```kotlin
+@Resource("/users")
+class Users {
+    @Resource("{id}")
+    class Id(val parent: Users = Users(), val id: Int)
+}
+
+fun Route.userRoutes() {
+    get<Users> {
+        call.respond(userService.getAll())
+    }
+    
+    get<Users.Id> { user ->
+        call.respond(userService.getById(user.id))
+    }
 }
 ```
 
 ## Testing
 
 ```kotlin
-class UserRoutesTest {
-    @Test
-    fun `GET users returns list`() = testApplication {
-        application { configureRouting() }
-        
-        val response = client.get("/api/users")
-        
-        assertEquals(HttpStatusCode.OK, response.status)
-        val users = response.body<List<UserDTO>>()
-        assertTrue(users.isNotEmpty())
-    }
-    
-    @Test
-    fun `POST user creates new user`() = testApplication {
-        application { configureRouting() }
-        
-        val response = client.post("/api/users") {
-            contentType(ContentType.Application.Json)
-            setBody(CreateUserRequest("John", "john@test.com"))
-        }
-        
-        assertEquals(HttpStatusCode.Created, response.status)
+@Test
+fun testGetUsers() = testApplication {
+    client.get("/users").apply {
+        assertEquals(HttpStatusCode.OK, status)
+        assertTrue(bodyAsText().contains("users"))
     }
 }
 ```
 
-## Best Practices
+## Key Features
 
-**MUST**:
-- Use `suspend` functions in route handlers (coroutines are core to Ktor)
-- Use ContentNegotiation plugin with JSON serialization
-- Use StatusPages plugin for error handling
-- Validate input explicitly (no automatic validation like Spring)
-- Install authentication/authorization plugins when needed
+| Feature | Purpose | Plugin |
+|---------|---------|--------|
+| Routing | Define endpoints | Built-in |
+| ContentNegotiation | Serialization | `ContentNegotiation` |
+| Authentication | Auth/authz | `Authentication` |
+| WebSockets | Real-time | `WebSockets` |
+| StatusPages | Error handling | `StatusPages` |
 
-**SHOULD**:
-- Use Koin or manual DI (Ktor has no built-in DI)
-- Use extension functions for common response patterns
-- Use sealed classes for API responses
-- Structure routes in separate functions/files
-- Use CallLogging plugin for request logging
+## Key Libraries
 
-**AVOID**:
-- Blocking calls in suspend route handlers
-- Manual JSON parsing (use ContentNegotiation)
-- Not handling exceptions (install StatusPages)
-- Returning domain entities (use DTOs)
-- Complex logic in routes (move to services)
-
-## Common Patterns
-
-### Dependency Injection (Manual or Koin)
-```kotlin
-// ✅ GOOD: Simple service container
-object ServiceContainer {
-    val database by lazy { Database.connect() }
-    val userRepository by lazy { UserRepository(database) }
-    val userService by lazy { UserService(userRepository) }
-}
-
-// Usage in routes
-fun Route.userRoutes() {
-    val service = ServiceContainer.userService
-    
-    get("/users") {
-        call.respond(service.findAll())
-    }
-}
-
-// ✅ GOOD: Koin (more sophisticated)
-val appModule = module {
-    single { Database.connect() }
-    single { UserRepository(get()) }
-    single { UserService(get()) }
-}
-```
-
-### Extension Functions for Common Patterns
-```kotlin
-// ✅ GOOD: Useful extensions
-suspend fun ApplicationCall.respondCreated(data: Any) =
-    respond(HttpStatusCode.Created, data)
-
-suspend fun ApplicationCall.respondNotFound(message: String = "Not found") =
-    respond(HttpStatusCode.NotFound, mapOf("error" to message))
-
-fun Parameters.getLongOrNull(name: String) = this[name]?.toLongOrNull()
-
-// Usage
-post("/users") {
-    val user = service.create(call.receive())
-    call.respondCreated(user)  // Clean!
-}
-```
-
-### Error Handling Pattern
-```kotlin
-// ✅ GOOD: Centralized error handling
-sealed class AppException(message: String) : RuntimeException(message) {
-    class NotFoundException(message: String) : AppException(message)
-    class ValidationException(message: String) : AppException(message)
-}
-
-fun Application.configureStatusPages() {
-    install(StatusPages) {
-        exception<NotFoundException> { call, cause ->
-            call.respond(HttpStatusCode.NotFound, ErrorResponse(404, cause.message ?: ""))
-        }
-        exception<ValidationException> { call, cause ->
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(400, cause.message ?: ""))
-        }
-    }
-}
-
-// ❌ BAD: No error handling
-get("/users/{id}") {
-    val id = call.parameters["id"]?.toLongOrNull()!!  // Crash if null!
-    val user = service.findById(id)  // Crash if not found!
-    call.respond(user)
-}
-```
+- **kotlinx.serialization**: JSON serialization
+- **Koin**: Dependency injection
+- **Exposed**: SQL database
+- **ktor-client**: HTTP client
