@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - PHP
+# CI/CD Implementation Process - PHP (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for PHP applications
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working PHP application (8.1+ recommended)
+> - Working PHP application
 > - Git repository with remote (GitHub)
 > - Composer configured (composer.json)
 > - Tests exist (PHPUnit, Pest)
+> - PHP version defined in composer.json
 
 ---
 
@@ -30,13 +33,18 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - PHP version matrix (8.1, 8.2, 8.3)
+> - PHP version from project (read from composer.json `require.php` or `platform.php`)
 > - Setup with shivammathur/setup-php@v2
 > - Composer caching (~/.composer/cache)
 > - Install dependencies (`composer install --prefer-dist --no-progress`)
 > - Run linter (PHP_CodeSniffer, PHP CS Fixer)
 > - Run tests with PHPUnit/Pest
 > - Collect coverage with Xdebug or PCOV
+
+> **Version Strategy**:
+> - **Best**: Use composer.json `require.php` constraint (e.g., "php": "^8.2")
+> - **Good**: Use composer.json `platform.php` for CI consistency
+> - **Matrix**: Test against multiple versions (8.1, 8.2, 8.3) if library
 
 > **NEVER**:
 > - Use `composer install` without `--no-dev` in production

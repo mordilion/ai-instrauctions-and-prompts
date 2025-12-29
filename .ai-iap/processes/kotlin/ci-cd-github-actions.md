@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - Java
+# CI/CD Implementation Process - Kotlin (GitHub Actions)
 
-> **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Java applications
+> **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Kotlin applications
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working Java application (Java 11+ recommended)
+> - Working Kotlin application
 > - Git repository with remote (GitHub)
-> - Build tool configured (Maven or Gradle)
-> - Tests exist (JUnit 5, Mockito)
+> - Gradle configured (Kotlin DSL preferred)
+> - Tests exist (JUnit 5, Kotest, MockK)
+> - Kotlin/JVM version defined in build.gradle.kts
 
 ---
 
@@ -25,61 +28,72 @@ main → ci/basic-pipeline
 
 > **ALWAYS**:
 > - Create `.github/workflows/` directory
-> - Name workflow file `maven.yml` or `gradle.yml`
+> - Name workflow file `kotlin.yml` or `gradle.yml`
 
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Java version matrix (11, 17, 21)
+> - Java/Kotlin version from project (read from build.gradle.kts `jvmToolchain` or `sourceCompatibility`)
 > - Setup with actions/setup-java@v3
-> - Dependency caching (Maven: ~/.m2, Gradle: ~/.gradle)
-> - Build command (mvn clean install or gradle build)
-> - Run tests with JUnit
-> - Collect coverage with JaCoCo
+> - Gradle caching (~/.gradle/caches, ~/.gradle/wrapper)
+> - Build command (`gradle build`)
+> - Run tests with JUnit/Kotest
+> - Collect coverage with JaCoCo or Kover
+
+> **Version Strategy**:
+> - **Best**: Use Gradle Toolchain: `kotlin { jvmToolchain(21) }`
+> - **Good**: Read from `sourceCompatibility` or `targetCompatibility`
+> - **Matrix**: Test against multiple JDK versions if library
 
 > **NEVER**:
-> - Skip tests in CI (`mvn install -DskipTests`)
-> - Use outdated Java versions in production
+> - Skip tests (`-x test`)
+> - Use outdated Kotlin/JVM versions
 > - Ignore compiler warnings
-> - Commit wrapper binaries (mvnw, gradlew) without verification
+> - Commit Gradle wrapper without verification
 
-**Maven Workflow**:
-- Restore: automatic with actions/setup-java cache
-- Build: `mvn clean install -B`
-- Test: included in install phase
-- Verify: `mvn verify -B`
-
-**Gradle Workflow**:
-- Restore: `gradle dependencies`
-- Build: `gradle build`
-- Test: `gradle test`
-- Validate: `gradle check`
+**Key Workflow Structure**:
+- Trigger: push (main/develop), pull_request
+- Jobs: lint → test → build
+- Setup: actions/setup-java@v3 with Kotlin
+- Cache: Gradle dependencies
 
 ### 1.3 Coverage Reporting
 
 > **ALWAYS**:
-> - Use JaCoCo plugin
+> - Use Kover (Kotlin-first) or JaCoCo
 > - Generate XML/HTML reports
 > - Upload to Codecov/Coveralls
 > - Set minimum coverage threshold (80%+)
 
-**JaCoCo Configuration**:
-- Maven: jacoco-maven-plugin
-- Gradle: jacoco plugin
-- Reports: XML for CI, HTML for review
+**Kover Configuration**:
+```kotlin
+// build.gradle.kts
+plugins {
+    id("org.jetbrains.kotlinx.kover") version "0.7.4"
+}
+
+kover {
+    report {
+        defaults {
+            xml { onCheck = true }
+            html { onCheck = true }
+        }
+    }
+}
+```
 
 ### 1.4 Commit & Verify
 
 > **Git workflow**:
 > ```
 > git add .github/workflows/
-> git commit -m "ci: add basic Java build and test pipeline"
+> git commit -m "ci: add basic Kotlin build and test pipeline"
 > git push origin ci/basic-pipeline
 > ```
 
 > **Verify**:
 > - Pipeline runs on push
-> - Builds succeed across Java versions
+> - Builds succeed across JDK versions
 > - Tests execute with results
 > - Coverage report generated
 > - Cache working (check run times)
@@ -96,48 +110,58 @@ main → ci/quality-security
 ### 2.1 Code Quality Analysis
 
 > **ALWAYS include**:
-> - Checkstyle (google_checks.xml or sun_checks.xml)
-> - PMD for static analysis
-> - SpotBugs for bug detection
+> - ktlint for linting (formatting + style)
+> - detekt for static analysis
 > - Fail build on violations
 
 > **NEVER**:
 > - Suppress warnings globally
 > - Skip linter configuration
-> - Allow critical bugs in new code
+> - Allow critical issues in new code
 
-**Maven Plugins**:
-- maven-checkstyle-plugin
-- maven-pmd-plugin
-- spotbugs-maven-plugin
+**ktlint Configuration**:
+```kotlin
+// build.gradle.kts
+plugins {
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
+}
 
-**Gradle Plugins**:
-- checkstyle
-- pmd
-- com.github.spotbugs
+ktlint {
+    version.set("1.0.1")
+    android.set(false) // or true for Android
+}
+```
+
+**detekt Configuration**:
+```kotlin
+// build.gradle.kts
+plugins {
+    id("io.gitlab.arturbosch.detekt") version "1.23.4"
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$projectDir/detekt.yml")
+}
+```
 
 ### 2.2 Dependency Security Scanning
 
 > **ALWAYS include**:
 > - Dependabot configuration (`.github/dependabot.yml`)
-> - OWASP Dependency-Check
+> - OWASP Dependency-Check or Snyk
 > - Fail on known vulnerabilities (CVSS ≥7)
 
 > **Dependabot Config**:
-> - Package ecosystem: maven or gradle
+> - Package ecosystem: gradle
 > - Schedule: weekly
 > - Open PR limit: 5
-
-**Dependency Check**:
-- Maven: `dependency-check-maven`
-- Gradle: `org.owasp.dependencycheck`
-- Generate reports, fail on high severity
 
 ### 2.3 Static Analysis (SAST)
 
 > **ALWAYS**:
 > - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: java
+> - Configure languages: kotlin (or java for Kotlin/JVM)
 > - Run on schedule (weekly) + push to main
 > - Review alerts in GitHub Security tab
 
@@ -149,13 +173,13 @@ main → ci/quality-security
 
 > **Git workflow**:
 > ```
-> git add .github/dependabot.yml .github/workflows/codeql.yml pom.xml
+> git add .github/dependabot.yml .github/workflows/codeql.yml build.gradle.kts
 > git commit -m "ci: add code quality and security scanning"
 > git push origin ci/quality-security
 > ```
 
 > **Verify**:
-> - Checkstyle, PMD, SpotBugs run
+> - ktlint and detekt run during CI
 > - Violations cause build failures
 > - Dependabot creates update PRs
 > - CodeQL scan completes
@@ -176,7 +200,7 @@ main → ci/deployment
 > - Define environments: dev, staging, production
 > - Use GitHub Environments with protection rules
 > - Store secrets per environment (DB credentials, API keys)
-> - Use Spring Profiles or application.properties per environment
+> - Use Ktor config files or Spring profiles
 
 > **Protection Rules**:
 > - Production: require approval, restrict to main branch
@@ -186,26 +210,20 @@ main → ci/deployment
 ### 3.2 Build & Package Artifacts
 
 > **ALWAYS**:
-> - Package as JAR/WAR (`mvn package` or `gradle bootJar`)
-> - Version artifacts (Maven: version in pom.xml, Gradle: version in build.gradle)
+> - Package as JAR (`gradle shadowJar` for fat JAR)
+> - Version artifacts (version in build.gradle.kts)
 > - Upload artifacts with retention policy
-> - Create executable JAR (Spring Boot, fat JAR)
+> - Create executable JAR with main class
 
 > **NEVER**:
-> - Include application-local.properties in artifacts
+> - Include local.properties in artifacts
 > - Package without optimization
 > - Ship test dependencies
 
-**Maven Package**:
-```bash
-mvn clean package -DskipTests -B
-# Output: target/*.jar or target/*.war
-```
-
 **Gradle Package**:
 ```bash
-gradle bootJar --no-daemon
-# Output: build/libs/*.jar
+gradle shadowJar --no-daemon
+# Output: build/libs/*-all.jar
 ```
 
 ### 3.3 Deployment Jobs
@@ -216,55 +234,51 @@ gradle bootJar --no-daemon
 - Use aws-actions/configure-aws-credentials
 - Upload JAR to S3
 - Deploy to Elastic Beanstalk or ECS
-- Lambda: package with AWS Lambda Java runtime
 
-**Azure (App Service / Container Apps)**:
+**Azure (App Service / Container Apps / Functions)**:
 - Use azure/webapps-deploy@v2
-- Upload JAR via FTP or Azure CLI
-- Deploy to Azure Spring Apps (optimized for Spring Boot)
+- Upload JAR via Azure CLI
+- Deploy to Azure Spring Apps
 
 **Google Cloud (App Engine / Cloud Run)**:
 - Use google-github-actions/setup-gcloud
-- Deploy JAR to App Engine standard/flexible
-- Cloud Run: containerize JAR and deploy
+- Deploy to App Engine or Cloud Run (containerized)
 
 **Docker Registry**:
-- Build Dockerfile (multi-stage: Maven/Gradle build → JRE runtime)
+- Build Dockerfile (multi-stage: Gradle build → JRE runtime)
 - Push to Docker Hub, GHCR, ECR, GCR
 - Tag with git SHA + semver
 
-**Heroku**:
-- Use Procfile: `web: java -jar target/*.jar`
-- Deploy with Heroku CLI or GitHub integration
+**Android (Google Play)**:
+- Build APK: `gradle assembleRelease`
+- Build AAB: `gradle bundleRelease`
+- Sign with keystore (stored as secret)
+- Upload to Google Play Console
 
 ### 3.4 Database Migrations
 
 > **ALWAYS**:
-> - Use Flyway or Liquibase
+> - Use Flyway or Liquibase (or Exposed migrations)
 > - Run migrations before app deployment
 > - Test migrations in staging first
 > - Version control all migration scripts
 
 > **NEVER**:
-> - Run migrations on app start in production (security risk)
+> - Run migrations on app start in production
 > - Skip migration testing
 > - Deploy app before migrations complete
 
-**Flyway/Liquibase Commands**:
+**Flyway Commands**:
 ```bash
-# Flyway
-mvn flyway:migrate -Dflyway.url=$DB_URL
-
-# Liquibase
-mvn liquibase:update -Dliquibase.url=$DB_URL
+gradle flywayMigrate -Dflyway.url=$DB_URL
 ```
 
 ### 3.5 Smoke Tests Post-Deploy
 
 > **ALWAYS include**:
-> - Health check endpoint (`/actuator/health` for Spring Boot)
+> - Health check endpoint (`/health` or `/actuator/health`)
 > - Database connectivity check
-> - Cache/Redis connectivity
+> - Cache/Redis connectivity check
 > - External API integration check
 
 > **NEVER**:
@@ -301,8 +315,8 @@ main → ci/advanced
 ### 4.1 Performance Testing
 
 > **ALWAYS**:
-> - JMH (Java Microbenchmark Harness) for micro-benchmarks
-> - Load testing with Gatling, JMeter, or k6
+> - kotlinx-benchmark for micro-benchmarks
+> - Gatling or k6 for load testing
 > - Track response times and memory usage
 > - Fail if performance degrades >10%
 
@@ -310,9 +324,9 @@ main → ci/advanced
 
 > **ALWAYS**:
 > - Separate workflow (`integration-tests.yml`)
-> - Use Testcontainers for database/Redis
-> - Spring Boot: @SpringBootTest with test profiles
+> - Use Testcontainers
 > - Run on schedule (nightly) + release tags
+> - Separate test database
 
 > **NEVER**:
 > - Use real production databases
@@ -322,8 +336,7 @@ main → ci/advanced
 ### 4.3 Release Automation
 
 > **Semantic Versioning**:
-> - Maven: maven-release-plugin
-> - Gradle: semantic-release or nebula-release
+> - Use semantic-release or Gradle release plugin
 > - Generate CHANGELOG from conventional commits
 > - Create GitHub Releases with notes
 > - Publish to Maven Central (if library)
@@ -333,11 +346,11 @@ main → ci/advanced
 > **If creating libraries**:
 > - Configure GPG signing
 > - Publish to OSSRH (Sonatype)
-> - Include sources and javadoc JARs
+> - Include sources and Dokka documentation
 > - Validate POM metadata
 
 > **ALWAYS**:
-> - Set groupId, artifactId, version
+> - Set group, artifactId, version
 > - Include license, developers, SCM
 > - Sign artifacts with GPG key
 
@@ -372,53 +385,47 @@ main → ci/advanced
 
 ## Framework-Specific Notes
 
-### Spring Boot
-- Package: `mvn spring-boot:build-image` for OCI image
+### Ktor
+- Build: `gradle shadowJar` (fat JAR with embedded server)
+- Engine: Netty, CIO, or Jetty
+- Health: custom `/health` endpoint
+- Fast startup, lightweight
+
+### Spring Boot (Kotlin)
+- Build: `gradle bootJar`
+- Kotlin DSL for configuration
 - Health: `/actuator/health`
-- Metrics: `/actuator/metrics` (Prometheus, Micrometer)
-- Profile: `-Dspring.profiles.active=production`
-
-### Quarkus
-- Native build: `mvn package -Pnative` (GraalVM)
-- JVM build: `mvn package` (uber-jar)
-- Dev mode: not for production
-- Extremely fast startup (ideal for serverless)
-
-### Micronaut
-- Build: `gradle shadowJar` (fat JAR)
-- Native: GraalVM native-image
-- Health: `/health`
-- Lightweight and cloud-native
-
-### Jakarta EE / Java EE
-- Package as WAR for application servers (WildFly, Payara)
-- Deploy to server using CLI or web console
-- Use MicroProfile for cloud-native features
+- Coroutines support
 
 ### Android
 - Build APK: `gradle assembleRelease`
-- Build AAB: `gradle bundleRelease`
-- Sign with keystore
-- Upload to Google Play Console
+- Build AAB: `gradle bundleRelease` (required for Play Store)
+- Sign with release keystore
+- ProGuard/R8 for minification
+
+### Exposed (ORM)
+- Migrations with Flyway or custom scripts
+- Transaction blocks in code
+- Type-safe SQL DSL
 
 ---
 
 ## Common Issues & Solutions
 
-### Issue: Maven dependencies not resolving in CI
-- **Solution**: Check settings.xml for auth, commit .mvn/wrapper files
-
 ### Issue: Gradle build fails with "daemon not found"
 - **Solution**: Use `--no-daemon` flag in CI
 
-### Issue: Tests pass locally but fail in CI
-- **Solution**: Check timezone, locale, file paths (absolute vs relative)
+### Issue: Kotlin compiler OOM error
+- **Solution**: Increase Gradle heap: `org.gradle.jvmargs=-Xmx4g`
 
-### Issue: Deployment fails with "port already in use"
-- **Solution**: Gracefully stop old process before starting new one
+### Issue: Tests pass locally but fail in CI
+- **Solution**: Check timezone, locale, coroutine dispatchers (use TestDispatchers)
+
+### Issue: Android build fails with signing error
+- **Solution**: Verify keystore secret encoding (base64), check alias and passwords
 
 ### Issue: Coverage reports not generated
-- **Solution**: Ensure JaCoCo plugin configured, run `verify` phase (Maven)
+- **Solution**: Ensure Kover/JaCoCo plugin configured, run `koverXmlReport` or `verify`
 
 ---
 
@@ -427,10 +434,10 @@ main → ci/advanced
 Before completing this process, verify:
 
 - [ ] CI pipeline runs on push and PR
-- [ ] Java version pinned (in workflow)
+- [ ] Kotlin/JDK version pinned
 - [ ] Builds succeed without warnings
 - [ ] All tests pass with coverage ≥80%
-- [ ] Code quality tools enabled (Checkstyle, PMD, SpotBugs)
+- [ ] Code quality tools enabled (ktlint, detekt)
 - [ ] Security scanning enabled (CodeQL, Dependabot, OWASP)
 - [ ] Dependencies up to date
 - [ ] Artifacts packaged with correct versioning

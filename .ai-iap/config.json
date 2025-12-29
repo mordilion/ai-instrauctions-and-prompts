@@ -60,9 +60,9 @@
           "file": "test-implementation",
           "description": "Establish flutter_test in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -138,9 +138,9 @@
           "file": "test-implementation",
           "description": "Establish NUnit testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -290,9 +290,9 @@
           "file": "test-implementation",
           "description": "Establish Jest/Vitest testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -465,9 +465,9 @@
           "file": "test-implementation",
           "description": "Establish JUnit 5 testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -559,9 +559,9 @@
           "file": "test-implementation",
           "description": "Establish pytest testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -660,9 +660,9 @@
           "file": "test-implementation",
           "description": "Establish PHPUnit testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -753,9 +753,9 @@
           "file": "test-implementation",
           "description": "Establish JUnit 5/Kotest testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {
@@ -862,9 +862,9 @@
           "file": "test-implementation",
           "description": "Establish XCTest testing in existing projects"
         },
-        "ci-cd-implementation": {
-          "name": "CI/CD Implementation",
-          "file": "ci-cd-implementation",
+        "ci-cd-github-actions": {
+          "name": "CI/CD (GitHub Actions)",
+          "file": "ci-cd-github-actions",
           "description": "Establish GitHub Actions CI/CD pipeline"
         },
         "logging-observability": {

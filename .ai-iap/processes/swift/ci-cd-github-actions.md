@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - Swift
+# CI/CD Implementation Process - Swift (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Swift applications (iOS, macOS, Server)
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Bitrise, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working Swift application (5.7+ recommended)
+> - Working Swift application
 > - Git repository with remote (GitHub)
 > - Xcode project or Package.swift (SPM)
 > - Tests exist (XCTest)
+> - Swift/Xcode version defined in .swift-version or xcodeproj
 
 ---
 
@@ -30,11 +33,16 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - macOS runner (macos-13, macos-14)
-> - Xcode version selection (xcode-select)
+> - macOS runner (read from workflow or use latest)
+> - Xcode version from project (read from `.xcode-version` or `.swift-version`)
 > - Build for specific scheme/destination
 > - Run tests with xcodebuild or swift test
 > - Collect coverage with xcov or xccov
+
+> **Version Strategy**:
+> - **Best**: Use `.xcode-version` file or `.swift-version` with `swiftenv`
+> - **Good**: Specify in workflow with `xcode-select` or `DEVELOPER_DIR`
+> - **iOS**: Match minimum deployment target from project settings
 
 > **NEVER**:
 > - Skip code signing setup for iOS

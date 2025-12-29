@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - .NET/C#
+# CI/CD Implementation Process - .NET/C# (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for .NET applications
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working .NET application (6.0+ recommended)
+> - Working .NET application
 > - Git repository with remote (GitHub)
 > - Solution (.sln) and project files (.csproj)
 > - Tests exist (xUnit/NUnit/MSTest)
+> - .NET version defined in .csproj or global.json
 
 ---
 
@@ -30,11 +33,16 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - .NET version matrix (6.0, 7.0, 8.0)
+> - .NET version from project (read from `global.json` or .csproj `<TargetFramework>`)
 > - Restore dependencies (`dotnet restore`)
 > - Build solution (`dotnet build --no-restore`)
 > - Run tests (`dotnet test --no-build --verbosity normal`)
 > - Collect coverage (coverlet, ReportGenerator)
+
+> **Version Strategy**:
+> - **Best**: Use `global.json` to pin SDK version: `dotnet new globaljson --sdk-version 8.0.100`
+> - **Good**: Read from .csproj `<TargetFramework>` (net8.0, net6.0, etc.)
+> - **Avoid**: Hardcoding version without project config
 
 > **NEVER**:
 > - Skip `--no-restore` and `--no-build` flags (wasteful rebuilds)
@@ -398,6 +406,13 @@ main → ci/advanced
 
 ### Issue: Migrations fail with timeout
 - **Solution**: Increase command timeout, split large migrations, check firewall rules
+
+### Issue: Want to use Azure DevOps / GitLab CI / CircleCI instead
+- **Solution**: Adapt workflow syntax to target platform:
+  - **Azure DevOps**: Native .NET support with `DotNetCoreCLI@2` tasks in azure-pipelines.yml
+  - **GitLab CI**: Use `mcr.microsoft.com/dotnet/sdk` image in .gitlab-ci.yml
+  - **CircleCI**: Use `cimg/dotnet` Docker image in .circleci/config.yml
+  - Core concepts remain the same: restore, build, test, publish
 
 ---
 

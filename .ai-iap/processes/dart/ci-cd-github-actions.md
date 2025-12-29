@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - Dart/Flutter
+# CI/CD Implementation Process - Dart/Flutter (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Dart/Flutter applications
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Codemagic, Bitrise, or CircleCI, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working Dart/Flutter application (3.0+ recommended)
+> - Working Dart/Flutter application
 > - Git repository with remote (GitHub)
 > - pubspec.yaml configured
 > - Tests exist (flutter_test, mocktail)
+> - Flutter/Dart version defined in pubspec.yaml or .fvmrc
 
 ---
 
@@ -30,13 +33,18 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Flutter version pinning (stable, beta channels)
+> - Flutter version from project (read from `.fvmrc`, pubspec.yaml `environment.sdk`, or pin to stable)
 > - Setup with subosito/flutter-action@v2
 > - Dependency caching (~/.pub-cache)
 > - Install dependencies (`flutter pub get`)
 > - Run analyzer (`flutter analyze`)
 > - Run tests (`flutter test`)
 > - Collect coverage with lcov
+
+> **Version Strategy**:
+> - **Best**: Use FVM (Flutter Version Management) with `.fvmrc` file
+> - **Good**: Specify in pubspec.yaml `environment: sdk: ">=3.0.0 <4.0.0"`
+> - **Channel**: Use `stable` for production, `beta` for early features
 
 > **NEVER**:
 > - Skip `flutter pub get` before tests

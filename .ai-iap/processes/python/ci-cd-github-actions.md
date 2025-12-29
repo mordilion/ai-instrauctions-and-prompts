@@ -1,16 +1,19 @@
-# CI/CD Implementation Process - Python
+# CI/CD Implementation Process - Python (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for Python applications
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
 
 ---
 
 ## Prerequisites
 
 > **BEFORE starting**:
-> - Working Python application (3.9+ recommended)
+> - Working Python application
 > - Git repository with remote (GitHub)
 > - Dependency management (requirements.txt, pyproject.toml, or poetry)
 > - Tests exist (pytest, unittest)
+> - Python version defined in pyproject.toml, .python-version, or runtime.txt
 
 ---
 
@@ -30,13 +33,18 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Python version matrix (3.9, 3.10, 3.11, 3.12)
+> - Python version from project (read from `.python-version`, `pyproject.toml`, or `runtime.txt`)
 > - Setup with actions/setup-python@v4
 > - Dependency caching (pip, poetry, pipenv)
 > - Install dependencies (`pip install -r requirements.txt` or `poetry install`)
 > - Run linter (ruff, flake8, pylint)
 > - Run tests with pytest
 > - Collect coverage with pytest-cov
+
+> **Version Strategy**:
+> - **Best**: Use `.python-version` file (pyenv standard) or `pyproject.toml` requires-python
+> - **Good**: Use runtime.txt (Heroku standard) or matrix with supported versions
+> - **Matrix**: Test against multiple versions (3.10, 3.11, 3.12) if library
 
 > **NEVER**:
 > - Use `pip install` without pinning versions

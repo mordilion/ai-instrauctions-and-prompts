@@ -1,6 +1,8 @@
-# CI/CD Implementation Process - TypeScript/Node.js
+# CI/CD Implementation Process - TypeScript/Node.js (GitHub Actions)
 
 > **Purpose**: Establish comprehensive CI/CD pipeline with GitHub Actions for TypeScript/Node.js projects
+
+> **Platform**: This guide is for **GitHub Actions**. For GitLab CI, Azure DevOps, CircleCI, or Jenkins, adapt the workflow syntax accordingly.
 
 ---
 
@@ -11,6 +13,7 @@
 > - Git repository with remote (GitHub)
 > - npm/yarn/pnpm configured
 > - Tests exist (unit/integration)
+> - Node.js version defined in package.json or .nvmrc
 
 ---
 
@@ -30,12 +33,17 @@ main → ci/basic-pipeline
 ### 1.2 Basic Build & Test Workflow
 
 > **ALWAYS include**:
-> - Node.js version matrix (18.x, 20.x, latest LTS)
+> - Node.js version from project (read from `.nvmrc`, `package.json` engines, or matrix with LTS versions)
 > - Dependency caching (npm/yarn/pnpm)
 > - `npm ci` for reproducible installs
 > - Run linter (ESLint/Biome)
 > - Run tests with coverage
 > - Build/compile step
+
+> **Version Strategy**:
+> - **Best**: Read from `.nvmrc` or `package.json` engines field
+> - **Good**: Use matrix with currently supported LTS versions
+> - **Avoid**: Hardcoding single version without justification
 
 > **NEVER**:
 > - Use `npm install` in CI (use `npm ci` for lockfile integrity)
@@ -325,7 +333,15 @@ main → ci/advanced
 - **Solution**: Verify environment name matches workflow, check secret names
 
 ### Issue: Build works locally but fails in CI
-- **Solution**: Use `.nvmrc` to pin Node version, check global dependencies
+- **Solution**: Use `.nvmrc` or `package.json` engines to specify Node version, check global dependencies
+
+### Issue: Want to use GitLab CI / Azure DevOps / CircleCI instead
+- **Solution**: Adapt workflow syntax to target platform:
+  - **GitLab CI**: Use `.gitlab-ci.yml` with `image: node:lts`, `script:` blocks
+  - **Azure DevOps**: Use `azure-pipelines.yml` with `pool: ubuntu-latest`, `steps:` tasks
+  - **CircleCI**: Use `.circleci/config.yml` with `docker: - image: cimg/node:lts`, `steps:` commands
+  - **Jenkins**: Use `Jenkinsfile` with `docker.image('node:lts').inside {}`
+  - Core concepts remain the same: cache deps, run tests, build, deploy
 
 ---
 
