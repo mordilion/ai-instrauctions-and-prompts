@@ -1,31 +1,30 @@
 # SQLAlchemy ORM
 
-> **Scope**: Python SQL toolkit and ORM
+> **Scope**: Python SQL toolkit and ORM  
 > **Applies to**: Python files using SQLAlchemy
 > **Extends**: python/architecture.md, python/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use DeclarativeBase for model definitions
-> **ALWAYS**: Use `select()` for queries (SQLAlchemy 2.0 style)
-> **ALWAYS**: Use eager loading to avoid N+1 queries
-> **ALWAYS**: Define relationships with `relationship()` and `back_populates`
-> **ALWAYS**: Use async session for async applications
+> **ALWAYS**: Use DeclarativeBase for models
+> **ALWAYS**: Use `select()` for queries (2.0 style)
+> **ALWAYS**: Use eager loading to avoid N+1
+> **ALWAYS**: Define relationships with back_populates
+> **ALWAYS**: Use async session for async apps
 > 
-> **NEVER**: Use old Query API (deprecated in 2.0)
-> **NEVER**: Skip eager loading for related objects
+> **NEVER**: Use old Query API (deprecated)
+> **NEVER**: Skip eager loading
 > **NEVER**: Forget to close sessions
-> **NEVER**: Use string column names (use model attributes)
+> **NEVER**: Use string column names
 > **NEVER**: Skip migration management
 
 ## Core Patterns
 
-### Models (Declarative)
+### Model Definition
 
 ```python
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship, DeclarativeBase
-from datetime import datetime
+from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy import Column, Integer, String, ForeignKey
 
 class Base(DeclarativeBase):
     pass
@@ -33,147 +32,113 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = 'users'
     
-    id: int = Column(Integer, primary_key=True)
-    email: str = Column(String(120), unique=True, nullable=False, index=True)
-    full_name: str = Column(String(100), nullable=False)
-    is_active: bool = Column(Boolean, default=True)
-    created_at: datetime = Column(DateTime, default=datetime.utcnow)
+    id = Column(Integer, primary_key=True)
+    email = Column(String(120), unique=True, nullable=False, index=True)
+    full_name = Column(String(100), nullable=False)
     
     posts = relationship('Post', back_populates='author', cascade='all, delete-orphan')
-```
 
-### Relationships
-
-```python
 class Post(Base):
     __tablename__ = 'posts'
     
-    id: int = Column(Integer, primary_key=True)
-    title: str = Column(String(200), nullable=False)
-    content: str = Column(String, nullable=False)
-    author_id: int = Column(Integer, ForeignKey('users.id'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(200), nullable=False)
+    author_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     
     author = relationship('User', back_populates='posts')
-    comments = relationship('Comment', back_populates='post', lazy='selectin')
 ```
 
-### Queries (SQLAlchemy 2.0 Style)
+### CRUD Operations (2.0 Style)
 
 ```python
 from sqlalchemy import select
+
+# Create
+async def create_user(session, email: str, name: str) -> User:
+    user = User(email=email, full_name=name)
+    session.add(user)
+    await session.commit()
+    return user
+
+# Read
+async def get_user(session, user_id: int) -> Optional[User]:
+    result = await session.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+# Update
+async def update_user(session, user_id: int, name: str):
+    user = await session.get(User, user_id)
+    user.full_name = name
+    await session.commit()
+
+// Delete
+async def delete_user(session, user_id: int):
+    user = await session.get(User, user_id)
+    await session.delete(user)
+    await session.commit()
+```
+
+### Eager Loading (Avoid N+1)
+
+```python
+# ❌ WRONG: N+1 queries
+users = (await session.execute(select(User))).scalars().all()
+for user in users:
+    print(user.posts)  # Lazy load per user!
+
+// ✅ CORRECT: Single query with joinedload
 from sqlalchemy.orm import selectinload
 
-# Basic query
-stmt = select(User).where(User.is_active == True)
-users = session.execute(stmt).scalars().all()
-
-# With eager loading (avoid N+1)
-stmt = select(User).options(selectinload(User.posts)).where(User.id == user_id)
-user = session.execute(stmt).scalar_one()
-
-# Joins
-stmt = select(User).join(Post).where(Post.title.like('%Python%'))
-users = session.execute(stmt).scalars().all()
+stmt = select(User).options(selectinload(User.posts))
+users = (await session.execute(stmt)).scalars().all()
 ```
 
 ### Session Management
 
 ```python
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-engine = create_engine("postgresql://user:pass@localhost/db")
-SessionLocal = sessionmaker(bind=engine)
-
-# Context manager
-def get_users():
-    with SessionLocal() as session:
-        stmt = select(User)
-        return session.execute(stmt).scalars().all()
-```
-
-### Async Support
-
-```python
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-async_engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db")
-AsyncSessionLocal = async_sessionmaker(async_engine)
+engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db")
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
-async def get_users():
+async def get_db():
     async with AsyncSessionLocal() as session:
-        stmt = select(User)
-        result = await session.execute(stmt)
-        return result.scalars().all()
+        yield session
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## Common AI Mistakes
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Old Query API** | `session.query(User)` | `select(User)` | Deprecated in 2.0 |
-| **N+1 Queries** | Loop with lazy load | `selectinload()` | Performance |
-| **String Columns** | `filter_by(name="John")` | `where(User.name == "John")` | Type safety |
-| **No Session Close** | Open session | Context manager | Resource leak |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Old Query API** | `session.query(User)` | `select(User)` |
+| **N+1** | Lazy load in loop | `selectinload()` |
+| **String Columns** | `where("email = x")` | `where(User.email == x)` |
+| **No Close** | Missing close | `async with session:` |
 
-### Anti-Pattern: N+1 Queries (PERFORMANCE DISASTER)
+## AI Self-Check
 
-```python
-# ❌ WRONG: N+1 queries
-users = session.execute(select(User)).scalars().all()
-for user in users:
-    print(user.posts)  # Separate query for EACH user!
-
-# ✅ CORRECT: Eager loading
-stmt = select(User).options(selectinload(User.posts))
-users = session.execute(stmt).scalars().all()
-for user in users:
-    print(user.posts)  # Already loaded
-```
-
-## AI Self-Check (Verify BEFORE generating SQLAlchemy code)
-
-- [ ] Using DeclarativeBase?
-- [ ] select() for queries (not old Query API)?
-- [ ] Eager loading with selectinload/joinedload?
+- [ ] DeclarativeBase?
+- [ ] select() for queries?
+- [ ] Eager loading?
 - [ ] Relationships with back_populates?
-- [ ] Session management (context manager)?
-- [ ] Type hints on columns?
-- [ ] Explicit __tablename__?
-- [ ] Cascade options defined?
-- [ ] Indexes on frequently queried columns?
-- [ ] Migration strategy (Alembic)?
+- [ ] Async session?
+- [ ] No old Query API?
+- [ ] No N+1 queries?
+- [ ] Session closed?
+- [ ] Model attributes not strings?
 
 ## Key Features
 
-| Feature | Purpose | Keywords |
-|---------|---------|----------|
-| **DeclarativeBase** | Model definition | Modern, type-safe |
-| **select()** | Queries | SQLAlchemy 2.0 style |
-| **Eager Loading** | Avoid N+1 | `selectinload`, `joinedload` |
-| **Relationships** | Associations | `relationship()`, `back_populates` |
-| **Async** | Async I/O | `async_sessionmaker` |
-| **Alembic** | Migrations | Version control for schema |
+| Feature | Purpose |
+|---------|---------|
+| DeclarativeBase | Model definition |
+| select() | 2.0 style queries |
+| selectinload() | Eager loading |
+| relationship() | Relations |
+| AsyncSessionLocal | Session management |
 
 ## Best Practices
 
-**MUST**:
-- DeclarativeBase
-- select() queries
-- Eager loading
-- Session context managers
-- back_populates
-
-**SHOULD**:
-- Async for async apps
-- Alembic for migrations
-- Type hints
-- Indexes
-- Cascade options
-
-**AVOID**:
-- Old Query API
-- N+1 queries
-- String column names
-- Unclosed sessions
-- Lazy loading in loops
+**MUST**: DeclarativeBase, select(), eager loading, relationships, async session
+**SHOULD**: Indexes, migrations (Alembic), cascade, connection pooling
+**AVOID**: Old Query API, N+1, string columns, unclosed sessions
