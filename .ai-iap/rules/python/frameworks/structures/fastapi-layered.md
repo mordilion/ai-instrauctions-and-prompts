@@ -1,201 +1,128 @@
 # FastAPI Layered Structure
 
-> **Scope**: This structure extends the FastAPI framework rules. When selected, use this folder organization instead of the default.
+> **Scope**: Layered architecture for FastAPI  
+> **Use When**: Medium-large apps, clear separation of concerns
 
-## Project Structure
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Separate api, schemas, models, services, repositories
+> **ALWAYS**: API layer depends on services only
+> **ALWAYS**: Services depend on repositories only
+> **ALWAYS**: Use Pydantic schemas for API contracts
+> 
+> **NEVER**: Access database from API layer
+> **NEVER**: Skip repository layer
+> **NEVER**: Mix business logic in API/repository
+
+## Structure
+
 ```
-myproject/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI app
-│   ├── config.py               # Settings
-│   ├── database.py             # DB setup
-│   ├── api/                    # Presentation layer
-│   │   ├── __init__.py
-│   │   ├── v1/
-│   │   │   ├── __init__.py
-│   │   │   ├── endpoints/
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── users.py
-│   │   │   │   ├── posts.py
-│   │   │   │   └── auth.py
-│   │   │   └── dependencies.py
-│   │   └── router.py
-│   ├── schemas/                # Pydantic models (DTOs)
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── post.py
-│   │   └── auth.py
-│   ├── models/                 # SQLAlchemy models (Data layer)
-│   │   ├── __init__.py
-│   │   ├── user.py
-│   │   ├── post.py
-│   │   └── base.py
-│   ├── services/               # Business logic layer
-│   │   ├── __init__.py
-│   │   ├── user_service.py
-│   │   ├── post_service.py
-│   │   └── auth_service.py
-│   ├── repositories/           # Data access layer
-│   │   ├── __init__.py
-│   │   ├── user_repository.py
-│   │   ├── post_repository.py
-│   │   └── base_repository.py
-│   ├── core/                   # Core utilities
-│   │   ├── __init__.py
-│   │   ├── security.py
-│   │   ├── exceptions.py
-│   │   └── middleware.py
-│   └── tests/
-│       ├── api/
-│       ├── services/
-│       └── repositories/
-├── alembic/
-├── .env
-└── requirements.txt
+app/
+├── main.py                 # FastAPI app
+├── config.py              # Settings
+├── database.py            # DB setup
+├── api/v1/endpoints/      # Presentation layer
+│   ├── users.py
+│   └── posts.py
+├── schemas/               # Pydantic DTOs
+│   ├── user.py
+│   └── post.py
+├── models/                # SQLAlchemy models
+│   ├── user.py
+│   └── post.py
+├── services/              # Business logic
+│   ├── user_service.py
+│   └── post_service.py
+└── repositories/          # Data access
+    ├── user_repository.py
+    └── post_repository.py
 ```
 
-## Layer Responsibilities
+## Core Patterns
 
-### API Layer (Presentation)
-- HTTP request/response handling
-- Input validation (Pydantic)
-- Route definitions
-- Dependency injection setup
+### API Endpoint
 
-### Schemas Layer (DTOs)
-- Request/response models
-- Data validation
-- Serialization/deserialization
-
-### Services Layer (Business Logic)
-- Business rules and workflows
-- Orchestration of repositories
-- Transaction management
-
-### Repositories Layer (Data Access)
-- Database queries
-- ORM operations
-- Data persistence
-
-### Models Layer (Data)
-- SQLAlchemy ORM models
-- Database schema definitions
-
-## Example: Endpoint
 ```python
-# app/api/v1/endpoints/users.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user_service import UserService
-from app.api.v1.dependencies import get_user_service
 
 router = APIRouter()
 
-@router.post("/", response_model=UserResponse, status_code=201)
+@router.post("", response_model=UserResponse, status_code=201)
 async def create_user(
     user_data: UserCreate,
-    service: UserService = Depends(get_user_service)
-):
+    service: UserService = Depends()
+) -> UserResponse:
     return await service.create_user(user_data)
-
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user(
-    user_id: int,
-    service: UserService = Depends(get_user_service)
-):
-    user = await service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
 ```
 
-## Example: Service
-```python
-# app/services/user_service.py
-from app.schemas.user import UserCreate
-from app.models.user import User
-from app.repositories.user_repository import UserRepository
+### Service Layer
 
+```python
 class UserService:
-    def __init__(self, user_repo: UserRepository):
-        self.user_repo = user_repo
+    def __init__(self, repository: UserRepository = Depends()):
+        self.repository = repository
     
-    async def create_user(self, user_data: UserCreate) -> User:
-        # Business logic here
-        if await self.user_repo.get_by_email(user_data.email):
-            raise ValueError("Email already exists")
-        
-        user = User(**user_data.model_dump(exclude={'password'}))
-        user.set_password(user_data.password)
-        return await self.user_repo.create(user)
-    
-    async def get_user(self, user_id: int) -> User | None:
-        return await self.user_repo.get_by_id(user_id)
+    async def create_user(self, data: UserCreate) -> UserResponse:
+        # Business logic
+        if await self.repository.get_by_email(data.email):
+            raise UserExistsError()
+        user = await self.repository.create(data)
+        return UserResponse.from_orm(user)
 ```
 
-## Example: Repository
-```python
-# app/repositories/user_repository.py
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.models.user import User
+### Repository Layer
 
+```python
 class UserRepository:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
     
-    async def create(self, user: User) -> User:
-        async with self.db.begin():
-            self.db.add(user)
-            await self.db.flush()
-            await self.db.refresh(user)
-            return user
+    async def create(self, data: UserCreate) -> User:
+        user = User(**data.dict())
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
     
-    async def get_by_id(self, user_id: int) -> User | None:
-        result = await self.db.execute(
-            select(User).where(User.id == user_id)
-        )
-        return result.scalar_one_or_none()
-    
-    async def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, email: str) -> Optional[User]:
         result = await self.db.execute(
             select(User).where(User.email == email)
         )
         return result.scalar_one_or_none()
 ```
 
-## Example: Router Setup
-```python
-# app/api/v1/router.py
-from fastapi import APIRouter
-from .endpoints import users, posts, auth
+## Common AI Mistakes
 
-api_router = APIRouter()
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Direct DB Access** | DB query in API | Repository |
+| **No Repository** | Service accesses DB | Repository layer |
+| **Business Logic** | In API/repository | In service |
+| **Circular Deps** | Layer violations | Strict layering |
 
-api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(posts.router, prefix="/posts", tags=["posts"])
-api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+## AI Self-Check
 
-# app/main.py
-from fastapi import FastAPI
-from app.api.v1.router import api_router
+- [ ] Separate api, services, repositories?
+- [ ] API depends on services only?
+- [ ] Services depend on repositories?
+- [ ] Pydantic schemas?
+- [ ] No DB access from API?
+- [ ] Business logic in services?
+- [ ] Data access in repositories?
+- [ ] No circular dependencies?
 
-app = FastAPI()
-app.include_router(api_router, prefix="/api/v1")
-```
+## Benefits
 
-## Rules
-- **Clear Layer Separation**: Each layer has distinct responsibility.
-- **Dependency Flow**: API → Services → Repositories → Models.
-- **No Layer Skipping**: API calls Services, Services call Repositories.
-- **Shared Schemas**: Use Pydantic schemas for data transfer between layers.
-- **Repository Pattern**: All database access through repositories.
+- ✅ Clear separation of concerns
+- ✅ Easy testing (mock layers)
+- ✅ Maintainable
+- ✅ Scalable
 
 ## When to Use
-- Medium to large FastAPI projects
-- Need for clear separation of concerns
-- Multiple developers working on different layers
-- Complex business logic requiring service layer
-- Projects requiring high testability
 
+- ✅ Medium-large apps
+- ✅ Clear layer boundaries
+- ✅ Team structure aligns
+- ❌ Simple CRUD apps

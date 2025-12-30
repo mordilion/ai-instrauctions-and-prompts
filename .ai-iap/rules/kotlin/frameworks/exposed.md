@@ -1,31 +1,22 @@
 # Exposed ORM Framework
 
-> **Scope**: Lightweight SQL library for Kotlin with DSL and DAO APIs
+> **Scope**: Lightweight SQL library for Kotlin  
 > **Applies to**: Kotlin files using Exposed
 > **Extends**: kotlin/architecture.md, kotlin/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
 > **ALWAYS**: Use transactions for all database operations
-> **ALWAYS**: Use suspend functions with `dbQuery { }` for async operations
-> **ALWAYS**: Define tables as objects extending `Table` or `IntIdTable`
-> **ALWAYS**: Use `DatabaseFactory.init()` to setup connection
-> **ALWAYS**: Use HikariCP for connection pooling in production
+> **ALWAYS**: Use suspend functions with dbQuery { }
+> **ALWAYS**: Define tables as objects extending Table
+> **ALWAYS**: Use DatabaseFactory.init() to setup
+> **ALWAYS**: Use HikariCP for connection pooling
 > 
-> **NEVER**: Perform database operations outside transactions
-> **NEVER**: Block threads with synchronous queries (use `dbQuery`)
-> **NEVER**: Skip table schema creation (`SchemaUtils.create`)
-> **NEVER**: Use string literals for column names
-> **NEVER**: Expose database exceptions to API layer
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| **DSL API** | Type-safe SQL queries | `select`, `insert`, `update` |
-| **DAO API** | Object-oriented approach | Entity classes |
-| **Transactions** | All DB operations | `transaction { }` |
-| **dbQuery** | Async operations | Coroutines, non-blocking |
+> **NEVER**: Perform operations outside transactions
+> **NEVER**: Block threads with synchronous queries
+> **NEVER**: Skip table schema creation
+> **NEVER**: Use string literals for columns
+> **NEVER**: Expose database exceptions to API
 
 ## Core Patterns
 
@@ -47,149 +38,97 @@ object DatabaseFactory {
 }
 
 suspend fun <T> dbQuery(block: () -> T): T =
-    withContext(Dispatchers.IO) {
-        transaction { block() }
-    }
+    withContext(Dispatchers.IO) { transaction { block() } }
 ```
 
-### Table Definitions
+### Table Definition
 
 ```kotlin
-object Users : Table("users") {
-    val id = long("id").autoIncrement()
-    val name = varchar("name", 100)
-    val email = varchar("email", 100).uniqueIndex()
-    val createdAt = timestamp("created_at").defaultExpression(CurrentTimestamp())
-    override val primaryKey = PrimaryKey(id)
-}
-
-object Orders : Table("orders") {
-    val id = long("id").autoIncrement()
-    val userId = long("user_id").references(Users.id, onDelete = ReferenceOption.CASCADE)
-    val total = decimal("total", 10, 2)
-    override val primaryKey = PrimaryKey(id)
+object Users : IntIdTable("users") {
+    val name = varchar("name", 255)
+    val email = varchar("email", 255).uniqueIndex()
+    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 }
 ```
 
-### DSL Queries (CRUD)
+### CRUD Operations (DSL)
 
 ```kotlin
-class UserRepository {
-    suspend fun findAll(): List<User> = dbQuery {
-        Users.selectAll().map { toUser(it) }
-    }
-    
-    suspend fun findById(id: Long): User? = dbQuery {
-        Users.select { Users.id eq id }
-            .mapNotNull { toUser(it) }
-            .singleOrNull()
-    }
-    
-    suspend fun create(name: String, email: String): User = dbQuery {
-        val id = Users.insert {
-            it[Users.name] = name
-            it[Users.email] = email
-        } get Users.id
-        User(id, name, email)
-    }
-    
-    suspend fun update(id: Long, name: String): Boolean = dbQuery {
-        Users.update({ Users.id eq id }) {
-            it[Users.name] = name
-        } > 0
-    }
-    
-    suspend fun delete(id: Long): Boolean = dbQuery {
-        Users.deleteWhere { Users.id eq id } > 0
-    }
-}
-```
-
-### Joins & Relationships
-
-```kotlin
-suspend fun getUserWithOrders(userId: Long): UserWithOrders? = dbQuery {
-    (Users innerJoin Orders)
-        .select { Users.id eq userId }
-        .map { row ->
-            UserWithOrders(
-                user = toUser(row),
-                orders = toOrder(row)
-            )
-        }
-        .singleOrNull()
-}
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **No Transaction** | Direct `Users.select()` | `transaction { Users.select() }` | Data consistency |
-| **Blocking Calls** | `transaction { }` | `dbQuery { }` | Thread blocking |
-| **No Connection Pool** | Direct `Database.connect()` | HikariCP | Performance |
-| **No Schema Creation** | Skip `SchemaUtils.create` | Create schema | Missing tables |
-
-### Anti-Pattern: No Transaction (DATA CORRUPTION)
-
-```kotlin
-// ❌ WRONG: No transaction
-suspend fun createUser(name: String): User {
+// Create
+suspend fun createUser(name: String, email: String): Int = dbQuery {
     Users.insert {
         it[Users.name] = name
-    }  // Not in transaction!
+        it[Users.email] = email
+    } get Users.id
 }
 
-// ✅ CORRECT: In transaction
-suspend fun createUser(name: String): User = dbQuery {
-    val id = Users.insert {
+// Read
+suspend fun getAllUsers(): List<User> = dbQuery {
+    Users.selectAll().map { toUser(it) }
+}
+
+// Update
+suspend fun updateUser(id: Int, name: String) = dbQuery {
+    Users.update({ Users.id eq id }) {
         it[Users.name] = name
-    } get Users.id
-    User(id, name)
+    }
+}
+
+// Delete
+suspend fun deleteUser(id: Int) = dbQuery {
+    Users.deleteWhere { Users.id eq id }
 }
 ```
 
-## AI Self-Check (Verify BEFORE generating Exposed code)
+### Joins
 
-- [ ] All operations in transactions?
-- [ ] Using dbQuery for async operations?
-- [ ] Tables defined as objects?
-- [ ] HikariCP for connection pooling?
-- [ ] Schema created with SchemaUtils?
-- [ ] Using DSL operators (eq, like, etc.)?
-- [ ] Proper error handling?
-- [ ] No string literals for columns?
-- [ ] Joins for relationships?
-- [ ] Non-blocking operations?
+```kotlin
+suspend fun getUsersWithOrders() = dbQuery {
+    (Users innerJoin Orders)
+        .selectAll()
+        .map { row ->
+            User(
+                id = row[Users.id].value,
+                name = row[Users.name],
+                orders = listOf(Order(row[Orders.id].value, row[Orders.total]))
+            )
+        }
+}
+```
+
+## Common AI Mistakes
+
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **No Transaction** | Direct query | `transaction { }` |
+| **Blocking** | Sync query | `dbQuery { }` |
+| **String Literals** | `"name"` | `Users.name` |
+| **No Schema** | Missing SchemaUtils | `SchemaUtils.create()` |
+
+## AI Self-Check
+
+- [ ] Using transactions?
+- [ ] dbQuery for async?
+- [ ] Tables as objects?
+- [ ] DatabaseFactory.init()?
+- [ ] HikariCP pooling?
+- [ ] No operations outside transactions?
+- [ ] No blocking queries?
+- [ ] Schema creation?
+- [ ] No string literals?
 
 ## Key Features
 
-| Feature | Purpose | Keywords |
-|---------|---------|----------|
-| **DSL API** | Type-safe queries | `select`, `where`, `join` |
-| **Transactions** | Consistency | `transaction { }` |
-| **SchemaUtils** | DDL operations | `create`, `drop`, `createMissingTablesAndColumns` |
-| **References** | Foreign keys | `references`, `onDelete` |
-| **Async** | Non-blocking | `dbQuery`, coroutines |
+| Feature | Purpose |
+|---------|---------|
+| DSL API | Type-safe SQL |
+| Transactions | Data integrity |
+| dbQuery | Async operations |
+| Hikari CP | Connection pooling |
+| SchemaUtils | Schema management |
 
 ## Best Practices
 
-**MUST**:
-- Transactions for all operations
-- dbQuery for async
-- HikariCP connection pooling
-- Schema creation
-- Object-based table definitions
-
-**SHOULD**:
-- Use DSL API for queries
-- Proper indexes
-- Cascade deletes
-- Error handling
-
-**AVOID**:
-- Operations outside transactions
-- Blocking synchronous calls
-- Direct database connections
-- String literals
-- N+1 queries
+**MUST**: Transactions, dbQuery, Tables, DatabaseFactory, HikariCP
+**SHOULD**: Joins, indexes, default expressions, migrations
+**AVOID**: No transactions, blocking, string literals, missing schema

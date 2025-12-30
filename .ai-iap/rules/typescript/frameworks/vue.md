@@ -1,38 +1,27 @@
 # Vue.js Framework
 
-> **Scope**: Apply these rules when working with Vue.js 3.x applications
+> **Scope**: Vue.js 3.x applications  
 > **Applies to**: .vue files and Vue TypeScript files
 > **Extends**: typescript/architecture.md, typescript/code-style.md
-> **Precedence**: Framework rules OVERRIDE TypeScript rules for Vue-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use Composition API with `<script setup>` (Vue 3 standard)
-> **ALWAYS**: Use `ref()` or `reactive()` for state (explicit reactivity required)
-> **ALWAYS**: Define props with TypeScript interfaces (type safety)
-> **ALWAYS**: Use computed() for derived state (NOT methods for calculations)
-> **ALWAYS**: Clean up side effects in onBeforeUnmount (prevent memory leaks)
+> **ALWAYS**: Use Composition API with `<script setup>`
+> **ALWAYS**: Use `ref()` or `reactive()` for state
+> **ALWAYS**: Define props with TypeScript interfaces
+> **ALWAYS**: Use computed() for derived state
+> **ALWAYS**: Clean up side effects in onBeforeUnmount
 > 
-> **NEVER**: Use Options API in new code (legacy pattern)
-> **NEVER**: Mutate props directly (one-way data flow)
-> **NEVER**: Access refs without .value in `<script>` (Vue 3 requirement)
-> **NEVER**: Forget to define emits (breaks type safety)
-> **NEVER**: Use `any` type for props or emits
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Composition API + `<script setup>` | Always (Vue 3 standard) | `<script setup lang="ts">` |
-| ref() | Primitive values | `const count = ref(0)` |
-| reactive() | Objects/arrays | `const state = reactive({ ... })` |
-| computed() | Derived state | `const fullName = computed(() => ...)` |
-| watch/watchEffect | Side effects | `watch(source, callback)` |
-| provide/inject | Dependency injection | `provide('key', value)`, `inject('key')` |
+> **NEVER**: Use Options API in new code
+> **NEVER**: Mutate props directly
+> **NEVER**: Access refs without .value in `<script>`
+> **NEVER**: Forget to define emits
+> **NEVER**: Use `any` type for props/emits
 
 ## Core Patterns
 
-### Component with Props & Emits (REQUIRED)
+### Component with Props & Emits
+
 ```vue
 <script setup lang="ts">
 interface Props {
@@ -48,155 +37,117 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const handleInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  emit('update:modelValue', target.value)
+function handleInput(event: Event) {
+  emit('update:modelValue', (event.target as HTMLInputElement).value)
 }
 </script>
 
 <template>
-  <input 
-    :value="modelValue" 
-    :placeholder="placeholder"
-    @input="handleInput"
-  />
+  <input :value="modelValue" :placeholder="placeholder" @input="handleInput" />
 </template>
 ```
 
-### Reactivity Patterns
-```typescript
-import { ref, reactive, computed, watch } from 'vue'
+### Reactive State
 
-// Primitives: use ref()
+```vue
+<script setup lang="ts">
+import { ref, reactive, computed } from 'vue'
+
+// ref for primitives
 const count = ref(0)
-const increment = () => count.value++  // .value required in script
+const message = ref('Hello')
 
-// Objects: use reactive()
+// reactive for objects
 const state = reactive({
   user: { name: 'John', age: 30 },
-  posts: []
+  items: [1, 2, 3]
 })
 
-// Derived state: use computed()
-const fullName = computed(() => `${state.user.name} (${state.user.age})`)
+// computed for derived
+const doubled = computed(() => count.value * 2)
 
-// Side effects: use watch/watchEffect
-watch(() => state.user.name, (newName) => {
-  console.log(`Name changed to: ${newName}`)
-})
-```
-
-### Composables (Reusable Logic)
-```typescript
-// composables/useCounter.ts
-import { ref } from 'vue'
-
-export function useCounter(initialValue = 0) {
-  const count = ref(initialValue)
-  
-  const increment = () => count.value++
-  const decrement = () => count.value--
-  const reset = () => count.value = initialValue
-  
-  return { count, increment, decrement, reset }
+function increment() {
+  count.value++  // .value required in <script>
 }
+</script>
 
-// Usage in component
-import { useCounter } from '@/composables/useCounter'
-const { count, increment } = useCounter(10)
+<template>
+  <button @click="increment">{{ count }}</button>  <!-- No .value in template -->
+</template>
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+### Lifecycle & Side Effects
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Using Options API** | `export default { data() {...} }` | `<script setup>` + Composition API | Options API is legacy |
-| **Forgetting .value** | `count++` in script | `count.value++` | Ref requires .value access |
-| **Mutating Props** | `props.modelValue = 'x'` | `emit('update:modelValue', 'x')` | Breaks one-way data flow |
-| **Missing Emit Definitions** | Emit without `defineEmits` | Define all emits with types | Breaks type safety |
-| **Methods for Derived State** | Function returning calculated value | `computed()` for caching | Performance degradation |
-
-### Anti-Pattern: Options API (FORBIDDEN in new code)
 ```vue
-<!-- ❌ WRONG - Options API (legacy) -->
-<script lang="ts">
-export default {
-  data() {
-    return { count: 0 }
-  },
-  methods: {
-    increment() {
-      this.count++
-    }
-  }
-}
-</script>
-
-<!-- ✅ CORRECT - Composition API -->
 <script setup lang="ts">
-import { ref } from 'vue'
-const count = ref(0)
-const increment = () => count.value++
-</script>
-```
+import { onMounted, onBeforeUnmount } from 'vue'
 
-### Anti-Pattern: Forgetting .value (COMMON ERROR)
-```typescript
-// ❌ WRONG - Missing .value
-const count = ref(0)
-count++  // Does NOT work
-if (count > 5) { }  // Does NOT work
-
-// ✅ CORRECT - Use .value in script
-const count = ref(0)
-count.value++  // Works
-if (count.value > 5) { }  // Works
-```
-
-## AI Self-Check (Verify BEFORE generating Vue code)
-
-- [ ] Using Composition API with `<script setup>`? (NOT Options API)
-- [ ] Props defined with TypeScript interface? (Type safety)
-- [ ] Emits defined with `defineEmits<T>`? (All events declared)
-- [ ] Using ref() for primitives, reactive() for objects?
-- [ ] Accessing refs with .value in `<script>`? (Required)
-- [ ] Using computed() for derived state? (NOT methods)
-- [ ] Never mutating props directly? (Emit for updates)
-- [ ] Cleaning up in onBeforeUnmount? (Timers, subscriptions)
-- [ ] Template uses correct v-model syntax?
-- [ ] Composables for reusable logic?
-
-## Component Communication
-
-| Pattern | Use Case | Example |
-|---------|----------|---------|
-| Props | Parent → Child | `defineProps<Props>()` |
-| Emits | Child → Parent | `emit('eventName', payload)` |
-| v-model | Two-way binding | `v-model="value"` |
-| provide/inject | Ancestor → Descendant | `provide()`, `inject()` |
-| Pinia/Vuex | Global state | Store pattern |
-
-## Lifecycle Hooks
-
-```typescript
-import { onMounted, onUpdated, onBeforeUnmount } from 'vue'
+let interval: number
 
 onMounted(() => {
-  // Component mounted, DOM available
-})
-
-onUpdated(() => {
-  // After reactive data changes
+  interval = setInterval(() => console.log('tick'), 1000)
 })
 
 onBeforeUnmount(() => {
-  // Cleanup: remove event listeners, clear timers
+  clearInterval(interval)
 })
+</script>
 ```
 
-## Key Libraries
+### Composables (Reusable Logic)
 
-- **Vue Router**: `useRouter()`, `useRoute()`
-- **Pinia**: `defineStore()`, `storeToRefs()`
-- **VueUse**: Composable utilities collection
-- **Vite**: Build tool (replaces Vue CLI)
+```typescript
+// composables/useCounter.ts
+import { ref, computed } from 'vue'
+
+export function useCounter(initial: number = 0) {
+  const count = ref(initial)
+  const doubled = computed(() => count.value * 2)
+  
+  function increment() { count.value++ }
+  function decrement() { count.value-- }
+  
+  return { count, doubled, increment, decrement }
+}
+
+// Component.vue
+import { useCounter } from './composables/useCounter'
+const { count, doubled, increment } = useCounter(10)
+```
+
+## Common AI Mistakes
+
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Options API** | `data() { return ... }` | `const state = ref()` |
+| **No .value** | `count++` in script | `count.value++` |
+| **Prop Mutation** | `props.value = x` | `emit('update:value', x)` |
+| **any Type** | `props: any` | Interface with types |
+
+## AI Self-Check
+
+- [ ] Composition API with <script setup>?
+- [ ] ref()/reactive() for state?
+- [ ] TypeScript interfaces for props?
+- [ ] computed() for derived?
+- [ ] Side effects cleanup?
+- [ ] .value in <script>?
+- [ ] Emits defined?
+- [ ] No prop mutation?
+- [ ] No any types?
+
+## Key Features
+
+| Feature | Purpose |
+|---------|---------|
+| <script setup> | Composition API |
+| ref() | Reactive primitives |
+| reactive() | Reactive objects |
+| computed() | Derived state |
+| Composables | Reusable logic |
+
+## Best Practices
+
+**MUST**: Composition API, ref()/reactive(), TypeScript, computed(), cleanup
+**SHOULD**: Composables, v-model, provide/inject, Pinia
+**AVOID**: Options API, prop mutation, any types, no .value

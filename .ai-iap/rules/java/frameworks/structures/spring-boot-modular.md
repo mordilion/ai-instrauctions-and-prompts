@@ -1,203 +1,153 @@
 # Spring Boot Modular Structure
 
-> **Scope**: This structure extends the Spring Boot framework rules. When selected, use this folder organization instead of the default.
+> **Scope**: Feature-first modular structure for Spring Boot  
+> **Use When**: Medium-large apps, domain-driven design
 
-## Project Structure
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Organize by feature/business capability
+> **ALWAYS**: Each module is self-contained
+> **ALWAYS**: Minimize cross-module dependencies
+> **ALWAYS**: Use interfaces for module communication
+> 
+> **NEVER**: Share implementation details between modules
+> **NEVER**: Create circular dependencies
+
+## Structure
+
 ```
-src/main/java/com/company/myapp/
-├── users/                      # User domain module
-│   ├── User.java               # Entity
+src/main/java/com/app/
+├── common/              # Shared utilities only
+│   ├── exception/
+│   ├── security/
+│   └── config/
+├── users/                # User module (self-contained)
+│   ├── User.java
 │   ├── UserController.java
 │   ├── UserService.java
 │   ├── UserRepository.java
-│   ├── dto/
-│   │   ├── CreateUserRequest.java
-│   │   └── UserDto.java
-│   ├── mapper/
-│   │   └── UserMapper.java
-│   └── exception/
-│       └── UserNotFoundException.java
-├── orders/                     # Order domain module
-│   ├── Order.java
-│   ├── OrderController.java
-│   ├── OrderService.java
-│   ├── OrderRepository.java
 │   └── dto/
-├── products/                   # Product domain module
-│   ├── Product.java
-│   ├── ProductController.java
-│   ├── ProductService.java
-│   └── ProductRepository.java
-├── common/                     # Shared utilities
-│   ├── exception/
-│   │   └── GlobalExceptionHandler.java
-│   ├── security/
-│   │   └── SecurityConfig.java
-│   └── config/
-│       └── DatabaseConfig.java
-└── Application.java            # Main class
+├── orders/               # Order module
+│   ├── Order.java
+│   ├── OrderService.java
+│   └── OrderController.java
+└── products/             # Product module
 ```
 
-## Module Structure (users/)
-```
-users/
-├── User.java                   # JPA Entity
-├── UserController.java         # REST controller
-├── UserService.java            # Business logic
-├── UserRepository.java         # Spring Data JPA repository
-├── dto/
-│   ├── CreateUserRequest.java # Request DTO
-│   └── UserDto.java            # Response DTO
-├── mapper/
-│   └── UserMapper.java         # Entity ↔ DTO mapping
-└── exception/
-    └── UserNotFoundException.java
-```
+## Core Patterns
 
-## Example: Entity
+### Module Organization
+
 ```java
 // users/User.java
-package com.company.myapp.users;
-
-import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(unique = true, nullable = false)
-    private String email;
-    
-    @Column(nullable = false)
     private String name;
-    
-    private boolean active;
-    
-    private LocalDateTime createdAt;
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    private String email;
 }
-```
 
-## Example: Service
-```java
 // users/UserService.java
-package com.company.myapp.users;
-
-import com.company.myapp.users.dto.CreateUserRequest;
-import com.company.myapp.users.dto.UserDto;
-import com.company.myapp.users.exception.UserNotFoundException;
-import com.company.myapp.users.mapper.UserMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Slf4j
 @Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class UserService {
-    private final UserRepository userRepository;
+    private final UserRepository repository;
     
-    @Transactional
-    public UserDto createUser(final CreateUserRequest request) {
-        log.info("Creating user with email: {}", request.email());
-        
-        if (userRepository.findByEmail(request.email()).isPresent()) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        
-        final User user = User.builder()
-            .email(request.email())
-            .name(request.name())
-            .active(true)
-            .build();
-        
-        final User saved = userRepository.save(user);
-        return UserMapper.toDto(saved);
+    public UserService(UserRepository repository) {
+        this.repository = repository;
     }
     
-    public UserDto getUser(final Long userId) {
-        return userRepository.findById(userId)
-            .map(UserMapper::toDto)
-            .orElseThrow(() -> new UserNotFoundException(userId));
+    public User create(String name, String email) {
+        return repository.save(new User(name, email));
     }
 }
-```
 
-## Example: Controller
-```java
 // users/UserController.java
-package com.company.myapp.users;
-
-import com.company.myapp.users.dto.CreateUserRequest;
-import com.company.myapp.users.dto.UserDto;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
-public class UserController {
-    private final UserService userService;
+public class UsersController {
+    private final UserService service;
+    
+    public UsersController(UserService service) {
+        this.service = service;
+    }
     
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody final CreateUserRequest request) {
-        final UserDto user = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<UserDto> create(@Valid @RequestBody CreateUserDto dto) {
+        return ResponseEntity.ok(service.create(dto.name(), dto.email()).toDto());
+    }
+}
+```
+
+### Cross-Module Communication
+
+```java
+// users/UserPublicApi.java - Interface for other modules
+public interface UserPublicApi {
+    Optional<UserDto> getUserById(Long id);
+}
+
+@Service
+public class UserPublicApiImpl implements UserPublicApi {
+    private final UserService service;
+    
+    public UserPublicApiImpl(UserService service) {
+        this.service = service;
     }
     
-    @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable final Long id) {
-        return userService.getUser(id);
+    @Override
+    public Optional<UserDto> getUserById(Long id) {
+        return service.findById(id).map(User::toDto);
+    }
+}
+
+// orders/OrderService.java - Uses user module via interface
+@Service
+public class OrderService {
+    private final UserPublicApi userApi;
+    
+    public OrderService(UserPublicApi userApi) {
+        this.userApi = userApi;
+    }
+    
+    public Order createOrder(Long userId, List<Item> items) {
+        UserDto user = userApi.getUserById(userId)
+            .orElseThrow(() -> new UserNotFoundException());
+        return new Order(userId, items);
     }
 }
 ```
 
-## Example: Repository
-```java
-// users/UserRepository.java
-package com.company.myapp.users;
+## Common AI Mistakes
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Circular Dependencies** | user → order → user | Use interfaces |
+| **Shared Implementation** | Expose service directly | Public API interface |
+| **Module Coupling** | Access internal classes | Public API only |
+| **Common Bloat** | Everything in common/ | Only truly shared code |
 
-import java.util.Optional;
+## AI Self-Check
 
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
-}
-```
+- [ ] Organized by feature?
+- [ ] Each module self-contained?
+- [ ] Public API interfaces for cross-module?
+- [ ] No circular dependencies?
+- [ ] Common/ has only shared utilities?
+- [ ] Tests mirror module structure?
+- [ ] No implementation sharing?
+- [ ] Clear module boundaries?
 
-## Rules
-- **Self-Contained Modules**: Each module has entities, controllers, services, repositories.
-- **Package by Feature**: Group by business domain, not technical layer.
-- **Minimal Cross-Module Dependencies**: Modules communicate through DTOs, not entities.
-- **Shared Code Only**: Only truly reusable code in `common/`.
+## Benefits
+
+- ✅ High cohesion, low coupling
+- ✅ Easy to understand scope
+- ✅ Parallel team development
+- ✅ Easier to extract to microservices
 
 ## When to Use
-- Medium to large Spring Boot applications
-- Clear domain boundaries
-- Multiple teams working on different modules
-- Potential for extracting modules to microservices
-- Feature-based development
 
+- ✅ Medium-large applications
+- ✅ Clear business domains
+- ✅ Multiple teams
+- ❌ Simple CRUD apps
