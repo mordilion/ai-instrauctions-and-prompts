@@ -1,38 +1,27 @@
 # React Framework
 
-> **Scope**: Apply these rules when working with React 18+ applications
-> **Applies to**: .tsx and .jsx files in React projects
+> **Scope**: React 18+ applications
+> **Applies to**: .tsx and .jsx files
 > **Extends**: typescript/architecture.md, typescript/code-style.md
-> **Precedence**: Framework rules OVERRIDE TypeScript rules for React-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use functional components with hooks (NOT class components)
-> **ALWAYS**: Use TypeScript for props and state (type safety required)
-> **ALWAYS**: Use useCallback/useMemo for expensive operations (performance)
-> **ALWAYS**: Clean up effects with return function (prevent memory leaks)
-> **ALWAYS**: Use key prop for lists (stable identity)
+> **ALWAYS**: Use functional components with hooks
+> **ALWAYS**: Use TypeScript for props/state
+> **ALWAYS**: Clean up effects with return function
+> **ALWAYS**: Use key prop for lists
+> **ALWAYS**: Follow Rules of Hooks
 > 
-> **NEVER**: Use class components in new code (legacy pattern)
-> **NEVER**: Mutate state directly (use setState or state updater)
-> **NEVER**: Call hooks conditionally (breaks Rules of Hooks)
-> **NEVER**: Forget dependencies in useEffect/useCallback (stale closures)
-> **NEVER**: Use index as key for dynamic lists (causes bugs)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Functional Components | Always (React 16.8+) | `function Component() {}`, arrow functions |
-| useState | Component-local state | `const [state, setState] = useState()` |
-| useEffect | Side effects, subscriptions | `useEffect(() => {}, [deps])` |
-| useCallback | Memoize callbacks | `useCallback(() => {}, [deps])` |
-| useMemo | Memoize expensive calculations | `useMemo(() => compute(), [deps])` |
-| Custom Hooks | Reusable logic | `function useCustomHook() {}` |
+> **NEVER**: Use class components (legacy)
+> **NEVER**: Mutate state directly
+> **NEVER**: Call hooks conditionally
+> **NEVER**: Forget effect dependencies
+> **NEVER**: Use index as key for dynamic lists
 
 ## Core Patterns
 
-### Functional Component with Props
+### Component with Props
+
 ```typescript
 interface UserCardProps {
   user: User
@@ -40,249 +29,161 @@ interface UserCardProps {
 }
 
 export function UserCard({ user, onDelete }: UserCardProps) {
-  const handleDelete = () => {
-    onDelete?.(user.id)
-  }
-  
   return (
     <div className="card">
       <h3>{user.name}</h3>
-      <p>{user.email}</p>
-      <button onClick={handleDelete}>Delete</button>
+      <button onClick={() => onDelete?.(user.id)}>Delete</button>
     </div>
   )
 }
 ```
 
-### State Management with useState
+### State Management
+
 ```typescript
 function Counter() {
   const [count, setCount] = useState(0)
   
-  // ✅ CORRECT - Functional update
   const increment = () => setCount(prev => prev + 1)
   
-  // ❌ WRONG - Direct mutation
-  // const increment = () => count++  // DOESN'T WORK!
-  
-  return (
-    <div>
-      <p>Count: {count}</p>
-      <button onClick={increment}>+</button>
-    </div>
-  )
+  return <button onClick={increment}>Count: {count}</button>
 }
 ```
 
 ### Effects with Cleanup
+
 ```typescript
-function ChatRoom({ roomId }: { roomId: string }) {
-  const [messages, setMessages] = useState<Message[]>([])
+function UserProfile({ userId }: Props) {
+  const [user, setUser] = useState<User | null>(null)
   
   useEffect(() => {
-    const subscription = chatAPI.subscribe(roomId, (message) => {
-      setMessages(prev => [...prev, message])
-    })
+    const controller = new AbortController()
     
-    // ✅ Cleanup function (prevents memory leaks)
-    return () => subscription.unsubscribe()
-  }, [roomId])  // Re-run when roomId changes
+    fetch(`/api/users/${userId}`, { signal: controller.signal })
+      .then(res => res.json())
+      .then(setUser)
+    
+    return () => controller.abort()  // Cleanup
+  }, [userId])
   
-  return <MessageList messages={messages} />
+  return user ? <div>{user.name}</div> : <div>Loading...</div>
 }
 ```
 
-### Custom Hooks (Reusable Logic)
-```typescript
-function useFetch<T>(url: string) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  
-  useEffect(() => {
-    let cancelled = false
-    
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (!cancelled) {
-          setData(data)
-          setLoading(false)
-        }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
-      })
-    
-    return () => { cancelled = true }  // Cleanup
-  }, [url])
-  
-  return { data, loading, error }
-}
+### Performance Optimization
 
-// Usage
-function UserList() {
-  const { data, loading, error } = useFetch<User[]>('/api/users')
+```typescript
+function ExpensiveComponent({ items, onSelect }: Props) {
+  // Memoize callback
+  const handleSelect = useCallback((id: number) => {
+    onSelect(id)
+  }, [onSelect])
   
-  if (loading) return <div>Loading...</div>
-  if (error) return <div>Error: {error.message}</div>
+  // Memoize expensive calculation
+  const sortedItems = useMemo(() => 
+    [...items].sort((a, b) => a.name.localeCompare(b.name))
+  , [items])
   
   return (
     <ul>
-      {data?.map(user => <li key={user.id}>{user.name}</li>)}
+      {sortedItems.map(item => (
+        <li key={item.id} onClick={() => handleSelect(item.id)}>
+          {item.name}
+        </li>
+      ))}
     </ul>
   )
 }
 ```
 
-### Performance Optimization
-```typescript
-function ProductList({ products, onSelect }: ProductListProps) {
-  // ✅ Memoize callback to prevent child re-renders
-  const handleSelect = useCallback((id: number) => {
-    onSelect(id)
-  }, [onSelect])
-  
-  // ✅ Memoize expensive calculation
-  const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => a.price - b.price)
-  }, [products])
-  
-  return (
-    <div>
-      {sortedProducts.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onSelect={handleSelect}
-        />
-      ))}
-    </div>
-  )
-}
-```
-
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
-
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Class Components** | `class Component extends React.Component` | Functional components + hooks | Legacy pattern |
-| **Mutating State** | `state.count++` or `user.name = 'x'` | `setState` with new object | React won't re-render |
-| **Conditional Hooks** | `if (x) { useState() }` | Always call hooks unconditionally | Breaks React internals |
-| **Missing Dependencies** | `useEffect(() => {}, [])` with stale closure | Include all dependencies | Stale values, bugs |
-| **Index as Key** | `key={index}` for dynamic lists | `key={item.id}` | Causes rendering bugs |
-
-### Anti-Pattern: Class Components (FORBIDDEN in new code)
-```typescript
-// ❌ WRONG - Class component (legacy)
-class Counter extends React.Component {
-  state = { count: 0 }
-  
-  increment = () => {
-    this.setState({ count: this.state.count + 1 })
-  }
-  
-  render() {
-    return <button onClick={this.increment}>{this.state.count}</button>
-  }
-}
-
-// ✅ CORRECT - Functional component
-function Counter() {
-  const [count, setCount] = useState(0)
-  return <button onClick={() => setCount(count + 1)}>{count}</button>
-}
-```
-
-### Anti-Pattern: Conditional Hooks (BREAKS REACT)
-```typescript
-// ❌ WRONG - Conditional hook call
-function Component({ show }: { show: boolean }) {
-  if (show) {
-    const [state, setState] = useState(0)  // BREAKS RULES OF HOOKS!
-  }
-  return <div>...</div>
-}
-
-// ✅ CORRECT - Always call hooks unconditionally
-function Component({ show }: { show: boolean }) {
-  const [state, setState] = useState(0)  // Always called
-  
-  if (!show) return null  // Conditional rendering
-  
-  return <div>{state}</div>
-}
-```
-
-### Anti-Pattern: Missing Dependencies (STALE CLOSURES)
-```typescript
-// ❌ WRONG - Missing dependency
-function SearchResults({ query }: { query: string }) {
-  useEffect(() => {
-    fetchResults(query)  // Uses 'query' but not in deps!
-  }, [])  // Only runs once with initial query value
-}
-
-// ✅ CORRECT - Include all dependencies
-function SearchResults({ query }: { query: string }) {
-  useEffect(() => {
-    fetchResults(query)
-  }, [query])  // Re-runs when query changes
-}
-```
-
-## AI Self-Check (Verify BEFORE generating React code)
-
-- [ ] Using functional components? (NOT class components)
-- [ ] Props typed with TypeScript interface?
-- [ ] Using useState for state? (NOT direct mutation)
-- [ ] useEffect has cleanup function? (If needed)
-- [ ] All dependencies in useEffect/useCallback? (No stale closures)
-- [ ] Hooks called unconditionally? (NOT in if/loops)
-- [ ] Keys for lists use stable IDs? (NOT index)
-- [ ] useCallback/useMemo for performance? (When appropriate)
-- [ ] Event handlers properly bound?
-- [ ] Following React naming conventions?
-
-## Hooks
-
-| Hook | Purpose | Example |
-|------|---------|---------|
-| useState | Local state | `const [count, setCount] = useState(0)` |
-| useEffect | Side effects | `useEffect(() => { }, [deps])` |
-| useContext | Context consumer | `const value = useContext(MyContext)` |
-| useReducer | Complex state | `const [state, dispatch] = useReducer(reducer, init)` |
-| useCallback | Memoize callbacks | `useCallback(() => { }, [deps])` |
-| useMemo | Memoize values | `useMemo(() => compute(), [deps])` |
-| useRef | DOM refs, mutable values | `const ref = useRef<HTMLDivElement>(null)` |
-
-## Context API
+### Custom Hook
 
 ```typescript
-const UserContext = createContext<User | null>(null)
-
-function App() {
+function useUser(userId: number) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   
-  return (
-    <UserContext.Provider value={user}>
-      <Dashboard />
-    </UserContext.Provider>
-  )
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setUser(data)
+        setLoading(false)
+      })
+  }, [userId])
+  
+  return { user, loading }
 }
 
-function Dashboard() {
-  const user = useContext(UserContext)
-  return <div>Welcome, {user?.name}</div>
+// Usage
+function UserProfile({ userId }: Props) {
+  const { user, loading } = useUser(userId)
+  
+  if (loading) return <div>Loading...</div>
+  return <div>{user?.name}</div>
 }
 ```
 
-## Key Libraries
+## Common AI Mistakes
 
-- **React Router**: `useNavigate`, `useParams`, `Link`
-- **React Query**: `useQuery`, `useMutation`
-- **Zustand/Redux**: Global state management
-- **React Hook Form**: Form handling
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Direct Mutation** | `state.push(item)` | `setState([...state, item])` |
+| **Missing Dependencies** | `useEffect(() => {}, [])` with closures | Include all dependencies |
+| **Index as Key** | `key={index}` | `key={item.id}` |
+| **Conditional Hooks** | `if (x) { useState() }` | Hooks at top level |
+
+### Anti-Pattern: Direct Mutation
+
+```typescript
+// ❌ WRONG
+setUsers(users.push(newUser))  // Mutates!
+
+// ✅ CORRECT
+setUsers([...users, newUser])
+```
+
+### Anti-Pattern: Missing Dependencies
+
+```typescript
+// ❌ WRONG
+useEffect(() => {
+  fetchData(userId)  // userId not in deps!
+}, [])
+
+// ✅ CORRECT
+useEffect(() => {
+  fetchData(userId)
+}, [userId])
+```
+
+## AI Self-Check
+
+- [ ] Functional components only?
+- [ ] TypeScript for props?
+- [ ] Hooks at top level?
+- [ ] Effect cleanup functions?
+- [ ] All dependencies listed?
+- [ ] Stable keys for lists?
+- [ ] useCallback for callbacks?
+- [ ] useMemo for expensive calculations?
+- [ ] Custom hooks for reusable logic?
+- [ ] No direct state mutation?
+
+## Key Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `useState` | Component state |
+| `useEffect` | Side effects |
+| `useCallback` | Memoize callbacks |
+| `useMemo` | Memoize values |
+| `useRef` | Persistent values |
+| `useContext` | Context API |
+
+## Best Practices
+
+**MUST**: Functional components, TypeScript, hooks rules, effect cleanup
+**SHOULD**: useCallback, useMemo, custom hooks, stable keys
+**AVOID**: Class components, mutations, missing dependencies, index keys
