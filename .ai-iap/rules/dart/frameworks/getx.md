@@ -1,31 +1,31 @@
 # GetX Framework
 
-> **Scope**: State management, routing, and DI for Flutter with GetX
+> **Scope**: State management, routing, and DI for Flutter  
 > **Applies to**: Dart files using GetX in Flutter
 > **Extends**: dart/architecture.md, dart/code-style.md
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
 > **ALWAYS**: Use GetxController (NOT StatefulWidget)
 > **ALWAYS**: Use .obs for reactive variables
-> **ALWAYS**: Use bindings for dependency injection
+> **ALWAYS**: Use bindings for DI
 > **ALWAYS**: Use Get.find() to access controllers
 > **ALWAYS**: Dispose in onClose()
 > 
-> **NEVER**: Instantiate controllers directly (use Get.put/Get.lazyPut)
+> **NEVER**: Instantiate controllers directly
 > **NEVER**: Use StatefulWidget with GetX
 > **NEVER**: Skip onClose() cleanup
-> **NEVER**: Overuse Get.find() (use GetView)
+> **NEVER**: Overuse Get.find()
 > **NEVER**: Create global state unless needed
 
 ## Core Patterns
 
-### Controller (GetxController)
+### Controller
 
 ```dart
 class UserController extends GetxController {
   final UserRepository _repository;
-  UserController(this._repository);
+  UserController(this _repository);
   
   final users = <User>[].obs;
   final isLoading = false.obs;
@@ -51,163 +51,131 @@ class UserController extends GetxController {
   
   @override
   void onClose() {
-    // Clean up resources
+    // Cleanup
     super.onClose();
   }
 }
 ```
 
-### View (GetView)
+### View (Obx)
 
 ```dart
-class UserView extends GetView<UserController> {
+class UserListView extends StatelessWidget {
+  final controller = Get.find<UserController>();
+  
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Users')),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator());
-        }
-        
-        if (controller.error.value != null) {
-          return Center(child: Text('Error: ${controller.error.value}'));
-        }
-        
-        return ListView.builder(
-          itemCount: controller.users.length,
-          itemBuilder: (context, index) {
-            final user = controller.users[index];
-            return ListTile(
-              title: Text(user.name),
-              subtitle: Text(user.email),
-            );
-          },
-        );
-      }),
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return CircularProgressIndicator();
+      }
+      return ListView.builder(
+        itemCount: controller.users.length,
+        itemBuilder: (context, index) => UserTile(controller.users[index]),
+      );
+    });
+  }
+}
+
+// Or use GetView
+class UserListView extends GetView<UserController> {
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => ListView.builder(
+      itemCount: controller.users.length,
+      itemBuilder: (context, index) => UserTile(controller.users[index]),
+    ));
   }
 }
 ```
 
-### Bindings (Dependency Injection)
+### Bindings
 
 ```dart
 class UserBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<UserRepository>(() => UserRepositoryImpl());
-    Get.lazyPut<UserController>(() => UserController(Get.find()));
+    Get.lazyPut(() => UserRepository());
+    Get.lazyPut(() => UserController(Get.find()));
   }
 }
+
+// Usage
+GetPage(
+  name: '/users',
+  page: () => UserListView(),
+  binding: UserBinding(),
+);
 ```
 
-### Routes
+### Navigation
 
 ```dart
-class AppPages {
-  static const HOME = '/home';
-  static const USER_DETAILS = '/user/:id';
-  
-  static final routes = [
-    GetPage(
-      name: HOME,
-      page: () => HomeView(),
-      binding: HomeBinding(),
-    ),
-    GetPage(
-      name: USER_DETAILS,
-      page: () => UserDetailsView(),
-      binding: UserDetailsBinding(),
-    ),
-  ];
-}
+// Navigate
+Get.to(() => UserDetailView());
 
-// Navigation
-Get.toNamed(AppPages.USER_DETAILS, arguments: {'id': userId});
+// Named route
+Get.toNamed('/user/details', arguments: userId);
+
+// Replace
+Get.off(() => HomeView());
+
+// Clear stack
+Get.offAll(() => LoginView());
+
+// Back
 Get.back();
 ```
 
-### App Setup
+### Dialogs & Snackbars
 
 ```dart
-void main() {
-  runApp(GetMaterialApp(
-    title: 'My App',
-    initialRoute: AppPages.HOME,
-    getPages: AppPages.routes,
-    initialBinding: InitialBinding(),
-  ));
-}
+// Snackbar
+Get.snackbar('Success', 'User created');
+
+// Dialog
+Get.defaultDialog(
+  title: 'Confirm',
+  middleText: 'Delete user?',
+  onConfirm: () => controller.deleteUser(),
+);
+
+// Bottom sheet
+Get.bottomSheet(Container(child: Text('Options')));
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+## Common AI Mistakes
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Direct Instantiation** | `UserController()` | `Get.put(UserController())` | Lifecycle management |
-| **StatefulWidget** | `StatefulWidget` + GetX | `GetView<Controller>` | Redundant state |
-| **No onClose** | Skip cleanup | Implement `onClose()` | Memory leak |
-| **Manual Rebuild** | `setState()` | `.obs` + `Obx()` | GetX pattern |
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Direct Instantiation** | `UserController()` | `Get.find<UserController>()` |
+| **StatefulWidget** | With GetX | Use GetxController |
+| **No onClose** | Missing cleanup | Implement onClose() |
+| **Overuse Get.find** | Everywhere | Use GetView |
 
-### Anti-Pattern: Direct Controller Instantiation (LIFECYCLE DISASTER)
-
-```dart
-// ❌ WRONG: Direct instantiation
-class UserView extends StatelessWidget {
-  final controller = UserController();  // Wrong lifecycle!
-}
-
-// ✅ CORRECT: GetView + Binding
-class UserView extends GetView<UserController> {
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() => Text(controller.count.toString()));
-  }
-}
-```
-
-## AI Self-Check (Verify BEFORE generating GetX code)
+## AI Self-Check
 
 - [ ] Using GetxController?
-- [ ] .obs for reactive variables?
+- [ ] .obs for reactive vars?
 - [ ] Bindings for DI?
-- [ ] GetView for widgets?
-- [ ] Obx() for reactive UI?
-- [ ] onClose() cleanup implemented?
-- [ ] Get.toNamed() for navigation?
-- [ ] Get.lazyPut() in bindings?
-- [ ] GetMaterialApp as root?
-- [ ] No StatefulWidget with GetX?
+- [ ] Get.find() for access?
+- [ ] onClose() cleanup?
+- [ ] No direct instantiation?
+- [ ] No StatefulWidget?
+- [ ] GetView where appropriate?
 
 ## Key Features
 
-| Feature | Purpose | Keywords |
-|---------|---------|----------|
-| **GetxController** | State management | `.obs`, `update()` |
-| **Obx()** | Reactive widgets | Auto-rebuild |
-| **Bindings** | Dependency injection | `Get.put()`, `Get.lazyPut()` |
-| **Get.toNamed()** | Navigation | Named routes |
-| **GetView** | Controller access | No Get.find() calls |
+| Feature | Purpose |
+|---------|---------|
+| GetxController | State management |
+| .obs | Reactive variables |
+| Obx | UI rebuild |
+| Bindings | DI |
+| Get.to() | Navigation |
 
 ## Best Practices
 
-**MUST**:
-- GetxController for state
-- .obs for reactivity
-- Bindings for DI
-- Get.find() or GetView
-- onClose() cleanup
-
-**SHOULD**:
-- GetView over StatelessWidget
-- Get.toNamed() for navigation
-- Feature-based modules
-- GetMaterialApp root
-
-**AVOID**:
-- Direct controller instantiation
-- StatefulWidget
-- Missing onClose()
-- Overusing Get.find()
-- Global state
+**MUST**: GetxController, .obs, bindings, onClose(), Get.find()
+**SHOULD**: GetView, lazy loading, named routes
+**AVOID**: Direct instantiation, StatefulWidget, overuse Get.find(), global state

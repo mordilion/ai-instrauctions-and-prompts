@@ -1,37 +1,27 @@
 # ASP.NET Core Framework
 
-> **Scope**: Apply these rules when working with ASP.NET Core web APIs and MVC applications
+> **Scope**: ASP.NET Core web APIs and MVC  
 > **Applies to**: *.cs files in ASP.NET Core projects
 > **Extends**: dotnet/architecture.md, dotnet/code-style.md
-> **Precedence**: Framework rules OVERRIDE C# rules for ASP.NET Core-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use constructor injection (NOT property injection)
-> **ALWAYS**: Return ActionResult<T> for type-safe API responses
-> **ALWAYS**: Use DTOs for API contracts (NEVER expose entities)
-> **ALWAYS**: Use async/await for I/O operations
-> **ALWAYS**: Register services in layer-specific extension methods
+> **ALWAYS**: Use constructor injection
+> **ALWAYS**: Return ActionResult<T>
+> **ALWAYS**: Use DTOs for API contracts
+> **ALWAYS**: Use async/await for I/O
+> **ALWAYS**: Register services in extension methods
 > 
-> **NEVER**: Use Singleton lifetime for DbContext (causes threading issues)
-> **NEVER**: Return entities from controllers (causes lazy loading errors)
-> **NEVER**: Put business logic in controllers (belongs in services)
-> **NEVER**: Use try-catch in controllers (use middleware for exceptions)
+> **NEVER**: Use Singleton lifetime for DbContext
+> **NEVER**: Return entities from controllers
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Use try-catch in controllers
 > **NEVER**: Access database directly from controllers
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Controllers | Complex routing, filters, traditional MVC | `[ApiController]`, `ControllerBase`, `[HttpGet]` |
-| Minimal APIs | Simple endpoints, microservices | `MapGet()`, `MapPost()`, `MapGroup()` |
-| ActionResult<T> | Type-safe responses (required) | Return type for all actions |
-| Scoped Lifetime | DbContext, per-request services | `AddDbContext<T>()`, `AddScoped<T>()` |
-| Singleton Lifetime | Stateless services, configuration | `AddSingleton<T>()` |
 
 ## Core Patterns
 
-### Thin Controller (REQUIRED)
+### Thin Controller
+
 ```csharp
 [ApiController]
 [Route("api/[controller]")]
@@ -49,177 +39,106 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest request)
+    public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto dto)
     {
-        var user = await _userService.CreateAsync(request);
+        var user = await _userService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
     }
 }
 ```
 
-### Dependency Injection Registration
+### Minimal API
+
 ```csharp
-// Application/DependencyInjection.cs
-public static IServiceCollection AddApplication(this IServiceCollection services)
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/users/{id}", async (int id, IUserService service) =>
 {
-    services.AddScoped<IUserService, UserService>();
-    services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-    return services;
-}
-
-// Infrastructure/DependencyInjection.cs
-public static IServiceCollection AddInfrastructure(
-    this IServiceCollection services, IConfiguration config)
-{
-    services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(config.GetConnectionString("Default")));
-    services.AddScoped<IUserRepository, UserRepository>();
-    return services;
-}
-```
-
-### Middleware Pipeline (Order Critical)
-```csharp
-app.UseExceptionHandler("/error");  // 1. Exception handling FIRST
-app.UseCors();                      // 2. CORS before auth
-app.UseAuthentication();            // 3. Authentication before authorization
-app.UseAuthorization();             // 4. Authorization after authentication
-app.MapControllers();               // 5. Endpoints LAST
-```
-
-### Global Exception Handling
-```csharp
-app.UseExceptionHandler(errorApp => {
-    errorApp.Run(async context => {
-        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-        
-        var problemDetails = exception switch {
-            NotFoundException => new ProblemDetails { Status = 404, Detail = exception.Message },
-            ValidationException => new ValidationProblemDetails { Status = 400 },
-            _ => new ProblemDetails { Status = 500, Title = "Internal Server Error" }
-        };
-        
-        await context.Response.WriteAsJsonAsync(problemDetails);
-    });
+    var user = await service.GetByIdAsync(id);
+    return user is null ? Results.NotFound() : Results.Ok(user);
 });
+
+app.MapPost("/users", async (CreateUserDto dto, IUserService service) =>
+{
+    var user = await service.CreateAsync(dto);
+    return Results.Created($"/users/{user.Id}", user);
+});
+
+app.Run();
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+### Service Registration
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Singleton DbContext** | `AddSingleton<DbContext>()` | `AddDbContext<T>()` (scoped) | Not thread-safe, production crashes |
-| **Exposing Entities** | `public User GetUser()` returning entity | `public UserDto GetUser()` returning DTO | Lazy loading errors, security risk |
-| **Business Logic in Controller** | Controller does validation, DB access | Controller calls service only | Untestable, unmaintainable |
-| **Wrong Middleware Order** | `UseAuthorization()` before `UseAuthentication()` | Auth before Authz | Security bypass |
-| **Try-Catch in Controllers** | `try-catch` in every action | Global exception middleware | Code duplication, inconsistent errors |
-
-### Anti-Pattern: Singleton DbContext (FORBIDDEN)
 ```csharp
-// ❌ WRONG - Not thread-safe
-services.AddSingleton<AppDbContext>();  // Causes concurrency bugs
+// Program.cs
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// ✅ CORRECT - Scoped lifetime
-services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
 ```
 
-### Anti-Pattern: Exposing Entities (FORBIDDEN)
-```csharp
-// ❌ WRONG - Entity in API
-[HttpGet]
-public async Task<List<User>> GetUsers() {
-    return await _context.Users.ToListAsync();  // Security risk
-}
-
-// ✅ CORRECT - DTO in API
-[HttpGet]
-public async Task<ActionResult<List<UserDto>>> GetUsers() {
-    return await _context.Users
-        .Select(u => new UserDto(u.Id, u.Name, u.Email))
-        .ToListAsync();
-}
-```
-
-### Anti-Pattern: Business Logic in Controller (FORBIDDEN)
-```csharp
-// ❌ WRONG - Fat controller
-[HttpPost]
-public async Task<IActionResult> CreateUser(CreateUserRequest req) {
-    if (string.IsNullOrEmpty(req.Email)) return BadRequest();  // Validation here
-    var user = new User { Email = req.Email };  // Business logic here
-    _context.Users.Add(user);  // DB access here
-    await _context.SaveChangesAsync();
-    return Ok(user);
-}
-
-// ✅ CORRECT - Thin controller
-[HttpPost]
-public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest req) {
-    var user = await _userService.CreateAsync(req);  // Service handles all logic
-    return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
-}
-```
-
-## AI Self-Check (Verify BEFORE generating ASP.NET Core code)
-
-- [ ] Constructor injection? (NOT property injection)
-- [ ] ActionResult<T> return type? (Type-safe responses)
-- [ ] Returns DTO? (NOT entity)
-- [ ] Async/await for I/O? (All DB/API calls)
-- [ ] DbContext is scoped? (NEVER Singleton)
-- [ ] Business logic in service? (NOT in controller)
-- [ ] Middleware in correct order? (Exception→CORS→Auth→Authz→Endpoints)
-- [ ] No try-catch in controller? (Use global middleware)
-- [ ] Layer-specific DI registration? (AddApplication/AddInfrastructure)
-- [ ] DTOs use records? (C# 9+)
-
-## API Conventions
-
-| Convention | Format | Example |
-|------------|--------|---------|
-| Route Naming | Plural nouns | `/api/users` (NOT `/api/user`) |
-| HTTP Verbs | RESTful | GET (read), POST (create), PUT (replace), PATCH (update), DELETE (remove) |
-| Status Codes | Standard | 200 OK, 201 Created, 204 NoContent, 400 BadRequest, 404 NotFound |
-
-## Validation
+### Middleware
 
 ```csharp
-// FluentValidation (complex rules)
-public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest> {
-    public CreateUserRequestValidator() {
-        RuleFor(x => x.Email).NotEmpty().EmailAddress();
-        RuleFor(x => x.Name).MinimumLength(2).MaximumLength(100);
-    }
-}
-
-// Data Annotations (simple rules)
-public record CreateUserRequest(
-    [Required][StringLength(100)] string Name,
-    [Required][EmailAddress] string Email
-);
-```
-
-## Configuration
-
-```csharp
-// Options Pattern
-services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-
-// Usage
-public class AuthService {
-    private readonly JwtSettings _settings;
+public class ExceptionMiddleware
+{
+    private readonly RequestDelegate _next;
     
-    public AuthService(IOptions<JwtSettings> settings) {
-        _settings = settings.Value;
+    public ExceptionMiddleware(RequestDelegate next) => _next = next;
+    
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsJsonAsync(new { error = ex.Message });
+        }
     }
 }
+
+// Program.cs
+app.UseMiddleware<ExceptionMiddleware>();
 ```
 
-## Key Libraries
+## Common AI Mistakes
 
-- **DI**: Built-in, `IServiceCollection`, `AddScoped/Singleton/Transient`
-- **Validation**: FluentValidation, Data Annotations
-- **EF Core**: `AddDbContext<T>()`, `DbContext`, `DbSet<T>`
-- **MediatR**: CQRS pattern, request/response pipeline
-- **AutoMapper**: DTO mapping
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Entity Return** | `return entity` | `return dto` |
+| **Singleton DbContext** | `AddSingleton<DbContext>` | `AddScoped<DbContext>` |
+| **Controller Logic** | Business logic | Service call |
+| **try-catch** | In controller | Middleware |
+
+## AI Self-Check
+
+- [ ] Constructor injection?
+- [ ] ActionResult<T> return type?
+- [ ] DTOs for contracts?
+- [ ] async/await for I/O?
+- [ ] Services in extensions?
+- [ ] Scoped DbContext?
+- [ ] Thin controllers?
+- [ ] Middleware for exceptions?
+- [ ] No direct database access?
+
+## Key Features
+
+| Feature | Purpose |
+|---------|---------|
+| ActionResult<T> | Type-safe responses |
+| Minimal APIs | Simple endpoints |
+| Middleware | Request pipeline |
+| DI | Service injection |
+| Scoped Lifetime | Per-request |
+
+## Best Practices
+
+**MUST**: Constructor DI, ActionResult<T>, DTOs, async/await, scoped DbContext
+**SHOULD**: Minimal APIs, middleware, extension methods, filters
+**AVOID**: Singleton DbContext, entity returns, controller logic, controller exceptions

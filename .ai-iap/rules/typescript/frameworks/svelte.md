@@ -1,37 +1,27 @@
 # Svelte Framework
 
-> **Scope**: Apply these rules when working with Svelte/SvelteKit applications
+> **Scope**: Svelte/SvelteKit applications  
 > **Applies to**: .svelte files and Svelte TypeScript files
 > **Extends**: typescript/architecture.md, typescript/code-style.md
-> **Precedence**: Framework rules OVERRIDE TypeScript rules for Svelte-specific patterns
 
-## CRITICAL REQUIREMENTS (AI: Verify ALL before generating code)
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS**: Use `$:` for reactive statements (Svelte's reactivity system)
-> **ALWAYS**: Use `export let` for props (Svelte prop syntax)
-> **ALWAYS**: Use stores for shared state (writable, readable, derived)
-> **ALWAYS**: Clean up subscriptions with `onDestroy` (prevent memory leaks)
-> **ALWAYS**: Use `bind:` for two-way binding (NOT manual event handlers)
+> **ALWAYS**: Use `$:` for reactive statements
+> **ALWAYS**: Use `export let` for props
+> **ALWAYS**: Use stores for shared state
+> **ALWAYS**: Clean up subscriptions with onDestroy
+> **ALWAYS**: Use `bind:` for two-way binding
 > 
-> **NEVER**: Use `.subscribe()` without `onDestroy` cleanup (memory leak)
-> **NEVER**: Mutate props directly (use events for parent updates)
-> **NEVER**: Forget `$:` for derived values (breaks reactivity)
-> **NEVER**: Use complex logic in templates (move to reactive statements)
-> **NEVER**: Create stores inside components (define at module level)
-
-## Pattern Selection
-
-| Pattern | Use When | Keywords |
-|---------|----------|----------|
-| Reactive Statements | Derived values, side effects | `$: derivedValue = count * 2` |
-| Stores | Shared state across components | `writable()`, `readable()`, `derived()` |
-| bind: | Two-way binding | `bind:value`, `bind:checked` |
-| on: | Event handling | `on:click={handler}` |
-| {#if}/{#each} | Conditional/list rendering | Control flow blocks |
+> **NEVER**: Use `.subscribe()` without onDestroy
+> **NEVER**: Mutate props directly
+> **NEVER**: Forget `$:` for derived values
+> **NEVER**: Use complex logic in templates
+> **NEVER**: Create stores inside components
 
 ## Core Patterns
 
 ### Component with Props & Events
+
 ```svelte
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
@@ -39,194 +29,120 @@
   export let value: string = ''
   export let placeholder: string = 'Enter text'
   
-  const dispatch = createEventDispatcher<{
-    change: string
-    submit: void
-  }>()
+  const dispatch = createEventDispatcher<{ change: string }>()
   
   function handleInput(e: Event) {
-    const target = e.target as HTMLInputElement
-    dispatch('change', target.value)
+    dispatch('change', (e.target as HTMLInputElement).value)
   }
 </script>
 
-<input
-  value={value}
-  placeholder={placeholder}
-  on:input={handleInput}
-  on:keydown={(e) => e.key === 'Enter' && dispatch('submit')}
-/>
+<input {value} {placeholder} on:input={handleInput} />
 ```
 
-### Reactivity (Core Feature)
+### Reactive Statements
+
 ```svelte
 <script lang="ts">
   let count = 0
-  
-  // Reactive statement: runs when count changes
-  $: doubled = count * 2
-  
-  // Reactive block: multiple statements
-  $: {
-    console.log(`Count is ${count}`)
-    if (count > 10) {
-      console.warn('Count is high!')
-    }
-  }
-  
-  // Reactive expression for class/style
-  $: className = count > 5 ? 'high' : 'low'
+  $: doubled = count * 2  // Reactive declaration
+  $: console.log(`count is ${count}`)  // Side effect
+  $: if (count > 10) alert('Too high!')  // Conditional
 </script>
 
-<div class={className}>
-  <p>Count: {count}</p>
-  <p>Doubled: {doubled}</p>
-  <button on:click={() => count++}>Increment</button>
-</div>
+<button on:click={() => count++}>
+  {count} (doubled: {doubled})
+</button>
 ```
 
-### Stores (Shared State)
+### Stores
+
 ```typescript
-// stores/counter.ts
+// stores.ts
 import { writable, derived, readable } from 'svelte/store'
 
-// Writable store
 export const count = writable(0)
-
-// Derived store
 export const doubled = derived(count, $count => $count * 2)
-
-// Readable store (read-only)
-export const time = readable(new Date(), (set) => {
+export const time = readable(new Date(), set => {
   const interval = setInterval(() => set(new Date()), 1000)
-  return () => clearInterval(interval)  // Cleanup function
+  return () => clearInterval(interval)
 })
 
-// Usage in component
-import { count } from './stores/counter'
-import { onDestroy } from 'svelte'
+// Component.svelte
+<script lang="ts">
+  import { count } from './stores'
+  // Auto-subscribes with $, auto-unsubscribes
+</script>
 
-// Auto-subscribe with $
-$: console.log($count)  // Automatically subscribes and unsubscribes
-
-// Manual subscribe (requires cleanup)
-const unsubscribe = count.subscribe(value => console.log(value))
-onDestroy(unsubscribe)
+<button on:click={() => $count++}>{$count}</button>
 ```
 
-## Common AI Mistakes (DO NOT MAKE THESE ERRORS)
+### Two-Way Binding
 
-| Mistake | ❌ Wrong | ✅ Correct | Why Critical |
-|---------|---------|-----------|--------------|
-| **Missing `$:` for Derived Values** | `const doubled = count * 2` | `$: doubled = count * 2` | Breaks reactivity |
-| **Subscribe Without Cleanup** | `store.subscribe()` without `onDestroy` | Use `$store` or cleanup in `onDestroy` | Memory leak |
-| **Mutating Props** | `value = 'new'` when `value` is prop | `dispatch('change', 'new')` | Breaks one-way data flow |
-| **Stores in Components** | `const store = writable()` in component | Define at module level | Creates new store per instance |
-| **Complex Template Logic** | Long expressions in `{...}` | Move to reactive statement | Unreadable, breaks reactivity |
-
-### Anti-Pattern: Missing $: for Derived Values (COMMON ERROR)
 ```svelte
-<!-- ❌ WRONG - Not reactive -->
 <script lang="ts">
-  let count = 0
-  const doubled = count * 2  // Calculated ONCE, never updates
+  let name = ''
+  let isChecked = false
 </script>
 
-<!-- ✅ CORRECT - Reactive -->
-<script lang="ts">
-  let count = 0
-  $: doubled = count * 2  // Recalculates when count changes
-</script>
+<input bind:value={name} />
+<input type="checkbox" bind:checked={isChecked} />
 ```
 
-### Anti-Pattern: Subscribe Without Cleanup (MEMORY LEAK)
-```svelte
-<!-- ❌ WRONG - Memory leak -->
-<script lang="ts">
-  import { myStore } from './stores'
-  
-  myStore.subscribe(value => {
-    console.log(value)
-  })  // NEVER cleaned up!
-</script>
-
-<!-- ✅ CORRECT - Auto-subscribe -->
-<script lang="ts">
-  import { myStore } from './stores'
-  
-  $: console.log($myStore)  // Auto-subscribes and cleans up
-</script>
-
-<!-- ✅ CORRECT - Manual cleanup -->
-<script lang="ts">
-  import { onDestroy } from 'svelte'
-  import { myStore } from './stores'
-  
-  const unsubscribe = myStore.subscribe(value => console.log(value))
-  onDestroy(unsubscribe)
-</script>
-```
-
-## AI Self-Check (Verify BEFORE generating Svelte code)
-
-- [ ] Using `$:` for derived values? (NOT const assignments)
-- [ ] Props declared with `export let`? (Svelte prop syntax)
-- [ ] Events dispatched with `createEventDispatcher`?
-- [ ] Stores defined at module level? (NOT inside components)
-- [ ] Using `$store` for auto-subscribe? (OR manual cleanup with `onDestroy`)
-- [ ] Two-way binding with `bind:`? (NOT manual v-model)
-- [ ] Never mutating props directly? (Dispatch events)
-- [ ] Cleanup in `onDestroy`? (Subscriptions, timers)
-- [ ] Control flow with `{#if}` and `{#each}`?
-- [ ] TypeScript types for props and events?
-
-## Control Flow
+### Control Flow
 
 ```svelte
-<!-- Conditional rendering -->
-{#if condition}
-  <p>Shown when true</p>
-{:else if otherCondition}
-  <p>Alternate</p>
+{#if user}
+  <p>Hello {user.name}!</p>
 {:else}
-  <p>Default</p>
+  <p>Please log in</p>
 {/if}
 
-<!-- List rendering -->
-{#each items as item, index (item.id)}
-  <div>{index}: {item.name}</div>
-{:else}
-  <p>No items</p>
+{#each items as item (item.id)}
+  <div>{item.name}</div>
 {/each}
 
-<!-- Promises -->
 {#await promise}
   <p>Loading...</p>
-{:then value}
-  <p>Result: {value}</p>
+{:then data}
+  <p>Data: {data}</p>
 {:catch error}
   <p>Error: {error.message}</p>
 {/await}
 ```
 
-## Bindings
+## Common AI Mistakes
 
-```svelte
-<!-- Two-way binding -->
-<input bind:value={name} />
-<input type="checkbox" bind:checked={accepted} />
-<select bind:value={selected}>...</select>
+| Mistake | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **No $:** | `const doubled = count * 2` | `$: doubled = count * 2` |
+| **Prop Mutation** | `value = 'new'` | `dispatch('change', 'new')` |
+| **No Cleanup** | `store.subscribe()` | `$store` or onDestroy |
+| **Store in Component** | `const s = writable()` inside | Define at module level |
 
-<!-- Component binding -->
-<CustomInput bind:value={text} />
+## AI Self-Check
 
-<!-- Element binding -->
-<div bind:clientWidth={width} bind:clientHeight={height}>...</div>
-```
+- [ ] Using $: for reactivity?
+- [ ] export let for props?
+- [ ] Stores for shared state?
+- [ ] onDestroy for cleanup?
+- [ ] bind: for two-way binding?
+- [ ] No prop mutation?
+- [ ] No complex template logic?
+- [ ] No store creation in components?
+- [ ] Using $store syntax?
 
-## Key Libraries
+## Key Features
 
-- **SvelteKit**: Full-stack framework (replaces Sapper)
-- **Svelte Stores**: `writable`, `readable`, `derived`
-- **svelte/transition**: Animations and transitions
-- **svelte/motion**: Tweened and spring animations
+| Feature | Purpose |
+|---------|---------|
+| $: | Reactive statements |
+| Stores | Shared state |
+| bind: | Two-way binding |
+| on: | Event handling |
+| $store | Auto-subscribe |
+
+## Best Practices
+
+**MUST**: $: for reactivity, export let, stores, onDestroy, bind:
+**SHOULD**: Derived stores, readable stores, auto-subscribe ($)
+**AVOID**: Prop mutation, complex templates, store creation in components
