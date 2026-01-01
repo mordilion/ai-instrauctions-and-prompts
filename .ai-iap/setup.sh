@@ -865,6 +865,9 @@ generate_tool() {
         aider)
             generate_concatenated "Aider" "CONVENTIONS.md" ""
             ;;
+        google-ai-studio)
+            generate_concatenated "Google AI Studio" "GOOGLE_AI_STUDIO.md" ""
+            ;;
         *)
             print_warning "Unknown tool: $tool"
             ;;

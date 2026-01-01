@@ -28,7 +28,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider
+- **🔧 Multi-Tool Support** – Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider, Google AI Studio
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
@@ -71,6 +71,7 @@ Select AI tools to configure:
   3. GitHub Copilot
   4. Windsurf
   5. Aider
+  6. Google AI Studio
 
   * = recommended
   a. All tools
@@ -91,6 +92,7 @@ That's it! Your AI tools are now configured with consistent coding standards.
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
+| **Google AI Studio** | `GOOGLE_AI_STUDIO.md` | Single concatenated file for system instructions |
 
 ---
 

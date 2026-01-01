@@ -8,11 +8,11 @@
 
 ---
 
-Define your coding standards once, generate configurations for **Cursor, Claude CLI, GitHub Copilot, Windsurf, and Aider**.
+Define your coding standards once, generate configurations for **Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider, and Google AI Studio**.
 
 ## ✨ Features
 
-- 🔧 **Multi-Tool** – One source, all AI tools configured
+- 🔧 **Multi-Tool** – One source, 6 AI tools configured
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript, Dart/Flutter, .NET/C#, PHP, Node.js
 - 📦 **50+ Frameworks** – React, Next.js, NestJS, AdonisJS, Spring Boot, Django, FastAPI, Laravel, iOS, Android, and more
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular

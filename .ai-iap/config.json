@@ -38,6 +38,13 @@
       "fileExtension": ".md",
       "useFrontmatter": false,
       "concatenate": true
+    },
+    "google-ai-studio": {
+      "name": "Google AI Studio",
+      "outputFile": "GOOGLE_AI_STUDIO.md",
+      "fileExtension": ".md",
+      "useFrontmatter": false,
+      "concatenate": true
     }
   },
   "languages": {
