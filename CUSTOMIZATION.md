@@ -610,6 +610,40 @@ git checkout origin/main -- .ai-iap/
 
 ---
 
+## Testing & Verification
+
+### Verify Extension System
+
+Before or after making changes, verify the extension system is working:
+
+```bash
+# Linux/Mac
+./.ai-iap/verify-extension.sh
+
+# Windows
+.\.ai-iap\verify-extension.ps1
+```
+
+The verification script tests:
+- File structure (example files exist)
+- Git configuration (proper ignores)
+- Documentation completeness
+- Script integration (merge functions)
+- Config structure validity
+
+**Result**: 16 tests should pass with 0 failures.
+
+### Automated Testing
+
+The extension system is tested automatically:
+- ✅ On every commit via GitHub Actions
+- ✅ On every pull request
+- ✅ Cross-platform (Linux + Windows)
+
+Check the Actions tab on GitHub to see test results.
+
+---
+
 ## Additional Resources
 
 - **Main README**: [README.md](README.md)
