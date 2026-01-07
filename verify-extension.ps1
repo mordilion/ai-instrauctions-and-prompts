@@ -1,0 +1,116 @@
+# Verification Script for Extension System
+# Tests that setup scripts can load and merge custom config
+
+Write-Host "`n=====================================" -ForegroundColor Cyan
+Write-Host "  Extension System Verification" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+
+$results = @{
+    passed = 0
+    failed = 0
+    warnings = 0
+}
+
+function Test-Item {
+    param($Name, $Condition, [switch]$Warning)
+    
+    if ($Condition) {
+        Write-Host "[PASS] $Name" -ForegroundColor Green
+        $script:results.passed++
+    } else {
+        if ($Warning) {
+            Write-Host "[WARN] $Name" -ForegroundColor Yellow
+            $script:results.warnings++
+        } else {
+            Write-Host "[FAIL] $Name" -ForegroundColor Red
+            $script:results.failed++
+        }
+    }
+}
+
+# Test 1: Core config exists
+Test-Item "Core config exists" (Test-Path ".ai-iap/config.json")
+
+# Test 2: Custom config exists
+Test-Item "Custom config exists" (Test-Path ".ai-iap-custom/config.json")
+
+# Test 3: Custom config is valid JSON
+try {
+    $customConfig = Get-Content .ai-iap-custom/config.json -Raw | ConvertFrom-Json
+    Test-Item "Custom config is valid JSON" $true
+} catch {
+    Test-Item "Custom config is valid JSON" $false
+    Write-Host "  Error: $_" -ForegroundColor DarkRed
+}
+
+# Test 4: Custom files exist
+$tsCustomFile = Test-Path ".ai-iap-custom/rules/typescript/company-standards.md"
+Test-Item "Custom rule file exists (company-standards.md)" $tsCustomFile
+
+# Test 5: Custom process exists
+$tsCustomProc = Test-Path ".ai-iap-custom/processes/typescript/deploy-internal.md"
+Test-Item "Custom process file exists (deploy-internal.md)" $tsCustomProc
+
+# Test 6: Example files still exist (shouldn't be deleted)
+$exampleConfig = Test-Path ".ai-iap-custom/config.example.json"
+Test-Item "Example config preserved" $exampleConfig
+
+# Test 7: GitIgnore configured
+$gitignoreContent = Get-Content .gitignore -Raw
+$hasCustomIgnore = $gitignoreContent -match "\.ai-iap-custom/"
+$hasExampleException = $gitignoreContent -match "!.*example"
+Test-Item "GitIgnore includes .ai-iap-custom/" $hasCustomIgnore
+Test-Item "GitIgnore excepts example files" $hasExampleException
+
+# Test 8: Documentation exists
+Test-Item "CUSTOMIZATION.md exists" (Test-Path "CUSTOMIZATION.md")
+Test-Item "Custom README.md exists" (Test-Path ".ai-iap-custom/README.md")
+
+# Test 9: Setup scripts have merge functions
+$bashScript = Get-Content .ai-iap/setup.sh -Raw
+$psScript = Get-Content .ai-iap/setup.ps1 -Raw
+
+$bashHasMerge = $bashScript -match "merge_custom_config|CUSTOM_CONFIG"
+$psHasMerge = $psScript -match "Merge-CustomConfig|CustomConfig"
+
+Test-Item "Bash script has merge function" $bashHasMerge
+Test-Item "PowerShell script has merge function" $psHasMerge
+
+# Test 10: Config structure is correct
+if ($customConfig) {
+    $hasLanguages = $null -ne $customConfig.languages
+    $hasTypeScript = $null -ne $customConfig.languages.typescript
+    $hasCustomFiles = $null -ne $customConfig.languages.typescript.customFiles
+    $hasCustomProcesses = $null -ne $customConfig.languages.typescript.customProcesses
+    
+    Test-Item "Custom config has 'languages' section" $hasLanguages
+    Test-Item "Custom config has 'typescript' section" $hasTypeScript
+    Test-Item "TypeScript has 'customFiles'" $hasCustomFiles
+    Test-Item "TypeScript has 'customProcesses'" $hasCustomProcesses
+}
+
+# Summary
+Write-Host ""
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host "  Test Summary" -ForegroundColor Cyan
+Write-Host "=====================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Passed:   $($results.passed)" -ForegroundColor Green
+Write-Host "Failed:   $($results.failed)" -ForegroundColor $(if ($results.failed -eq 0) { "Green" } else { "Red" })
+Write-Host "Warnings: $($results.warnings)" -ForegroundColor $(if ($results.warnings -eq 0) { "Green" } else { "Yellow" })
+Write-Host ""
+
+if ($results.failed -eq 0) {
+    Write-Host "SUCCESS: Extension system is ready!" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Next steps:" -ForegroundColor Cyan
+    Write-Host "  1. Run: .\.ai-iap\setup.ps1" -ForegroundColor White
+    Write-Host "  2. Select TypeScript" -ForegroundColor White
+    Write-Host "  3. Look for 'Deploy to Internal Platform' in process selection" -ForegroundColor White
+    Write-Host ""
+} else {
+    Write-Host "FAILED: $($results.failed) test(s) failed" -ForegroundColor Red
+    Write-Host ""
+    exit 1
+}
