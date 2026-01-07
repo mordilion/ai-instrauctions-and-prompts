@@ -23,6 +23,11 @@ $Script:Version = "1.0.0"
 $Script:ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Script:ProjectRoot = Split-Path -Parent $Script:ScriptDir
 $Script:ConfigFile = Join-Path $Script:ScriptDir "config.json"
+$Script:CustomConfigFile = Join-Path $Script:ProjectRoot ".ai-iap-custom\config.json"
+$Script:CustomRulesDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\rules"
+$Script:CustomProcessesDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\processes"
+$Script:MergedConfigFile = Join-Path $env:TEMP "ai-iap-merged-config-$PID.json"
+$Script:WorkingConfig = $Script:ConfigFile
 
 # ============================================================================
 # Utility Functions
@@ -76,6 +81,12 @@ function Get-Configuration {
     
     try {
         $config = Get-Content $Script:ConfigFile -Raw | ConvertFrom-Json
+        
+        # Merge custom config if exists
+        Merge-CustomConfig
+        
+        # Load from working config (might be merged)
+        $config = Get-Content $Script:WorkingConfig -Raw | ConvertFrom-Json
         return $config
     } catch {
         Write-ErrorMessage "Failed to parse config file: $Script:ConfigFile"
@@ -94,6 +105,61 @@ function Get-Configuration {
         Write-Host ""
         exit 1
     }
+}
+
+function Merge-CustomConfig {
+    # Check if custom config exists
+    if (-not (Test-Path $Script:CustomConfigFile)) {
+        Write-InfoMessage "No custom config found (optional)"
+        return
+    }
+    
+    Write-InfoMessage "Found custom config: .ai-iap-custom\config.json"
+    
+    # Validate custom config JSON
+    try {
+        $customConfig = Get-Content $Script:CustomConfigFile -Raw | ConvertFrom-Json
+    } catch {
+        Write-ErrorMessage "Custom config file contains invalid JSON"
+        Write-Host ""
+        Write-Host "Please fix .ai-iap-custom\config.json" -ForegroundColor Yellow
+        Write-Host ""
+        exit 1
+    }
+    
+    # Load core config
+    $coreConfig = Get-Content $Script:ConfigFile -Raw | ConvertFrom-Json
+    
+    # Deep merge function
+    function Merge-Objects {
+        param($Target, $Source)
+        
+        foreach ($property in $Source.PSObject.Properties) {
+            if ($Target.PSObject.Properties.Name -contains $property.Name) {
+                if ($property.Value -is [PSCustomObject] -and $Target.($property.Name) -is [PSCustomObject]) {
+                    # Recursively merge objects
+                    Merge-Objects -Target $Target.($property.Name) -Source $property.Value
+                } else {
+                    # Override value
+                    $Target.($property.Name) = $property.Value
+                }
+            } else {
+                # Add new property
+                $Target | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value -Force
+            }
+        }
+    }
+    
+    # Merge custom into core
+    Merge-Objects -Target $coreConfig -Source $customConfig
+    
+    # Save merged config to temp file
+    $coreConfig | ConvertTo-Json -Depth 100 | Out-File -FilePath $Script:MergedConfigFile -Encoding UTF8
+    
+    Write-SuccessMessage "Merged custom configuration"
+    
+    # Update working config to point to merged
+    $Script:WorkingConfig = $Script:MergedConfigFile
 }
 
 # ============================================================================
@@ -1059,6 +1125,11 @@ function Main {
     Write-Host ""
     Write-Host "Setup complete!" -ForegroundColor Green
     Write-Host ""
+    
+    # Cleanup temp merged config
+    if (Test-Path $Script:MergedConfigFile) {
+        Remove-Item $Script:MergedConfigFile -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Main
