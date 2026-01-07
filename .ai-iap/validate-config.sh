@@ -67,13 +67,13 @@ for tool_key in $(jq -r '.tools | keys[]' .ai-iap/config.json); do
         write_error "Tool '$tool_key': Missing 'name' property"
     fi
     
-    use_frontmatter=$(jq -r ".tools[\"$tool_key\"].useFrontmatter // empty" .ai-iap/config.json)
-    if [[ -z "$use_frontmatter" ]]; then
+    use_frontmatter=$(jq -r ".tools[\"$tool_key\"].useFrontmatter" .ai-iap/config.json)
+    if [[ "$use_frontmatter" == "null" ]]; then
         write_error "Tool '$tool_key': Missing 'useFrontmatter' property"
     fi
     
-    file_extension=$(jq -r ".tools[\"$tool_key\"].fileExtension // empty" .ai-iap/config.json)
-    if [[ "$file_extension" == "null" ]]; then
+    file_extension=$(jq -r ".tools[\"$tool_key\"] | has(\"fileExtension\")" .ai-iap/config.json)
+    if [[ "$file_extension" != "true" ]]; then
         write_error "Tool '$tool_key': Missing 'fileExtension' property"
     fi
     
@@ -114,13 +114,13 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
     echo -e "${WHITE}Language: $lang_key${NC}"
     
     # Check required properties
-    name=$(jq -r ".languages[\"$lang_key\"].name // empty" .ai-iap/config.json)
-    if [[ -z "$name" ]]; then
+    name=$(jq -r ".languages[\"$lang_key\"].name" .ai-iap/config.json)
+    if [[ "$name" == "null" ]]; then
         write_error "Language '$lang_key': Missing 'name' property"
     fi
     
-    globs=$(jq -r ".languages[\"$lang_key\"].globs // empty" .ai-iap/config.json)
-    if [[ -z "$globs" ]]; then
+    globs=$(jq -r ".languages[\"$lang_key\"].globs" .ai-iap/config.json)
+    if [[ "$globs" == "null" ]]; then
         write_error "Language '$lang_key': Missing 'globs' property"
     fi
     
@@ -130,8 +130,8 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
         write_error "Language '$lang_key': 'globs' should be a string, not an array"
     fi
     
-    always_apply=$(jq -r ".languages[\"$lang_key\"].alwaysApply // empty" .ai-iap/config.json)
-    if [[ -z "$always_apply" ]]; then
+    always_apply=$(jq -r ".languages[\"$lang_key\"].alwaysApply" .ai-iap/config.json)
+    if [[ "$always_apply" == "null" ]]; then
         write_error "Language '$lang_key': Missing 'alwaysApply' property"
     fi
     
@@ -141,13 +141,13 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
         write_error "Language '$lang_key': 'alwaysApply' should be boolean (true/false)"
     fi
     
-    description=$(jq -r ".languages[\"$lang_key\"].description // empty" .ai-iap/config.json)
-    if [[ -z "$description" ]]; then
+    description=$(jq -r ".languages[\"$lang_key\"].description" .ai-iap/config.json)
+    if [[ "$description" == "null" ]]; then
         write_error "Language '$lang_key': Missing 'description' property"
     fi
     
-    files=$(jq -r ".languages[\"$lang_key\"].files // empty" .ai-iap/config.json)
-    if [[ -z "$files" ]]; then
+    files=$(jq -r ".languages[\"$lang_key\"].files" .ai-iap/config.json)
+    if [[ "$files" == "null" ]]; then
         write_error "Language '$lang_key': Missing 'files' property"
     fi
     
@@ -158,8 +158,8 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
     fi
     
     # Check for obsolete properties
-    enabled=$(jq -r ".languages[\"$lang_key\"].enabled // empty" .ai-iap/config.json)
-    if [[ -n "$enabled" ]]; then
+    enabled=$(jq -r ".languages[\"$lang_key\"].enabled" .ai-iap/config.json)
+    if [[ "$enabled" != "null" ]]; then
         write_error "Language '$lang_key': Uses obsolete 'enabled' property (use 'alwaysApply' instead)"
     fi
     
@@ -169,23 +169,23 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
     
     if [[ "$fw_count" -gt 0 ]]; then
         for fw_key in $(jq -r ".languages[\"$lang_key\"].frameworks // {} | keys[]" .ai-iap/config.json); do
-            fw_name=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].name // empty" .ai-iap/config.json)
-            if [[ -z "$fw_name" ]]; then
+            fw_name=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].name" .ai-iap/config.json)
+            if [[ "$fw_name" == "null" ]]; then
                 write_error "Language '$lang_key', Framework '$fw_key': Missing 'name' property"
             fi
             
-            fw_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].file // empty" .ai-iap/config.json)
-            if [[ -z "$fw_file" ]]; then
+            fw_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].file" .ai-iap/config.json)
+            if [[ "$fw_file" == "null" ]]; then
                 write_error "Language '$lang_key', Framework '$fw_key': Missing 'file' property"
             fi
             
-            fw_category=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].category // empty" .ai-iap/config.json)
-            if [[ -z "$fw_category" ]]; then
+            fw_category=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].category" .ai-iap/config.json)
+            if [[ "$fw_category" == "null" ]]; then
                 write_warning "Language '$lang_key', Framework '$fw_key': Missing 'category' property"
             fi
             
-            fw_description=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].description // empty" .ai-iap/config.json)
-            if [[ -z "$fw_description" ]]; then
+            fw_description=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].description" .ai-iap/config.json)
+            if [[ "$fw_description" == "null" ]]; then
                 write_warning "Language '$lang_key', Framework '$fw_key': Missing 'description' property"
             fi
             
@@ -193,18 +193,18 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
             for struct_key in $(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures // {} | keys[]" .ai-iap/config.json); do
                 ((struct_count++))
                 
-                struct_name=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].name // empty" .ai-iap/config.json)
-                if [[ -z "$struct_name" ]]; then
+                struct_name=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].name" .ai-iap/config.json)
+                if [[ "$struct_name" == "null" ]]; then
                     write_error "Language '$lang_key', Framework '$fw_key', Structure '$struct_key': Missing 'name'"
                 fi
                 
-                struct_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].file // empty" .ai-iap/config.json)
-                if [[ -z "$struct_file" ]]; then
+                struct_file=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].file" .ai-iap/config.json)
+                if [[ "$struct_file" == "null" ]]; then
                     write_error "Language '$lang_key', Framework '$fw_key', Structure '$struct_key': Missing 'file'"
                 fi
                 
-                struct_description=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].description // empty" .ai-iap/config.json)
-                if [[ -z "$struct_description" ]]; then
+                struct_description=$(jq -r ".languages[\"$lang_key\"].frameworks[\"$fw_key\"].structures[\"$struct_key\"].description" .ai-iap/config.json)
+                if [[ "$struct_description" == "null" ]]; then
                     write_warning "Language '$lang_key', Framework '$fw_key', Structure '$struct_key': Missing 'description'"
                 fi
             done
@@ -222,18 +222,18 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
     
     if [[ "$proc_count" -gt 0 ]]; then
         for proc_key in $(jq -r ".languages[\"$lang_key\"].processes // {} | keys[]" .ai-iap/config.json); do
-            proc_name=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].name // empty" .ai-iap/config.json)
-            if [[ -z "$proc_name" ]]; then
+            proc_name=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].name" .ai-iap/config.json)
+            if [[ "$proc_name" == "null" ]]; then
                 write_error "Language '$lang_key', Process '$proc_key': Missing 'name' property"
             fi
             
-            proc_file=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].file // empty" .ai-iap/config.json)
-            if [[ -z "$proc_file" ]]; then
+            proc_file=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].file" .ai-iap/config.json)
+            if [[ "$proc_file" == "null" ]]; then
                 write_error "Language '$lang_key', Process '$proc_key': Missing 'file' property"
             fi
             
-            proc_description=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].description // empty" .ai-iap/config.json)
-            if [[ -z "$proc_description" ]]; then
+            proc_description=$(jq -r ".languages[\"$lang_key\"].processes[\"$proc_key\"].description" .ai-iap/config.json)
+            if [[ "$proc_description" == "null" ]]; then
                 write_warning "Language '$lang_key', Process '$proc_key': Missing 'description' property"
             fi
         done
@@ -246,8 +246,8 @@ for lang_key in $(jq -r '.languages | keys[]' .ai-iap/config.json); do
             write_error "Language 'general': Should have 'alwaysApply: true'"
         fi
         
-        has_documentation=$(jq -r ".languages.general.documentation // empty" .ai-iap/config.json)
-        if [[ -z "$has_documentation" ]]; then
+        has_documentation=$(jq -r ".languages.general.documentation" .ai-iap/config.json)
+        if [[ "$has_documentation" == "null" ]]; then
             write_warning "Language 'general': Missing 'documentation' section"
         fi
     else
