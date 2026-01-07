@@ -22,14 +22,14 @@ test_item() {
     
     if [[ "$condition" == "true" ]]; then
         echo -e "${GREEN}[PASS]${NC} $name"
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
     else
         if [[ "$warning" == "true" ]]; then
             echo -e "${YELLOW}[WARN]${NC} $name"
-            ((WARNINGS++))
+            WARNINGS=$((WARNINGS + 1))
         else
             echo -e "${RED}[FAIL]${NC} $name"
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
         fi
     fi
 }
