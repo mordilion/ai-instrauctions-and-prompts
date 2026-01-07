@@ -94,7 +94,7 @@ jobs:
           bash -n .ai-iap/validate-config.sh
           echo "✓ validate-config.sh syntax is valid"
           
-          bash -n verify-extension.sh
+          bash -n .ai-iap/verify-extension.sh
           echo "✓ verify-extension.sh syntax is valid"
       
       - name: Run file validation tests
@@ -109,8 +109,8 @@ jobs:
       
       - name: Run extension system tests
         run: |
-          chmod +x verify-extension.sh
-          ./verify-extension.sh
+          chmod +x .ai-iap/verify-extension.sh
+          ./.ai-iap/verify-extension.sh
 
   test-windows:
     name: Test PowerShell Scripts
@@ -133,7 +133,7 @@ jobs:
           $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\validate-config.ps1 -Raw), [ref]$null)
           Write-Host "✓ validate-config.ps1 syntax is valid"
           
-          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content verify-extension.ps1 -Raw), [ref]$null)
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content .ai-iap\verify-extension.ps1 -Raw), [ref]$null)
           Write-Host "✓ verify-extension.ps1 syntax is valid"
       
       - name: Run file validation tests
@@ -149,7 +149,7 @@ jobs:
       - name: Run extension system tests
         shell: pwsh
         run: |
-          .\verify-extension.ps1
+          .\.ai-iap\verify-extension.ps1
 
   count-tokens:
     name: Token Cost Analysis

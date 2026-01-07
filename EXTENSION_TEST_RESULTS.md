@@ -188,17 +188,26 @@
 
 ### For Users
 
-1. **Activate Custom Config**:
+1. **Verify Extension System**:
+   ```bash
+   # Linux/Mac
+   ./.ai-iap/verify-extension.sh
+   
+   # Windows
+   .\.ai-iap\verify-extension.ps1
+   ```
+
+2. **Activate Custom Config**:
    ```powershell
    Copy-Item .ai-iap-custom/config.example.json .ai-iap-custom/config.json
    ```
 
-2. **Add Your Custom Files**:
+3. **Add Your Custom Files**:
    - Create company-specific rules
    - Document internal processes
    - Override core files as needed
 
-3. **Run Setup**:
+4. **Run Setup**:
    ```powershell
    .\.ai-iap\setup.ps1
    ```
@@ -213,4 +222,4 @@
 
 **Test Date**: 2026-01-07  
 **Verified By**: Automated Test Suite  
-**Test Script**: `verify-extension.ps1`
+**Test Script**: `.ai-iap/verify-extension.ps1` (PowerShell) / `.ai-iap/verify-extension.sh` (Bash)
