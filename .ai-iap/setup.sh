@@ -15,6 +15,11 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 readonly CONFIG_FILE="$SCRIPT_DIR/config.json"
+readonly CUSTOM_CONFIG_FILE="$PROJECT_ROOT/.ai-iap-custom/config.json"
+readonly CUSTOM_RULES_DIR="$PROJECT_ROOT/.ai-iap-custom/rules"
+readonly CUSTOM_PROCESSES_DIR="$PROJECT_ROOT/.ai-iap-custom/processes"
+readonly MERGED_CONFIG_FILE="/tmp/ai-iap-merged-config-$$.json"
+WORKING_CONFIG="$WORKING_CONFIG"
 readonly VERSION="1.0.0"
 
 # Colors
@@ -148,8 +153,8 @@ validate_selection() {
 # ============================================================================
 
 load_config() {
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        print_error "Config file not found: $CONFIG_FILE"
+    if [[ ! -f "$WORKING_CONFIG" ]]; then
+        print_error "Config file not found: $WORKING_CONFIG"
         echo ""
         echo -e "${YELLOW}This usually means you're running the script from the wrong directory.${NC}"
         echo ""
@@ -162,13 +167,13 @@ load_config() {
     fi
     
     # Validate JSON
-    if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
-        print_error "Failed to parse config file: $CONFIG_FILE"
+    if ! jq empty "$WORKING_CONFIG" 2>/dev/null; then
+        print_error "Failed to parse config file: $WORKING_CONFIG"
         echo ""
         echo -e "${YELLOW}The config.json file exists but contains invalid JSON.${NC}"
         echo ""
         echo -e "${CYAN}Solution:${NC}"
-        echo -e "  ${NC}1. Validate JSON syntax: jq empty \"$CONFIG_FILE\"${NC}"
+        echo -e "  ${NC}1. Validate JSON syntax: jq empty \"$WORKING_CONFIG\"${NC}"
         echo -e "  ${NC}2. Check for common issues:${NC}"
         echo -e "     ${NC}- Missing or extra commas${NC}"
         echo -e "     ${NC}- Unmatched brackets/braces${NC}"
@@ -177,114 +182,187 @@ load_config() {
         echo ""
         exit 1
     fi
+    
+    # Check for custom config and merge if exists
+    merge_custom_config
 }
 
+merge_custom_config() {
+    # Check if custom config exists
+    if [[ ! -f "$CUSTOM_CONFIG_FILE" ]]; then
+        print_info "No custom config found (optional)"
+        return 0
+    fi
+    
+    print_info "Found custom config: .ai-iap-custom/config.json"
+    
+    # Validate custom config JSON
+    if ! jq empty "$CUSTOM_CONFIG_FILE" 2>/dev/null; then
+        print_error "Custom config file contains invalid JSON"
+        echo ""
+        echo -e "${YELLOW}Please fix .ai-iap-custom/config.json${NC}"
+        echo ""
+        exit 1
+    fi
+    
+    # Merge custom config into core config
+    # For each language in custom config, merge customFiles, customProcesses, customFrameworks
+    jq -s '
+        def deep_merge(a; b):
+            a + b |
+            to_entries |
+            group_by(.key) |
+            map({
+                key: .[0].key,
+                value: (
+                    if (.[0].value | type) == "object" and (.[1].value | type) == "object"
+                    then deep_merge(.[0].value; .[1].value)
+                    else .[1].value
+                    end
+                )
+            }) |
+            from_entries;
+        
+        deep_merge(.[0]; .[1])
+    ' "$CONFIG_FILE" "$CUSTOM_CONFIG_FILE" > "$MERGED_CONFIG_FILE"
+    
+    print_success "Merged custom configuration"
+    
+    # Update WORKING_CONFIG to point to merged config
+    WORKING_CONFIG="$MERGED_CONFIG_FILE"
+}
+
+cleanup() {
+    # Clean up temporary merged config file
+    if [[ -f "$MERGED_CONFIG_FILE" ]]; then
+        rm -f "$MERGED_CONFIG_FILE"
+    fi
+}
+
+trap cleanup EXIT
+
 get_tools() {
-    jq -r '.tools | keys[]' "$CONFIG_FILE"
+    jq -r '.tools | keys[]' "$WORKING_CONFIG"
 }
 
 get_tool_name() {
-    jq -r ".tools[\"$1\"].name" "$CONFIG_FILE"
+    jq -r ".tools[\"$1\"].name" "$WORKING_CONFIG"
 }
 
 get_languages() {
-    jq -r '.languages | keys[]' "$CONFIG_FILE"
+    jq -r '.languages | keys[]' "$WORKING_CONFIG"
 }
 
 get_language_name() {
-    jq -r ".languages[\"$1\"].name" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].name" "$WORKING_CONFIG"
 }
 
 get_language_files() {
-    jq -r ".languages[\"$1\"].files[]" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].files[]" "$WORKING_CONFIG"
+}
+
+get_language_custom_files() {
+    jq -r ".languages[\"$1\"].customFiles[]? // empty" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_language_globs() {
-    jq -r ".languages[\"$1\"].globs" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].globs" "$WORKING_CONFIG"
 }
 
 get_language_always_apply() {
-    jq -r ".languages[\"$1\"].alwaysApply" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].alwaysApply" "$WORKING_CONFIG"
 }
 
 get_language_description() {
-    jq -r ".languages[\"$1\"].description" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].description" "$WORKING_CONFIG"
 }
 
 get_language_frameworks() {
-    jq -r ".languages[\"$1\"].frameworks // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].frameworks // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+}
+
+get_language_custom_frameworks() {
+    jq -r ".languages[\"$1\"].customFrameworks // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_language_processes() {
-    jq -r ".languages[\"$1\"].processes // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].processes // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+}
+
+get_language_custom_processes() {
+    jq -r ".languages[\"$1\"].customProcesses // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_framework_name() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].name" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].name" "$WORKING_CONFIG"
+}
+
+get_custom_framework_name() {
+    jq -r ".languages[\"$1\"].customFrameworks[\"$2\"].name" "$WORKING_CONFIG"
 }
 
 get_process_name() {
-    jq -r ".languages[\"$1\"].processes[\"$2\"].name" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].processes[\"$2\"].name" "$WORKING_CONFIG"
 }
 
 get_process_description() {
-    jq -r ".languages[\"$1\"].processes[\"$2\"].description" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].processes[\"$2\"].description" "$WORKING_CONFIG"
 }
 
 get_process_file() {
-    jq -r ".languages[\"$1\"].processes[\"$2\"].file" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].processes[\"$2\"].file" "$WORKING_CONFIG"
 }
 
 get_framework_description() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].description" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].description" "$WORKING_CONFIG"
 }
 
 get_framework_file() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].file" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].file" "$WORKING_CONFIG"
 }
 
 get_framework_category() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].category // \"Other\"" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].category // \"Other\"" "$WORKING_CONFIG"
 }
 
 get_framework_structures() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_structure_name() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].name" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].name" "$WORKING_CONFIG"
 }
 
 get_structure_description() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].description" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].description" "$WORKING_CONFIG"
 }
 
 get_structure_file() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].file" "$CONFIG_FILE"
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures[\"$3\"].file" "$WORKING_CONFIG"
 }
 
 get_documentation_keys() {
-    jq -r ".languages.general.documentation // empty | keys[]" "$CONFIG_FILE" 2>/dev/null || true
+    jq -r ".languages.general.documentation // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_documentation_name() {
-    jq -r ".languages.general.documentation[\"$1\"].name" "$CONFIG_FILE"
+    jq -r ".languages.general.documentation[\"$1\"].name" "$WORKING_CONFIG"
 }
 
 get_documentation_description() {
-    jq -r ".languages.general.documentation[\"$1\"].description" "$CONFIG_FILE"
+    jq -r ".languages.general.documentation[\"$1\"].description" "$WORKING_CONFIG"
 }
 
 get_documentation_file() {
-    jq -r ".languages.general.documentation[\"$1\"].file" "$CONFIG_FILE"
+    jq -r ".languages.general.documentation[\"$1\"].file" "$WORKING_CONFIG"
 }
 
 get_documentation_recommended() {
-    jq -r ".languages.general.documentation[\"$1\"].recommended // false" "$CONFIG_FILE"
+    jq -r ".languages.general.documentation[\"$1\"].recommended // false" "$WORKING_CONFIG"
 }
 
 get_documentation_applicable_to() {
-    jq -r ".languages.general.documentation[\"$1\"].applicableTo[]" "$CONFIG_FILE" 2>/dev/null || echo "all"
+    jq -r ".languages.general.documentation[\"$1\"].applicableTo[]" "$WORKING_CONFIG" 2>/dev/null || echo "all"
 }
 
 # ============================================================================
@@ -306,7 +384,7 @@ select_tools_simple() {
     for ((i=0; i<${#tool_keys[@]}; i++)); do
         local suffix=""
         local recommended
-        recommended=$(jq -r ".tools[\"${tool_keys[$i]}\"].recommended // false" "$CONFIG_FILE")
+        recommended=$(jq -r ".tools[\"${tool_keys[$i]}\"].recommended // false" "$WORKING_CONFIG")
         if [[ "$recommended" == "true" ]]; then
             suffix=" *"
         fi
@@ -380,7 +458,7 @@ select_languages_simple() {
         languages+=("$(get_language_name "$key")")
         # Track languages with alwaysApply: true
         local always_apply
-        always_apply=$(jq -r ".languages[\"$key\"].alwaysApply // false" "$CONFIG_FILE")
+        always_apply=$(jq -r ".languages[\"$key\"].alwaysApply // false" "$WORKING_CONFIG")
         if [[ "$always_apply" == "true" ]]; then
             always_apply_langs+=("$key")
         fi
@@ -394,7 +472,7 @@ select_languages_simple() {
     for ((i=0; i<${#lang_keys[@]}; i++)); do
         local suffix=""
         local always_apply
-        always_apply=$(jq -r ".languages[\"${lang_keys[$i]}\"].alwaysApply // false" "$CONFIG_FILE")
+        always_apply=$(jq -r ".languages[\"${lang_keys[$i]}\"].alwaysApply // false" "$WORKING_CONFIG")
         if [[ "$always_apply" == "true" ]]; then
             suffix=" (always included)"
         fi
@@ -550,7 +628,7 @@ select_frameworks() {
             fw_names+=("$(get_framework_name "$lang" "$key")")
             fw_descs+=("$(get_framework_description "$lang" "$key")")
             fw_cats+=("$(get_framework_category "$lang" "$key")")
-            fw_recs+=("$(jq -r ".languages[\"$lang\"].frameworks[\"$key\"].recommended // false" "$CONFIG_FILE")")
+            fw_recs+=("$(jq -r ".languages[\"$lang\"].frameworks[\"$key\"].recommended // false" "$WORKING_CONFIG")")
         done < <(get_language_frameworks "$lang")
         
         # Skip if no frameworks
@@ -701,7 +779,7 @@ select_structures() {
                 struct_names+=("$(get_structure_name "$lang" "$fw" "$key")")
                 struct_descs+=("$(get_structure_description "$lang" "$fw" "$key")")
                 struct_files+=("$(get_structure_file "$lang" "$fw" "$key")")
-                struct_recs+=("$(jq -r ".languages[\"$lang\"].frameworks[\"$fw\"].structures[\"$key\"].recommended // false" "$CONFIG_FILE")")
+                struct_recs+=("$(jq -r ".languages[\"$lang\"].frameworks[\"$fw\"].structures[\"$key\"].recommended // false" "$WORKING_CONFIG")")
             done < <(get_framework_structures "$lang" "$fw")
             
             # Skip if no structures
