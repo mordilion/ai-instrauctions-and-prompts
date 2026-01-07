@@ -612,7 +612,7 @@ function New-CursorFrontmatter {
     
     $langConfig = $Config.languages.$Lang
     $globs = $langConfig.globs
-    $alwaysApply = $langConfig.alwaysApply.ToString().ToLower()
+    $alwaysApply = if ($langConfig.alwaysApply -ne $null) { $langConfig.alwaysApply.ToString().ToLower() } else { "false" }
     
     if ($IsFramework) {
         $fw = $langConfig.frameworks.$File

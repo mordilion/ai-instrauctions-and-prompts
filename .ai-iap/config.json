@@ -982,8 +982,9 @@
     },
     "kotlin": {
       "name": "Kotlin",
+      "globs": "*.kt,*.kts",
+      "alwaysApply": false,
       "description": "Modern, expressive language for JVM, Android, and multiplatform",
-      "enabled": true,
       "files": ["security"],
       "processes": {
         "test-implementation": {
@@ -1121,8 +1122,9 @@
     },
     "swift": {
       "name": "Swift",
+      "globs": "*.swift",
+      "alwaysApply": false,
       "description": "Apple's modern, type-safe language for iOS, macOS, and server-side development",
-      "enabled": true,
       "files": ["security"],
       "processes": {
         "test-implementation": {
