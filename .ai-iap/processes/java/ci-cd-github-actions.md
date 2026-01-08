@@ -71,49 +71,23 @@
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - Checkstyle (google_checks.xml or sun_checks.xml)
-> - PMD for static analysis
-> - SpotBugs for bug detection
-> - Fail build on violations
+> **ALWAYS**: Checkstyle, PMD, SpotBugs, Dependabot, OWASP Dependency-Check, CodeQL (java), fail on violations
+> **NEVER**: Suppress warnings globally
 
-> **NEVER**: Suppress warnings globally, skip linter configuration, allow critical bugs in new code
+**Plugins**: Maven (checkstyle/pmd/spotbugs), Gradle (checkstyle/pmd/spotbugs)
 
-**Maven Plugins**: maven-checkstyle-plugin, maven-pmd-plugin, spotbugs-maven-plugin
-
-**Gradle Plugins**: checkstyle, pmd, com.github.spotbugs
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - OWASP Dependency-Check
-> - Fail on known vulnerabilities (CVSS ≥7)
-
-**Dependabot Config**:
 ```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "maven" # or "gradle"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-**Dependency Check**: Maven (`dependency-check-maven`), Gradle (`org.owasp.dependencycheck`), Generate reports, fail on high severity
-
-### 2.3 Static Analysis (SAST)
-
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: java
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud/SonarQube, Snyk
-
-**Verify**: Checkstyle/PMD/SpotBugs run, violations cause build failures, Dependabot creates update PRs, CodeQL scan completes, vulnerabilities reported
+**Verify**: All tools run, violations fail build, Dependabot creates PRs, CodeQL completes
 
 ---
 
@@ -145,46 +119,14 @@ updates:
 
 **Gradle Package**: `gradle bootJar --no-daemon` → Output: build/libs/*.jar
 
-### 3.3 Deployment Jobs
+### 3.3 Deployment & Verification
 
-> **Platform-specific** (choose one or more):
+**Platforms**: AWS (Beanstalk/ECS/Lambda), Azure, Google Cloud (App Engine/Run), Docker, Heroku  
+**Migrations**: Flyway/Liquibase, run before deployment (`mvn flyway:migrate`), test in staging  
+**Smoke Tests**: `/actuator/health`, DB/Redis connectivity, external APIs  
+**NEVER**: Auto-run migrations on app start in production
 
-| Platform | Tool/Method | Notes |
-|----------|-------------|-------|
-| **AWS** | aws-actions/configure-aws-credentials | Upload JAR to S3, deploy to Elastic Beanstalk/ECS/Lambda |
-| **Azure** | azure/webapps-deploy@v2 | Upload JAR via FTP or Azure CLI, Azure Spring Apps |
-| **Google Cloud** | google-github-actions/setup-gcloud | Deploy to App Engine/Cloud Run |
-| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile (Maven/Gradle build → JRE runtime) |
-| **Heroku** | Heroku CLI/GitHub integration | Procfile: `web: java -jar target/*.jar` |
-
-### 3.4 Database Migrations
-
-> **ALWAYS**:
-> - Use Flyway or Liquibase
-> - Run migrations before app deployment
-> - Test migrations in staging first
-> - Version control all migration scripts
-
-> **NEVER**: Run migrations on app start in production (security risk), skip migration testing, deploy app before migrations complete
-
-**Flyway/Liquibase Commands**:
-```bash
-# Flyway
-mvn flyway:migrate -Dflyway.url=$DB_URL
-
-# Liquibase
-mvn liquibase:update -Dliquibase.url=$DB_URL
-```
-
-### 3.5 Smoke Tests Post-Deploy
-
-> **ALWAYS include**:
-> - Health check endpoint (`/actuator/health` for Spring Boot)
-> - Database connectivity check
-> - Cache/Redis connectivity
-> - External API integration check
-
-**Verify**: Manual trigger works, environment secrets accessible, JAR packaged correctly, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
+**Verify**: Deployment succeeds, migrations applied, smoke tests pass
 
 ---
 
@@ -192,44 +134,14 @@ mvn liquibase:update -Dliquibase.url=$DB_URL
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 Performance Testing
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - JMH (Java Microbenchmark Harness) for micro-benchmarks
-> - Load testing with Gatling, JMeter, or k6
-> - Track response times and memory usage
-> - Fail if performance degrades >10%
+**Performance**: JMH, Gatling/JMeter/k6, fail if degrades >10%  
+**Integration**: Separate workflow, Testcontainers, `@SpringBootTest`, run nightly  
+**Release**: maven-release-plugin/semantic-release, CHANGELOG, GitHub Releases, Maven Central (libraries)  
+**NEVER**: Use production DBs, run integration on every PR
 
-### 4.2 Integration Testing
-
-> **ALWAYS**:
-> - Separate workflow (`integration-tests.yml`)
-> - Use Testcontainers for database/Redis
-> - Spring Boot: @SpringBootTest with test profiles
-> - Run on schedule (nightly) + release tags
-
-> **NEVER**: Use real production databases, skip cleanup after tests, run on every PR (too slow)
-
-### 4.3 Release Automation
-
-> **Semantic Versioning**:
-> - Maven: maven-release-plugin
-> - Gradle: semantic-release or nebula-release
-> - Generate CHANGELOG from conventional commits
-> - Create GitHub Releases with notes
-> - Publish to Maven Central (if library)
-
-### 4.4 Maven Central Publishing
-
-> **If creating libraries**:
-> - Configure GPG signing
-> - Publish to OSSRH (Sonatype)
-> - Include sources and javadoc JARs
-> - Validate POM metadata
-
-> **ALWAYS**: Set groupId, artifactId, version; Include license, developers, SCM; Sign artifacts with GPG key
-
-### 4.5 Notifications
+### 4.2 Notifications
 
 > **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
 

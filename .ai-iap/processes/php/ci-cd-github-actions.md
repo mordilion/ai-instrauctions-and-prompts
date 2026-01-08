@@ -78,68 +78,21 @@ vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - PHP_CodeSniffer (phpcs) with PSR-12 standard
-> - PHP CS Fixer for auto-formatting
-> - PHPStan or Psalm for static analysis (level 8+)
-> - Fail build on violations
+> **ALWAYS**: phpcs (PSR-12), PHP CS Fixer, PHPStan/Psalm (level 8+), Dependabot, `composer audit`, CodeQL (php), fail on violations
+> **NEVER**: Suppress errors globally
 
-> **NEVER**: Suppress errors globally, skip static analysis, allow critical issues in new code
-
-**PHP_CodeSniffer Configuration** (`phpcs.xml`):
-```xml
-<?xml version="1.0"?>
-<ruleset name="Project">
-    <rule ref="PSR12"/>
-    <file>src/</file>
-    <file>tests/</file>
-</ruleset>
-```
-
-**PHPStan Configuration** (`phpstan.neon`):
-```neon
-parameters:
-    level: 8
-    paths:
-        - src
-        - tests
-```
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - Composer audit: `composer audit`
-> - Fail on known vulnerabilities
-
-**Dependabot Config**:
 ```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "composer"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-**Security Commands**:
-```bash
-composer audit
-# Or: local-php-security-checker
-```
-
-### 2.3 Static Analysis (SAST)
-
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: php
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud, Snyk
-
-**Verify**: phpcs/PHPStan pass, Dependabot creates update PRs, CodeQL scan completes, vulnerabilities reported
+**Verify**: phpcs/PHPStan pass, Dependabot creates PRs, CodeQL completes
 
 ---
 
@@ -175,51 +128,14 @@ php artisan route:cache # Laravel
 npm run build # If frontend assets
 ```
 
-### 3.3 Deployment Jobs
+### 3.3 Deployment & Verification
 
-> **Platform-specific** (choose one or more):
+**Platforms**: FTP/SFTP, VPS/SSH, AWS, Azure, Heroku, Laravel Forge, Docker  
+**Migrations**: Laravel (`php artisan migrate --force`), Doctrine, Phinx, run before deployment  
+**Smoke Tests**: Health check, DB/Redis connectivity, external APIs  
+**NEVER**: Auto-run migrations on app boot in production
 
-| Platform | Tool/Method | Notes |
-|----------|-------------|-------|
-| **Shared Hosting (FTP/SFTP)** | SamKirkland/FTP-Deploy-Action | Upload via SFTP, exclude .git, .env, tests/ |
-| **VPS / Dedicated Server** | SSH + rsync or scp | Run deployment script, reload PHP-FPM/Apache/Nginx |
-| **AWS** | aws-actions/configure-aws-credentials | Elastic Beanstalk, ECS, Lambda |
-| **Azure App Service** | azure/webapps-deploy@v2 | Upload via FTP or Azure CLI |
-| **Heroku** | Heroku CLI | Procfile: `web: vendor/bin/heroku-php-apache2 public/` |
-| **Laravel Forge / Envoyer** | Webhook API | Trigger deployment via webhook |
-| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile |
-
-### 3.4 Database Migrations
-
-> **ALWAYS**:
-> - Run migrations before app deployment (Laravel: php artisan migrate)
-> - Use database versioning (Phinx, Doctrine Migrations, or framework migrations)
-> - Test migrations in staging first
-> - Create rollback migrations
-
-> **NEVER**: Run migrations on app boot in production, skip migration testing, deploy app before migrations complete
-
-**Migration Commands**:
-```bash
-# Laravel
-php artisan migrate --force
-
-# Doctrine
-vendor/bin/doctrine migrations:migrate --no-interaction
-
-# Phinx
-vendor/bin/phinx migrate
-```
-
-### 3.5 Smoke Tests Post-Deploy
-
-> **ALWAYS include**:
-> - Health check endpoint test (`/health`, `/api/health`)
-> - Database connectivity check
-> - Cache (Redis/Memcached) connectivity
-> - External API integration check
-
-**Verify**: Manual trigger works, environment secrets accessible, build optimized correctly, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
+**Verify**: Deployment succeeds, migrations applied, smoke tests pass
 
 ---
 
@@ -227,43 +143,14 @@ vendor/bin/phinx migrate
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 Performance Testing
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - Load testing with k6, Apache Bench, or Gatling
-> - Memory profiling with Xdebug or Blackfire
-> - Track response times
-> - Fail if performance degrades >10%
+**Performance**: k6/Apache Bench/Gatling, Xdebug/Blackfire profiling, fail if degrades >10%  
+**Integration**: Separate workflow, Docker containers, run nightly  
+**Release**: semantic-release/tags, CHANGELOG, GitHub Releases, Packagist (libraries)  
+**NEVER**: Use production DBs, run integration on every PR
 
-### 4.2 Integration Testing
-
-> **ALWAYS**:
-> - Separate workflow (`integration-tests.yml`)
-> - Use Docker containers for database/Redis
-> - Run on schedule (nightly) + release tags
-> - Separate test database
-
-> **NEVER**: Use real production databases, skip cleanup after tests, run on every PR (too slow)
-
-### 4.3 Release Automation
-
-> **Semantic Versioning**:
-> - Use semantic-release or manual tags
-> - Generate CHANGELOG from conventional commits
-> - Create GitHub Releases with notes
-> - Publish to Packagist (if library)
-
-### 4.4 Packagist Publishing
-
-> **If creating Composer package**:
-> - Register on Packagist.org
-> - Auto-update via GitHub webhook
-> - Include README.md, LICENSE
-> - Follow semver strictly
-
-> **ALWAYS**: Set name, description, license in composer.json; Include autoload configuration; Tag releases with semantic version
-
-### 4.5 Notifications
+### 4.2 Notifications
 
 > **ALWAYS**: Slack/Teams webhook on deploy success/failure, GitHub Status Checks for PR reviews, Email notifications for security alerts
 

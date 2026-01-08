@@ -77,53 +77,26 @@ flutter test --coverage
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - flutter analyze (built-in)
-> - dart format --output=none --set-exit-if-changed (formatting check)
-> - Custom lint rules (analysis_options.yaml)
-> - Fail build on analysis issues
+> **ALWAYS**: flutter analyze, dart format check, custom lint rules, Dependabot, pub outdated
+> **NEVER**: Suppress all lints, ignore type safety
 
-> **NEVER**: Suppress all lints, ignore type safety, allow unused imports
-
-**Analysis Options** (`analysis_options.yaml`):
 ```yaml
+# analysis_options.yaml
 include: package:flutter_lints/flutter.yaml
-
 linter:
-  rules:
-    - prefer_const_constructors
-    - prefer_final_fields
-    - avoid_print
-    - unnecessary_null_checks
-```
+  rules: [prefer_const_constructors, prefer_final_fields, avoid_print]
 
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - Check for outdated dependencies: `flutter pub outdated`
-> - Audit for security issues
-
-**Dependabot Config**:
-```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "pub"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-### 2.3 Static Analysis
-
-> **ALWAYS**:
-> - Run dart analyze with strict mode
-> - Check for deprecated API usage
-> - Verify no TODOs/FIXMEs in main branch
-
-**Verify**: flutter analyze passes with no issues, formatting correct, Dependabot creates PRs
+**Verify**: Analyze passes, formatting correct, Dependabot creates PRs
 
 ---
 
@@ -141,93 +114,19 @@ updates:
 
 **Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy to internal testing), Development (ad-hoc builds)
 
-### 3.2 Build Android
+### 3.2 Platform Builds
 
-> **ALWAYS**:
-> - Build APK or AAB: `flutter build apk --release` or `flutter build appbundle`
-> - Sign with keystore (store keystore as secret)
-> - Version with build number (pubspec.yaml version)
-> - Upload to Google Play Console or Firebase App Distribution
+> **Android**: `flutter build appbundle --release`, sign with keystore (GitHub Secrets), ProGuard/R8
+> **iOS**: `flutter build ipa --release`, fastlane, import certificates to keychain
+> **Web**: `flutter build web --release --base-href /`, deploy to Firebase/Netlify/Pages
+> **NEVER**: Commit keystore, use debug keys in production
 
-> **NEVER**: Commit keystore to repository, ship debug builds to production, skip ProGuard/R8 optimization
+### 3.3 Deployment & Verification
 
-**Android Build Commands**:
-```bash
-flutter build appbundle --release --flavor production
-# Or APK: flutter build apk --release --split-per-abi
-```
+**Tools**: fastlane (Play Store/App Store), Firebase App Distribution, GitHub Pages  
+**Smoke Tests**: Health check, API connectivity, Firebase Test Lab (mobile UI tests)
 
-**Keystore Setup**:
-```bash
-# Decode keystore from secret
-echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
-
-# Configure signing in android/key.properties
-```
-
-### 3.3 Build iOS
-
-> **ALWAYS**:
-> - Build IPA: `flutter build ipa --release`
-> - Sign with certificates and provisioning profiles
-> - Upload to App Store Connect or TestFlight
-> - Use fastlane for automation
-
-> **NEVER**: Include development certificates in production, ship without bitcode (if required), forget to increment build number
-
-**iOS Build Commands**:
-```bash
-flutter build ipa --release --flavor production --export-options-plist=ios/ExportOptions.plist
-```
-
-**Code Signing Setup** (similar to Swift CI/CD):
-```bash
-# Import certificates to keychain
-security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}"
-```
-
-### 3.4 Build Web
-
-> **ALWAYS**:
-> - Build web: `flutter build web --release`
-> - Deploy to Firebase Hosting, Netlify, or GitHub Pages
-> - Configure base href for proper routing
-
-**Web Build Commands**:
-```bash
-flutter build web --release --base-href /
-```
-
-### 3.5 Deployment Jobs
-
-> **Platform-specific** (choose one or more):
-
-| Platform | Tool/Method | Notes |
-|----------|-------------|-------|
-| **Google Play Store** | fastlane or upload via API | Upload AAB to internal/beta/production track |
-| **App Store Connect** | fastlane or altool | Upload IPA to TestFlight or App Store |
-| **Firebase App Distribution** | firebase-tools CLI | Internal testing for Android/iOS |
-| **Web (Firebase Hosting)** | firebase-tools CLI | Deploy web build |
-| **GitHub Pages** | peaceiris/actions-gh-pages | Deploy web build to gh-pages branch |
-
-**Fastlane Example** (Android):
-```ruby
-lane :beta do
-  gradle(task: "bundle", build_type: "Release")
-  upload_to_play_store(track: "beta")
-end
-```
-
-### 3.6 Smoke Tests Post-Deploy
-
-> **ALWAYS include** (for web/backend):
-> - Health check endpoint test
-> - API connectivity check
-
-> **Mobile**: Use Firebase Test Lab or App Center for automated UI tests
-
-**Verify**: Android build succeeds, iOS build succeeds, web build succeeds, uploads to stores work, smoke tests pass
+**Verify**: Builds succeed, uploads work, smoke tests pass
 
 ---
 
@@ -235,25 +134,13 @@ end
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 Integration Testing
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - Separate workflow for integration tests (`integration_test/`)
-> - Run on emulators/simulators (Android emulator, iOS simulator)
-> - Use `flutter drive` or `integration_test` package
-> - Record test results and screenshots
+**Integration**: Separate workflow, emulators/simulators, `integration_test` package  
+**Performance**: Track startup time, frame rendering, memory usage, fail if degrades >10%  
+**NEVER**: Run integration tests on every PR (too slow)
 
-> **NEVER**: Run integration tests on every PR (too slow), skip device-specific tests
-
-### 4.2 Performance Testing
-
-> **ALWAYS**:
-> - Flutter driver performance tests
-> - Track app startup time, frame rendering
-> - Monitor memory usage
-> - Fail if performance degrades >10%
-
-### 4.3 Release Automation
+### 4.2 Release Automation
 
 > **Semantic Versioning**:
 > - Update pubspec.yaml version automatically

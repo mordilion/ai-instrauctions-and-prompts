@@ -77,47 +77,21 @@ reportgenerator -reports:./coverage/**/coverage.cobertura.xml -targetdir:./cover
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - StyleCop Analyzers (StyleCop.Analyzers NuGet)
-> - Roslynator or SonarAnalyzer.CSharp
-> - Treat warnings as errors in CI (`<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`)
-> - EditorConfig enforcement
+> **ALWAYS**: StyleCop Analyzers, Roslynator, TreatWarningsAsErrors, EditorConfig, Dependabot, CodeQL (csharp), NuGet vulnerability scanning
+> **NEVER**: Suppress warnings globally
 
-> **NEVER**:
-> - Suppress warnings globally
-> - Skip analyzer configuration
-> - Allow SA violations in new code
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - NuGet package vulnerability scanning
-> - Target framework updates
-> - Fail on known vulnerabilities
-
-**Dependabot Config**:
 ```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "nuget"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-### 2.3 Static Analysis (SAST)
-
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: csharp
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud, Security Code Scan analyzer, Meziantou.Analyzer
-
-**Verify**: Analyzers run during build, warnings treated as errors, Dependabot creates update PRs, CodeQL scan completes
+**Verify**: Analyzers run, warnings=errors, Dependabot creates PRs, CodeQL completes
 
 ---
 
@@ -158,46 +132,14 @@ dotnet publish -c Release -o ./publish --no-restore
 # Framework-dependent: add --no-self-contained
 ```
 
-### 3.3 Deployment Jobs
+### 3.3 Deployment & Verification
 
-> **Platform-specific** (choose one or more):
+**Platforms**: Azure App Service, AKS/Container Apps, AWS (ECS/Lambda), Docker Registry, IIS  
+**Migrations**: `dotnet ef migrations script --idempotent`, run before deployment, test in staging  
+**Smoke Tests**: Health check, DB/Redis connectivity, external APIs  
+**NEVER**: Auto-run migrations on app start in production
 
-| Platform | Tool | Notes |
-|----------|------|-------|
-| **Azure App Service** | azure/webapps-deploy@v2 | Use deployment slots (staging → production swap) |
-| **Azure Container Apps/AKS** | Docker + ACR | Deploy with az containerapp update or kubectl |
-| **AWS** | aws-actions/configure-aws-credentials | Elastic Beanstalk, ECS, or Lambda |
-| **Docker Registry** | docker/build-push-action | Push to Docker Hub, GHCR, ACR, ECR |
-| **IIS / Windows Server** | Web Deploy (MSDeploy) | PowerShell remoting or sftp/scp artifacts |
-
-### 3.4 Database Migrations
-
-> **ALWAYS**:
-> - Run EF Core migrations before app deployment
-> - Use `dotnet ef database update` or SQL scripts
-> - Test migrations in staging first
-> - Create rollback scripts
-
-> **NEVER**:
-> - Run migrations automatically on app start in production
-> - Skip migration testing
-> - Deploy app before migrations complete
-
-**Migration Commands**:
-```bash
-dotnet ef migrations script --idempotent --output migration.sql
-# Execute SQL script in deployment job
-```
-
-### 3.5 Smoke Tests Post-Deploy
-
-> **ALWAYS include**:
-> - Health check endpoint test (`/health` or `/healthz`)
-> - Database connectivity check
-> - Cache/Redis connectivity
-> - External API integration check
-
-**Verify**: Manual trigger works, environment secrets accessible, artifacts published, deployment succeeds to staging, migrations applied, smoke tests pass, rollback tested
+**Verify**: Deployment succeeds, migrations applied, smoke tests pass
 
 ---
 
@@ -205,28 +147,13 @@ dotnet ef migrations script --idempotent --output migration.sql
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 Performance Testing
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - BenchmarkDotNet for micro-benchmarks
-> - Load testing with k6, JMeter, or NBomber
-> - Track response times and memory usage
-> - Fail if performance degrades >10%
+**Performance**: BenchmarkDotNet, k6/JMeter/NBomber, fail if degrades >10%  
+**Integration**: Separate workflow, TestContainers, WebApplicationFactory, run nightly  
+**NEVER**: Use production DBs, run integration on every PR
 
-### 4.2 Integration Testing
-
-> **ALWAYS**:
-> - Separate workflow (`integration-tests.yml`)
-> - Use TestContainers for database/Redis
-> - WebApplicationFactory for in-memory testing
-> - Run on schedule (nightly) + release tags
-
-> **NEVER**:
-> - Use real production databases
-> - Skip cleanup after tests
-> - Run on every PR (too slow)
-
-### 4.3 Release Automation
+### 4.2 Release Automation
 
 > **Semantic Versioning**:
 > - Use GitVersion or Nerdbank.GitVersioning

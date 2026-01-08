@@ -78,50 +78,23 @@ gradle test jacocoTestReport
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - ktlint for Kotlin code style
-> - detekt for static analysis
-> - Fail build on violations
+> **ALWAYS**: ktlint, detekt, Dependabot, OWASP Dependency-Check/Snyk, CodeQL (java), fail on violations
+> **NEVER**: Suppress warnings globally
 
-> **NEVER**: Suppress warnings globally, skip linter configuration, allow code smells in new code
+**Gradle Plugins**: `org.jlleitschuh.gradle.ktlint`, `io.gitlab.arturbosch.detekt`
 
-**Gradle Plugins**:
-```kotlin
-plugins {
-    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
-    id("io.gitlab.arturbosch.detekt") version "1.23.4"
-}
-```
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`)
-> - OWASP Dependency-Check or Snyk
-> - Fail on known vulnerabilities
-
-**Dependabot Config**:
 ```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-### 2.3 Static Analysis (SAST)
-
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure languages: java (covers Kotlin)
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud
-
-**Verify**: ktlint/detekt pass, Dependabot creates PRs, CodeQL scan completes, security issues reported
+**Verify**: ktlint/detekt pass, Dependabot creates PRs, CodeQL completes
 
 ---
 
@@ -156,40 +129,14 @@ gradle shadowJar --no-daemon  # Fat JAR
 # Or: gradle nativeCompile for GraalVM native
 ```
 
-### 3.3 Deployment Jobs
+### 3.3 Deployment & Verification
 
-> **Platform-specific** (choose one or more):
+**Platforms**: AWS (Lambda/ECS), Azure, Google Cloud, Docker, Kubernetes  
+**Migrations**: Flyway/Liquibase, run before deployment (`gradle flywayMigrate`), test in staging  
+**Smoke Tests**: Health check, DB/Redis connectivity, external services  
+**NEVER**: Auto-run migrations on app start in production
 
-| Platform | Tool/Method | Notes |
-|----------|-------------|-------|
-| **AWS** | aws-actions/configure-aws-credentials | Lambda, ECS, Elastic Beanstalk |
-| **Azure** | azure/webapps-deploy@v2 | App Service, Container Apps |
-| **Google Cloud** | google-github-actions/setup-gcloud | Cloud Run, App Engine |
-| **Docker Registry** | docker/build-push-action | Multi-stage Dockerfile |
-| **Kubernetes** | kubectl / Helm | Deploy to GKE, EKS, AKS |
-
-### 3.4 Database Migrations
-
-> **ALWAYS**:
-> - Use Flyway or Liquibase (same as Java)
-> - Run migrations before app deployment
-> - Test migrations in staging first
-> - Version control migration scripts
-
-**Migration Commands**:
-```bash
-gradle flywayMigrate -Dflyway.url=$DB_URL
-```
-
-### 3.5 Smoke Tests Post-Deploy
-
-> **ALWAYS include**:
-> - Health check endpoint test
-> - Database connectivity
-> - Cache/Redis connectivity
-> - External service integration checks
-
-**Verify**: Manual trigger works, secrets accessible, JAR built correctly, deployment succeeds, migrations applied, smoke tests pass, rollback tested
+**Verify**: Deployment succeeds, migrations applied, smoke tests pass
 
 ---
 
@@ -197,43 +144,14 @@ gradle flywayMigrate -Dflyway.url=$DB_URL
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 Performance Testing
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - Kotlin microbenchmarks (kotlinx-benchmark)
-> - Load testing with Gatling or k6
-> - Track response times and memory
-> - Fail if performance degrades >10%
+**Performance**: kotlinx-benchmark, Gatling/k6, fail if degrades >10%  
+**Integration**: Separate workflow, Testcontainers, `@SpringBootTest`, run nightly  
+**Release**: gradle-git-versioning/nebula-release, CHANGELOG, GitHub Releases, Maven Central (libraries)  
+**NEVER**: Use production DBs, run integration on every PR
 
-### 4.2 Integration Testing
-
-> **ALWAYS**:
-> - Separate workflow (`integration-tests.yml`)
-> - Use Testcontainers for database/Redis
-> - Spring Boot: @SpringBootTest with test profiles
-> - Run on schedule (nightly) + release tags
-
-> **NEVER**: Use real production databases, skip cleanup, run on every PR (too slow)
-
-### 4.3 Release Automation
-
-> **Semantic Versioning**:
-> - Use gradle-git-versioning or nebula-release
-> - Generate CHANGELOG from conventional commits
-> - Create GitHub Releases
-> - Publish to Maven Central (if library)
-
-### 4.4 Maven Central Publishing
-
-> **If creating libraries**:
-> - Configure GPG signing
-> - Publish to Maven Central via OSSRH
-> - Include sources and javadoc JARs
-> - Use maven-publish plugin
-
-> **ALWAYS**: Set group, artifact, version; Include license, developers, SCM; Sign with GPG
-
-### 4.5 Notifications
+### 4.2 Notifications
 
 > **ALWAYS**: Slack/Teams webhook, GitHub Status Checks, Email for security alerts
 
