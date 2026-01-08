@@ -86,36 +86,13 @@ public record UserDto(Long id, String name, String email) {}
 | **Business Logic in Controller** | Controller does DB access, validation | Controller calls service only | Untestable, violates SoC, unmaintainable |
 | **Wrong DTO Mapping** | Mapping in controller layer | Mapping in service layer | Breaks layering, logic leak |
 
-### Anti-Pattern: Field Injection (FORBIDDEN)
-```java
-// ❌ WRONG - Cannot test, breaks immutability
-@Service
-public class UserService {
-    @Autowired private UserRepository repository;  // DO NOT GENERATE
-}
+### Anti-Patterns (FORBIDDEN)
 
-// ✅ CORRECT - Constructor injection
-@Service
-@RequiredArgsConstructor
-public class UserService {
-    private final UserRepository repository;  // Immutable, testable
-}
-```
+❌ **Field Injection**: `@Autowired private UserRepository repo;` → Untestable, mutable  
+✅ **Constructor Injection**: `@RequiredArgsConstructor` + `private final UserRepository repo;`
 
-### Anti-Pattern: Exposing Entities (FORBIDDEN)
-```java
-// ❌ WRONG - Entity in API layer
-@GetMapping("/{id}")
-public User getUser(@PathVariable Long id) {
-    return repository.findById(id).orElseThrow();  // Causes bugs
-}
-
-// ✅ CORRECT - DTO in API layer
-@GetMapping("/{id}")
-public UserDto getUser(@PathVariable Long id) {
-    return userService.getUser(id);  // Returns DTO
-}
-```
+❌ **Exposing Entities**: Controller returns `User` entity → Lazy loading errors, security risks  
+✅ **Use DTOs**: Controller returns `UserDto` mapped in service layer
 
 ## AI Self-Check (Verify BEFORE generating Spring Boot code)
 
@@ -149,25 +126,11 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(404, ex.getMessage());
     }
 }
-
-record ErrorResponse(int status, String message, LocalDateTime timestamp) {
-    public ErrorResponse(int status, String message) {
-        this(status, message, LocalDateTime.now());
-    }
-}
 ```
 
 ## Configuration
 
-```java
-@Configuration
-@ConfigurationProperties(prefix = "app")
-@Validated
-public class AppProperties {
-    @NotBlank private String name;
-    private String version;
-}
-```
+Use `@ConfigurationProperties(prefix = "app")` + `@Validated` for type-safe config
 
 ## Key Libraries
 

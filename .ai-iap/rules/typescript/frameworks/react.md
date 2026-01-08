@@ -102,26 +102,13 @@ function ExpensiveComponent({ items, onSelect }: Props) {
 function useUser(userId: number) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  
   useEffect(() => {
-    setLoading(true)
     fetch(`/api/users/${userId}`)
       .then(res => res.json())
-      .then(data => {
-        setUser(data)
-        setLoading(false)
-      })
+      .then(setUser)
+      .finally(() => setLoading(false))
   }, [userId])
-  
   return { user, loading }
-}
-
-// Usage
-function UserProfile({ userId }: Props) {
-  const { user, loading } = useUser(userId)
-  
-  if (loading) return <div>Loading...</div>
-  return <div>{user?.name}</div>
 }
 ```
 
@@ -134,29 +121,13 @@ function UserProfile({ userId }: Props) {
 | **Index as Key** | `key={index}` | `key={item.id}` |
 | **Conditional Hooks** | `if (x) { useState() }` | Hooks at top level |
 
-### Anti-Pattern: Direct Mutation
+### Anti-Patterns
 
-```typescript
-// ❌ WRONG
-setUsers(users.push(newUser))  // Mutates!
+❌ **Direct Mutation**: `setUsers(users.push(newUser))` → Mutates state!  
+✅ **Immutable Update**: `setUsers([...users, newUser])`
 
-// ✅ CORRECT
-setUsers([...users, newUser])
-```
-
-### Anti-Pattern: Missing Dependencies
-
-```typescript
-// ❌ WRONG
-useEffect(() => {
-  fetchData(userId)  // userId not in deps!
-}, [])
-
-// ✅ CORRECT
-useEffect(() => {
-  fetchData(userId)
-}, [userId])
-```
+❌ **Missing Dependencies**: `useEffect(() => fetchData(userId), [])` → Stale closure!  
+✅ **Include Dependencies**: `useEffect(() => fetchData(userId), [userId])`
 
 ## AI Self-Check
 

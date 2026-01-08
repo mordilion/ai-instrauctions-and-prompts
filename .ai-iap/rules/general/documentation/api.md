@@ -62,15 +62,7 @@
 
 ## Required Documentation Elements
 
-| Element | Description | Example |
-|---------|-------------|---------|
-| **Summary** | One-line description | "Get user by ID" |
-| **Description** | Detailed explanation | "Retrieves user with profile..." |
-| **Parameters** | All inputs (path, query, body) | `id` (path, required, uuid) |
-| **Responses** | All status codes | 200, 400, 401, 404, 500 |
-| **Examples** | Request/response samples | Complete JSON objects |
-| **Authentication** | Auth requirements | "Bearer token required" |
-| **Rate Limits** | Throttling rules | "100 requests/minute" |
+**MUST document**: Summary, description, parameters, responses (all status codes), request/response examples, authentication, rate limits
 
 ---
 
@@ -102,25 +94,7 @@
 
 ## Error Response Format
 
-> **ALWAYS**: Use consistent error format across all endpoints
-
-**Recommended Structure**:
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid email format",
-    "details": [
-      {
-        "field": "email",
-        "issue": "Must be valid email address"
-      }
-    ],
-    "timestamp": "2024-01-15T10:30:00Z",
-    "request_id": "req_abc123"
-  }
-}
-```
+> **ALWAYS**: Use consistent error format: `{ error: { code, message, details[], timestamp, request_id } }`
 
 ---
 
@@ -149,37 +123,17 @@
 
 ---
 
-## API Versioning Documentation
+## API Versioning & SDKs
 
-> **ALWAYS**: Document versioning strategy
+**Versioning**: Document strategy (URL path `/v1/`, header, or query param), versions, breaking changes, deprecation timeline
 
-| Strategy | Format | Example |
-|----------|--------|---------|
-| **URL Path** ⭐ | `/v1/users`, `/v2/users` | Most explicit |
-| **Header** | `Accept: application/vnd.api+json; version=1` | REST standard |
-| **Query Param** | `/users?version=1` | Simple, less common |
-
-**Template**: Document strategy (URL/header/query), versions, breaking changes, deprecation policy
-
----
-
-## SDK/Client Library Documentation
-
-> **ALWAYS**: Provide code examples in popular languages
-
-**Template**: Show install command, basic initialization, and example request for each SDK
+**SDK Documentation**: Show install command, initialization, and example request for popular languages
 
 ---
 
 ## Interactive Documentation Tools
 
-| Tool | Use Case | Features |
-|------|----------|----------|
-| **Swagger UI** ⭐ | OpenAPI visualization | Interactive testing, auto-generated |
-| **Redoc** | OpenAPI alternative | Clean UI, responsive |
-| **Postman** | API testing | Collections, environment variables |
-| **Insomnia** | REST/GraphQL | GraphQL explorer, templates |
-| **Stoplight** | API design | Mock servers, style guides |
+**Recommended**: Swagger UI ⭐ (OpenAPI, interactive), Redoc (clean UI), Postman (testing), Insomnia (GraphQL), Stoplight (design)
 
 ---
 
