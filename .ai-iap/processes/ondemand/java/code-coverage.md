@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Exclude generated code and POJOs
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, COVERAGE-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - LOCAL COVERAGE
 ========================================
 
@@ -154,14 +163,22 @@ BEST PRACTICES
 - Review coverage in PRs
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, COVERAGE-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Add JaCoCo plugin (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Add JaCoCo plugin (Phase 1)
 CONTINUE: Configure exclusions (Phase 2)
 CONTINUE: Add CI integration (Phase 3)
 OPTIONAL: Add enforcement (Phase 4)
-REMEMBER: Exclude generated code, use JaCoCo
+FINISH: Update all documentation files
+REMEMBER: Exclude generated code, use JaCoCo, document for catch-up
 ```
 
 ---

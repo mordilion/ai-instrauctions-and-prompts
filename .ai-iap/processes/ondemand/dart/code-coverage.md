@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Exclude generated files from coverage
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, COVERAGE-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - LOCAL COVERAGE
 ========================================
 
@@ -135,14 +144,22 @@ BEST PRACTICES
 - Set minimum thresholds (80%+)
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, COVERAGE-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Run local coverage (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Run local coverage (Phase 1)
 CONTINUE: Configure exclusions (Phase 2)
 CONTINUE: Add CI integration (Phase 3)
 OPTIONAL: Add enforcement (Phase 4)
-REMEMBER: Exclude generated files, use lcov
+FINISH: Update all documentation files
+REMEMBER: Exclude generated files, use lcov, document for catch-up
 ```
 
 ---
