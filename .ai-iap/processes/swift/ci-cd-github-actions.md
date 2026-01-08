@@ -80,53 +80,21 @@ swift test --enable-code-coverage
 
 **Objective**: Add code quality and security scanning to CI pipeline
 
-### 2.1 Code Quality Analysis
+### 2.1 Code Quality & Security
 
-> **ALWAYS include**:
-> - SwiftLint for code style
-> - SwiftFormat for consistent formatting
-> - Fail build on linting errors
+> **ALWAYS**: SwiftLint, SwiftFormat, Dependabot (Swift Package Manager), CodeQL (swift), fail on lint errors
+> **NEVER**: Suppress warnings globally, allow force unwrapping without justification
 
-> **NEVER**: Suppress warnings globally, skip linter configuration, allow force unwrapping without justification
-
-**SwiftLint Configuration** (`.swiftlint.yml`):
 ```yaml
-disabled_rules:
-  - line_length
-opt_in_rules:
-  - force_unwrapping
-excluded:
-  - Pods
-  - .build
-```
-
-### 2.2 Dependency Security Scanning
-
-> **ALWAYS include**:
-> - Dependabot configuration (`.github/dependabot.yml`) for Swift Package Manager
-> - Manual security audits for CocoaPods/Carthage
-> - Check for outdated dependencies
-
-**Dependabot Config**:
-```yaml
+# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "swift"
     directory: "/"
-    schedule:
-      interval: "weekly"
+    schedule: { interval: "weekly" }
 ```
 
-### 2.3 Static Analysis (SAST)
-
-> **ALWAYS**:
-> - Add CodeQL analysis (`.github/workflows/codeql.yml`)
-> - Configure language: swift
-> - Run on schedule (weekly) + push to main
-
-> **Optional but recommended**: SonarCloud, Xcode Analyze
-
-**Verify**: SwiftLint passes, SwiftFormat applied, Dependabot creates PRs, CodeQL scan completes
+**Verify**: SwiftLint passes, SwiftFormat applied, Dependabot creates PRs, CodeQL completes
 
 ---
 
@@ -144,69 +112,15 @@ updates:
 
 **Protection Rules**: Production (require approval, restrict to main), Staging (auto-deploy to TestFlight), Development (internal distribution)
 
-### 3.2 Code Signing (iOS/macOS)
+### 3.2 Code Signing, Build & Deployment
 
-> **ALWAYS**:
-> - Store certificates and provisioning profiles as secrets
-> - Use match (fastlane) or manual certificate management
-> - Decode base64 certificates in workflow
-> - Import to keychain before build
+**Code Signing**: Store certificates/profiles as secrets, fastlane match, decode+import to keychain  
+**Archive**: `xcodebuild archive` + `exportArchive`, version with build number  
+**Platforms**: App Store Connect/TestFlight (fastlane), Firebase App Distribution, Vapor (Docker/AWS)  
+**Smoke Tests**: Health check (Vapor), UI tests on TestFlight (iOS/macOS)  
+**NEVER**: Include dev certificates in production, ship with debug symbols
 
-**Code Signing Setup**:
-```bash
-# Decode certificate
-echo "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
-
-# Create keychain
-security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
-security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}"
-```
-
-### 3.3 Build & Archive
-
-> **ALWAYS**:
-> - Build for appropriate scheme and configuration (Debug/Release)
-> - Archive for distribution: `xcodebuild archive`
-> - Export IPA: `xcodebuild -exportArchive`
-> - Version with build number (CI_BUILD_NUMBER or git SHA)
-
-> **NEVER**: Include development certificates in production, ship with debug symbols exposed, forget to increment build number
-
-**Archive Commands**:
-```bash
-xcodebuild archive -workspace MyApp.xcworkspace -scheme MyApp -configuration Release -archivePath ./build/MyApp.xcarchive
-xcodebuild -exportArchive -archivePath ./build/MyApp.xcarchive -exportPath ./build -exportOptionsPlist ExportOptions.plist
-```
-
-### 3.4 Deployment Jobs
-
-> **Platform-specific** (choose one or more):
-
-| Platform | Tool/Method | Notes |
-|----------|-------------|-------|
-| **App Store Connect** | fastlane or altool | Upload to TestFlight or App Store |
-| **TestFlight** | fastlane pilot | Beta distribution |
-| **Firebase App Distribution** | firebase-tools | Internal testing |
-| **Vapor (Server)** | Docker, AWS, Heroku | Deploy as Linux service |
-
-**Fastlane Example**:
-```ruby
-lane :beta do
-  build_app(scheme: "MyApp")
-  upload_to_testflight
-end
-```
-
-### 3.5 Smoke Tests Post-Deploy
-
-> **ALWAYS include** (for Vapor/server):
-> - Health check endpoint test
-> - Database connectivity
-> - Redis connectivity (if applicable)
-
-> **iOS/macOS**: UI tests on TestFlight before production
-
-**Verify**: Code signing works, archive builds successfully, upload to TestFlight succeeds, smoke tests pass (server)
+**Verify**: Code signing works, archive succeeds, TestFlight upload succeeds, smoke tests pass
 
 ---
 
@@ -214,30 +128,13 @@ end
 
 **Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
-### 4.1 UI Testing (iOS/macOS)
+### 4.1 Advanced Testing & Automation
 
-> **ALWAYS**:
-> - Separate workflow for UI tests (`ui-tests.yml`)
-> - Run on simulators (multiple iOS versions)
-> - Record test results and screenshots
-> - Run on schedule (nightly) to save CI time
+**UI Testing**: Separate workflow, simulators (multiple iOS versions), run nightly  
+**Performance**: XCTest measureBlock, track launch time/memory, fail if regresses >10%  
+**Release**: fastlane increment_build_number, release notes, GitHub Releases, App Store submission
 
-### 4.2 Performance Testing
-
-> **ALWAYS**:
-> - XCTest performance tests (measureBlock)
-> - Track launch time, memory usage
-> - Fail if performance regresses >10%
-
-### 4.3 Release Automation
-
-> **Semantic Versioning**:
-> - Use fastlane increment_build_number
-> - Generate release notes from commits
-> - Create GitHub Releases
-> - Submit to App Store with fastlane
-
-### 4.4 Notifications
+### 4.2 Notifications
 
 > **ALWAYS**: Slack webhook on build/deploy success/failure, Email for TestFlight uploads
 
