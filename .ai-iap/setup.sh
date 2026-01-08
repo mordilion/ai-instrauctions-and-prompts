@@ -313,6 +313,10 @@ get_process_file() {
     jq -r ".languages[\"$1\"].processes[\"$2\"].file" "$WORKING_CONFIG"
 }
 
+get_process_load_into_ai() {
+    jq -r ".languages[\"$1\"].processes[\"$2\"].loadIntoAI // true" "$WORKING_CONFIG"
+}
+
 get_framework_description() {
     jq -r ".languages[\"$1\"].frameworks[\"$2\"].description" "$WORKING_CONFIG"
 }
@@ -713,7 +717,18 @@ select_processes() {
             [[ -z "$key" ]] && continue
             proc_keys+=("$key")
             proc_names+=("$(get_process_name "$lang" "$key")")
-            proc_descs+=("$(get_process_description "$lang" "$key")")
+            
+            # Add type indicator for permanent vs on-demand
+            local load_into_ai
+            load_into_ai=$(get_process_load_into_ai "$lang" "$key")
+            local type_label
+            if [[ "$load_into_ai" == "true" ]]; then
+                type_label="[permanent]"
+            else
+                type_label="[on-demand]"
+            fi
+            
+            proc_descs+=("$(get_process_description "$lang" "$key") $type_label")
             proc_files+=("$(get_process_file "$lang" "$key")")
         done < <(get_language_processes "$lang")
         
@@ -723,6 +738,10 @@ select_processes() {
         echo ""
         echo -e "${BOLD}Select processes for $lang_name:${NC}"
         echo -e "${DIM}(Workflow guides for establishing infrastructure)${NC}"
+        echo ""
+        echo -e "${YELLOW}Process Types:${NC}"
+        echo -e "${CYAN}  [permanent] - Loaded into AI permanently (recurring tasks)${NC}"
+        echo -e "${DIM}  [on-demand] - Copy prompt when needed (one-time setups)${NC}"
         echo ""
         
         for ((i=0; i<${#proc_keys[@]}; i++)); do
@@ -963,8 +982,16 @@ generate_cursor() {
         # Generate process files for this language
         if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
             for proc in ${SELECTED_PROCESSES[$lang]}; do
-                local proc_file output_file content
+                local proc_file output_file content load_into_ai
                 proc_file=$(get_process_file "$lang" "$proc")
+                load_into_ai=$(get_process_load_into_ai "$lang" "$proc")
+                
+                # Skip on-demand processes (user copies prompt when needed)
+                if [[ "$load_into_ai" == "false" ]]; then
+                    print_info "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/_ondemand/$lang/$proc_file.md when needed)"
+                    continue
+                fi
+                
                 output_file="$lang_dir/$proc_file.mdc"
                 
                 content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
@@ -1140,8 +1167,15 @@ generate_claude() {
         # Generate process files as skills
         if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
             for proc in ${SELECTED_PROCESSES[$lang]}; do
-                local proc_file content
+                local proc_file content load_into_ai
                 proc_file=$(get_process_file "$lang" "$proc")
+                load_into_ai=$(get_process_load_into_ai "$lang" "$proc")
+                
+                # Skip on-demand processes (user copies prompt when needed)
+                if [[ "$load_into_ai" == "false" ]]; then
+                    continue
+                fi
+                
                 content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
                 
                 local skill_name="$lang-process-$proc"
@@ -1258,8 +1292,15 @@ generate_concatenated() {
             # Process files for this language
             if [[ -n "${SELECTED_PROCESSES[$lang]:-}" ]]; then
                 for proc in ${SELECTED_PROCESSES[$lang]}; do
-                    local proc_file content
+                    local proc_file content load_into_ai
                     proc_file=$(get_process_file "$lang" "$proc")
+                    load_into_ai=$(get_process_load_into_ai "$lang" "$proc")
+                    
+                    # Skip on-demand processes (user copies prompt when needed)
+                    if [[ "$load_into_ai" == "false" ]]; then
+                        continue
+                    fi
+                    
                     content=$(read_instruction_file "$lang" "$proc_file" "false" "false" "true") || continue
                     
                     if [[ -n "$separator" ]]; then

@@ -520,12 +520,17 @@ function Select-Processes {
         foreach ($key in $langConfig.processes.PSObject.Properties.Name) {
             $proc = $langConfig.processes.$key
             $processKeys += $key
+            
+            # Add type indicator for permanent vs on-demand
+            $typeLabel = if ($proc.loadIntoAI -eq $true) { "[permanent]" } else { "[on-demand]" }
+            
             $processes += @{
                 Key = $key
                 Name = $proc.name
-                Description = $proc.description
+                Description = "$($proc.description) $typeLabel"
                 File = $proc.file
                 Index = $index
+                LoadIntoAI = $proc.loadIntoAI
             }
             $index++
         }
@@ -537,6 +542,10 @@ function Select-Processes {
         Write-Host ""
         Write-Host "Select processes for $($langConfig.name):" -ForegroundColor White
         Write-Host "(Workflow guides for establishing infrastructure)" -ForegroundColor DarkGray
+        Write-Host ""
+        Write-Host "Process Types:" -ForegroundColor Yellow
+        Write-Host "  [permanent] - Loaded into AI permanently (recurring tasks)" -ForegroundColor Cyan
+        Write-Host "  [on-demand] - Copy prompt when needed (one-time setups)" -ForegroundColor DarkGray
         Write-Host ""
         
         foreach ($proc in $processes) {
@@ -831,6 +840,13 @@ function New-CursorConfig {
         if ($SelectedProcesses.ContainsKey($lang)) {
             foreach ($proc in $SelectedProcesses[$lang]) {
                 $procConfig = $Config.languages.$lang.processes.$proc
+                
+                # Skip on-demand processes (user copies prompt when needed)
+                if ($procConfig.loadIntoAI -eq $false) {
+                    Write-InfoMessage "Skipped on-demand process: $proc (copy prompt from .ai-iap/processes/_ondemand/$lang/$($procConfig.file).md when needed)"
+                    continue
+                }
+                
                 $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
                 
                 if ($null -eq $content) {
@@ -989,6 +1005,12 @@ description: $structDescription
         if ($SelectedProcesses.ContainsKey($lang)) {
             foreach ($proc in $SelectedProcesses[$lang]) {
                 $procConfig = $Config.languages.$lang.processes.$proc
+                
+                # Skip on-demand processes (user copies prompt when needed)
+                if ($procConfig.loadIntoAI -eq $false) {
+                    continue
+                }
+                
                 $content = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
                 
                 if ($null -eq $content) {
@@ -1138,6 +1160,12 @@ function New-ConcatenatedConfig {
         if ($SelectedProcesses.ContainsKey($lang)) {
             foreach ($proc in $SelectedProcesses[$lang]) {
                 $procConfig = $Config.languages.$lang.processes.$proc
+                
+                # Skip on-demand processes (user copies prompt when needed)
+                if ($procConfig.loadIntoAI -eq $false) {
+                    continue
+                }
+                
                 $fileContent = Read-InstructionFile -Lang $lang -File $procConfig.file -IsProcess $true
                 
                 if ($null -ne $fileContent) {
