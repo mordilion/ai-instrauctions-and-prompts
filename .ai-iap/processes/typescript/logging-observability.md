@@ -87,56 +87,26 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-### 2.2 Metrics Collection
+### 2.2 Metrics (Prometheus)
 
-> **ALWAYS use**: **Prometheus** ⭐ (industry standard) with prom-client
-
-**Key metrics to track**:
-- Request count (by route, status code)
-- Response time (p50, p95, p99)
-- Error rate
-- Active connections
-- Memory/CPU usage
-
-**Prometheus Setup**:
-```bash
-npm install prom-client
-```
+> **Track**: Request count, response time (p50/p95/p99), error rate, memory/CPU
 
 ```typescript
 import promClient from 'prom-client';
 
 const register = new promClient.Register();
 promClient.collectDefaultMetrics({ register });
+const httpDuration = new promClient.Histogram({ name: 'http_request_duration_seconds', labelNames: ['method', 'route', 'status_code'], registers: [register] });
 
-const httpRequestDuration = new promClient.Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
-
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-});
+app.get('/metrics', async (req, res) => res.set('Content-Type', register.contentType).end(await register.metrics()));
 ```
 
-### 2.3 Error Tracking
-
-> **ALWAYS use**: **Sentry** ⭐ (comprehensive, easy setup), Rollbar, or Bugsnag
-
-**Sentry Setup**:
-```bash
-npm install @sentry/node @sentry/tracing
-```
+### 2.3 Error Tracking (Sentry)
 
 ```typescript
 import * as Sentry from '@sentry/node';
 
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+Sentry.init({ dsn: process.env.SENTRY_DSN, environment: process.env.NODE_ENV,
   tracesSampleRate: 0.1
 });
 
