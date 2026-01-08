@@ -366,33 +366,54 @@ For supported frameworks, choose how you want to organize your code:
 
 In addition to coding rules, this system includes **step-by-step workflow guides** for common development tasks. These are optimized for AI assistants to follow and implement.
 
+### Process Types
+
+**📌 Permanent Processes** (Loaded into AI):
+- **Database Migrations** - Used repeatedly throughout project lifecycle
+- Automatically loaded during setup
+- Always available in AI context
+
+**📋 On-Demand Processes** (Copy when needed):
+- **Testing, CI/CD, Docker, Logging, Auth, API Docs, Security, Linting, Coverage**
+- One-time setup processes
+- Copy prompt from `.ai-iap/processes/_ondemand/{language}/{process}.md` when ready to implement
+- **85% token savings** - Only load what you need, when you need it
+
+### How to Use On-Demand Processes
+
+1. Navigate to `.ai-iap/processes/_ondemand/{language}/{process}.md`
+2. Scroll to **"Usage - Copy This Complete Prompt"** section
+3. Copy the entire prompt block
+4. Paste into your AI tool
+5. AI will guide you through implementation
+
 ### Available Processes (All 8 Languages)
 
-| Process Type | Description | Status |
-|--------------|-------------|--------|
-| **Testing Implementation** | NUnit, Jest, JUnit, pytest, XCTest, PHPUnit, flutter_test | ✅ 8 files |
-| **CI/CD (GitHub Actions)** | Build, test, deploy pipelines with version detection | ✅ 8 files (optimized) |
-| **Logging & Observability** | Structured logging, metrics, tracing, error tracking | ✅ 8 files (standardized) |
-| **Docker Containerization** | Multi-stage Dockerfiles, docker-compose, production optimizations | ✅ 8 files |
-| **Authentication (JWT + OAuth)** | JWT auth, OAuth 2.0, RBAC, security hardening | ✅ 7 files (backend) |
-| **Database Migrations** | Version-controlled schema changes, rollbacks, seed data | ✅ 7 files (backend) |
-| **API Documentation (OpenAPI)** | Swagger/OpenAPI spec generation, auto-documentation, SDK generation | ✅ 7 files (optimized 30%) |
-| **Security Scanning** | SAST/DAST vulnerability scanning (OWASP, Snyk, Bandit, etc.) | ✅ 8 files |
-| **Linting & Formatting** | Code quality linting and style formatting | ✅ 8 files |
-| **Code Coverage** | Automated coverage tracking with thresholds | ✅ 8 files |
+| Process Type | Type | Description | Status |
+|--------------|------|-------------|--------|
+| **Database Migrations** | 📌 Permanent | Version-controlled schema changes, rollbacks, seed data | ✅ 8 files |
+| **Testing Implementation** | 📋 On-Demand | NUnit, Jest, JUnit, pytest, XCTest, PHPUnit, flutter_test | ✅ 8 files |
+| **CI/CD (GitHub Actions)** | 📋 On-Demand | Build, test, deploy pipelines with version detection | ✅ 8 files |
+| **Logging & Observability** | 📋 On-Demand | Structured logging, metrics, tracing, error tracking | ✅ 8 files |
+| **Docker Containerization** | 📋 On-Demand | Multi-stage Dockerfiles, docker-compose, production optimizations | ✅ 8 files |
+| **Authentication (JWT + OAuth)** | 📋 On-Demand | JWT auth, OAuth 2.0, RBAC, security hardening | ✅ 7 files |
+| **API Documentation (OpenAPI)** | 📋 On-Demand | Swagger/OpenAPI spec generation, auto-documentation | ✅ 7 files |
+| **Security Scanning** | 📋 On-Demand | SAST/DAST vulnerability scanning (OWASP, Snyk, etc.) | ✅ 8 files |
+| **Linting & Formatting** | 📋 On-Demand | Code quality linting and style formatting | ✅ 8 files |
+| **Code Coverage** | 📋 On-Demand | Automated coverage tracking with thresholds | ✅ 8 files |
 
-**Total**: 77 process files across 8 languages (TypeScript, .NET, Java, Python, Kotlin, Swift, PHP, Dart)
+**Total**: 70 process files (8 permanent, 62 on-demand) across 8 languages
 
 ### Process Quality Features
 
-1. **Phase-Based**: Each process divided into 4-5 clear phases with Git workflow pattern
-2. **Understandability-First**: Clarity prioritized over brevity - same result across GPT-3.5, GPT-4, Claude, Gemini, Codestral
-3. **Token-Optimized**: 30-40% shorter than traditional docs where clarity is maintained
-   - CI/CD files optimized 38%
-   - API Documentation files optimized 30-32% (removed duplication with general documentation standards)
-4. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), 10-12 item self-check lists
-5. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
-6. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
+1. **Smart Loading**: Permanent processes loaded into AI, on-demand processes copied when needed (85% token savings)
+2. **Self-Contained Prompts**: Each on-demand process includes complete, copy-paste prompt with all context
+3. **Phase-Based**: Each process divided into 4-5 clear phases with objectives and deliverables
+4. **Understandability-First**: Clarity prioritized over brevity - same result across GPT-3.5, GPT-4, Claude, Gemini, Codestral
+5. **Token-Optimized**: 30-40% shorter than traditional docs where clarity is maintained
+6. **AI-Optimized**: Explicit directives (`> **ALWAYS**`, `> **NEVER**`), clear implementation steps
+7. **Version Flexible**: No hardcoded versions - reads from project config files (.nvmrc, global.json, pom.xml, etc.)
+8. **Platform Guidance**: GitHub Actions primary, with guidance for GitLab CI, Azure DevOps, CircleCI, Jenkins
 7. **Consistent Structure**: Git Workflow reference, table format comparisons, troubleshooting sections
 8. **DRY Principle**: Process files reference general documentation standards instead of duplicating content
 
