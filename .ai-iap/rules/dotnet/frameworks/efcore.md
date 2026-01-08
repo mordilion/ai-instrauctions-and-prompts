@@ -20,99 +20,44 @@
 
 ## Core Patterns
 
-### DbContext
-
 ```csharp
+// DbContext
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-    
     public DbSet<User> Users => Set<User>();
-    public DbSet<Post> Posts => Set<Post>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
-            
-            entity.HasMany(e => e.Posts)
-                .WithOne(e => e.User)
-                .HasForeignKey(e => e.UserId);
+        modelBuilder.Entity<User>(e => {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.Email).IsUnique();
+            e.HasMany(x => x.Posts).WithOne(x => x.User);
         });
     }
 }
-```
 
-### Eager Loading (Avoid N+1)
-
-```csharp
-// ❌ WRONG: N+1 queries
-var users = await _context.Users.ToListAsync();
-foreach (var user in users)
-{
-    var posts = user.Posts;  // Lazy load for each user!
-}
-
-// ✅ CORRECT: Single query with Include
+// Eager Loading (Avoid N+1)
 var users = await _context.Users
-    .Include(u => u.Posts)
-    .ThenInclude(p => p.Comments)
+    .Include(u => u.Posts).ThenInclude(p => p.Comments)
     .ToListAsync();
-```
 
-### AsNoTracking
+// AsNoTracking (Read-Only)
+var users = await _context.Users.AsNoTracking().ToListAsync();
 
-```csharp
-// Read-only query
-var users = await _context.Users
-    .AsNoTracking()
-    .Where(u => u.IsActive)
-    .ToListAsync();
-```
-
-### Repository Pattern
-
-```csharp
+// Repository Pattern
 public class UserRepository : IUserRepository
 {
-    private readonly AppDbContext _context;
+    public async Task<User?> GetByIdAsync(int id) =>
+        await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.Id == id);
     
-    public UserRepository(AppDbContext context) => _context = context;
-    
-    public async Task<User?> GetByIdAsync(int id)
-    {
-        return await _context.Users
-            .Include(u => u.Posts)
-            .FirstOrDefaultAsync(u => u.Id == id);
-    }
-    
-    public async Task<IEnumerable<User>> GetAllAsync()
-    {
-        return await _context.Users.AsNoTracking().ToListAsync();
-    }
-    
-    public async Task AddAsync(User user)
-    {
+    public async Task AddAsync(User user) {
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
     }
 }
-```
 
-### Raw SQL (Parameterized)
-
-```csharp
-var users = await _context.Users
-    .FromSqlRaw("SELECT * FROM Users WHERE Email = {0}", email)
-    .ToListAsync();
-
-// Execute non-query
-await _context.Database.ExecuteSqlRawAsync(
-    "UPDATE Users SET IsActive = {0} WHERE Id = {1}", 
-    true, userId);
+// Raw SQL (Parameterized)
+var users = await _context.Users.FromSqlRaw("SELECT * FROM Users WHERE Email = {0}", email).ToListAsync();
 ```
 
 ## Common AI Mistakes

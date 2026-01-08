@@ -36,84 +36,47 @@ src/main/java/com/app/
 
 ## Core Patterns
 
-### Module Organization
-
 ```java
-// users/User.java
+// Module Organization (users/)
 @Entity
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String email;
+    @Id @GeneratedValue private Long id;
+    private String name, email;
 }
 
-// users/UserService.java
 @Service
 public class UserService {
-    private final UserRepository repository;
-    
-    public UserService(UserRepository repository) {
-        this.repository = repository;
-    }
-    
     public User create(String name, String email) {
         return repository.save(new User(name, email));
     }
 }
 
-// users/UserController.java
 @RestController
-@RequestMapping("/api/users")
-public class UsersController {
-    private final UserService service;
-    
-    public UsersController(UserService service) {
-        this.service = service;
-    }
-    
-    @PostMapping
-    public ResponseEntity<UserDto> create(@Valid @RequestBody CreateUserDto dto) {
-        return ResponseEntity.ok(service.create(dto.name(), dto.email()).toDto());
+public class UserController {
+    @PostMapping("/api/users")
+    public UserDto create(@Valid @RequestBody CreateUserDto dto) {
+        return service.create(dto.name(), dto.email()).toDto();
     }
 }
-```
 
-### Cross-Module Communication
-
-```java
-// users/UserPublicApi.java - Interface for other modules
+// Cross-Module Communication (Public API)
 public interface UserPublicApi {
     Optional<UserDto> getUserById(Long id);
 }
 
 @Service
 public class UserPublicApiImpl implements UserPublicApi {
-    private final UserService service;
-    
-    public UserPublicApiImpl(UserService service) {
-        this.service = service;
-    }
-    
-    @Override
     public Optional<UserDto> getUserById(Long id) {
         return service.findById(id).map(User::toDto);
     }
 }
 
-// orders/OrderService.java - Uses user module via interface
+// orders/OrderService.java (uses UserPublicApi)
 @Service
 public class OrderService {
     private final UserPublicApi userApi;
-    
-    public OrderService(UserPublicApi userApi) {
-        this.userApi = userApi;
-    }
-    
-    public Order createOrder(Long userId, List<Item> items) {
-        UserDto user = userApi.getUserById(userId)
-            .orElseThrow(() -> new UserNotFoundException());
-        return new Order(userId, items);
+    public Order createOrder(Long userId) {
+        return userApi.getUserById(userId).map(u -> new Order(userId)).orElseThrow();
     }
 }
 ```

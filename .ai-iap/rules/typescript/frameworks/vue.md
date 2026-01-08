@@ -20,99 +20,37 @@
 
 ## Core Patterns
 
-### Component with Props & Emits
-
 ```vue
 <script setup lang="ts">
-interface Props {
-  modelValue: string
-  placeholder?: string
-}
-
-interface Emits {
-  (e: 'update:modelValue', value: string): void
-  (e: 'submit'): void
-}
-
+// Props & Emits
+interface Props { modelValue: string; placeholder?: string }
+interface Emits { (e: 'update:modelValue', value: string): void }
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-function handleInput(event: Event) {
-  emit('update:modelValue', (event.target as HTMLInputElement).value)
-}
+// Reactive State
+const count = ref(0)  // Primitives
+const state = reactive({ user: { name: 'John' } })  // Objects
+const doubled = computed(() => count.value * 2)  // Derived
+
+// Lifecycle
+onMounted(() => interval = setInterval(tick, 1000))
+onBeforeUnmount(() => clearInterval(interval))
 </script>
 
 <template>
-  <input :value="modelValue" :placeholder="placeholder" @input="handleInput" />
+  <button @click="count++">{{ count }}</button>  <!-- No .value in template -->
 </template>
 ```
 
-### Reactive State
-
-```vue
-<script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-
-// ref for primitives
-const count = ref(0)
-const message = ref('Hello')
-
-// reactive for objects
-const state = reactive({
-  user: { name: 'John', age: 30 },
-  items: [1, 2, 3]
-})
-
-// computed for derived
-const doubled = computed(() => count.value * 2)
-
-function increment() {
-  count.value++  // .value required in <script>
-}
-</script>
-
-<template>
-  <button @click="increment">{{ count }}</button>  <!-- No .value in template -->
-</template>
-```
-
-### Lifecycle & Side Effects
-
-```vue
-<script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue'
-
-let interval: number
-
-onMounted(() => {
-  interval = setInterval(() => console.log('tick'), 1000)
-})
-
-onBeforeUnmount(() => {
-  clearInterval(interval)
-})
-</script>
-```
-
-### Composables (Reusable Logic)
+### Composables
 
 ```typescript
 // composables/useCounter.ts
-import { ref, computed } from 'vue'
-
-export function useCounter(initial: number = 0) {
+export function useCounter(initial = 0) {
   const count = ref(initial)
-  const doubled = computed(() => count.value * 2)
-  
-  function increment() { count.value++ }
-  function decrement() { count.value-- }
-  
-  return { count, doubled, increment, decrement }
+  return { count, increment: () => count.value++ }
 }
-
-// Component.vue
-import { useCounter } from './composables/useCounter'
-const { count, doubled, increment } = useCounter(10)
 ```
 
 ## Common AI Mistakes
