@@ -31,12 +31,6 @@ enum Entrypoint {
         try app.run()
     }
 }
-
-func configure(_ app: Application) throws {
-    app.middleware.use(ErrorMiddleware.default(environment: app.environment))
-    app.databases.use(.postgres(hostname: "localhost", username: "vapor", password: "password", database: "vapor"), as: .psql)
-    try routes(app)
-}
 ```
 
 ### Routes
@@ -68,24 +62,14 @@ struct UserController: RouteCollection {
 ```swift
 final class User: Model, Content {
     static let schema = "users"
-    
-    @ID(key: .id)
-    var id: UUID?
-    
-    @Field(key: "name")
-    var name: String
-    
-    @Field(key: "email")
-    var email: String
-    
-    @Children(for: \.$user)
-    var posts: [Post]
+    @ID(key: .id) var id: UUID?
+    @Field(key: "name") var name: String
+    @Field(key: "email") var email: String
+    @Children(for: \.$user) var posts: [Post]
     
     init() {}
     init(id: UUID? = nil, name: String, email: String) {
-        self.id = id
-        self.name = name
-        self.email = email
+        self.id = id; self.name = name; self.email = email
     }
 }
 ```
@@ -114,13 +98,9 @@ struct CreateUser: AsyncMigration {
 ```swift
 struct AuthMiddleware: AsyncMiddleware {
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-        guard let token = request.headers.bearerAuthorization?.token else {
-            throw Abort(.unauthorized)
-        }
-        
+        guard let token = request.headers.bearerAuthorization?.token else { throw Abort(.unauthorized) }
         let payload = try request.jwt.verify(token, as: SessionToken.self)
         request.auth.login(payload)
-        
         return try await next.respond(to: request)
     }
 }
@@ -137,19 +117,8 @@ struct AuthMiddleware: AsyncMiddleware {
 
 ### Anti-Pattern: Blocking
 
-```swift
-// ❌ WRONG
-get("/users") {
-    Thread.sleep(1)  // Blocks!
-    return users
-}
-
-// ✅ CORRECT
-get("/users") {
-    try await Task.sleep(nanoseconds: 1_000_000_000)
-    return users
-}
-```
+❌ `Thread.sleep()` blocks event loop  
+✅ `try await Task.sleep(nanoseconds:)` is async
 
 ## AI Self-Check
 
