@@ -295,7 +295,6 @@ kept verbose.
 
 ### Specific Test Cases
 
-
 #### Test 1: Configuration Files
 
 - File: `java/code-coverage.md`
@@ -305,7 +304,6 @@ kept verbose.
 - Initial: âŒ FAIL (no example)
 
 - After Fix: âœ… PASS (15-line XML example)
-
 
 #### Test 2: Python Config
 
@@ -317,7 +315,6 @@ kept verbose.
 
 - After Fix: âœ… PASS (`[tool.ruff]`, `[tool.ruff.lint]` shown)
 
-
 #### Test 3: Framework Patterns
 
 - File: `nextjs.md`
@@ -326,7 +323,6 @@ kept verbose.
 
 - Result: âœ… PASS (table format, clear examples)
 
-
 #### Test 4: CI/CD Commands
 
 - File: `dotnet/ci-cd-github-actions.md`
@@ -334,7 +330,6 @@ kept verbose.
 - Test: Can AI infer GitHub Actions syntax?
 
 - Result: âœ… PASS (explicit commands, Dependabot YAML)
-
 
 #### Test 5: Docker Containers
 
