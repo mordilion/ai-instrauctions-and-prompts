@@ -26,36 +26,20 @@
 /users/{id}:
   get:
     summary: Get user by ID
-    description: Retrieves detailed user information including profile and settings
-    tags:
-      - Users
     parameters:
       - name: id
         in: path
         required: true
-        description: Unique user identifier
-        schema:
-          type: string
-          format: uuid
+        schema: { type: string, format: uuid }
     responses:
       '200':
         description: User found
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-            example:
-              id: "123e4567-e89b-12d3-a456-426614174000"
-              name: "Jane Doe"
-              email: "jane@example.com"
-      '404':
-        description: User not found
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Error'
-      '401':
-        description: Unauthorized
+            schema: { $ref: '#/components/schemas/User' }
+            example: { id: "123...", name: "Jane Doe", email: "jane@example.com" }
+      '404': { description: User not found }
+      '401': { description: Unauthorized }
 ```
 
 ---

@@ -53,47 +53,22 @@ function Counter() {
 ### Effects with Cleanup
 
 ```typescript
-function UserProfile({ userId }: Props) {
-  const [user, setUser] = useState<User | null>(null)
-  
-  useEffect(() => {
-    const controller = new AbortController()
-    
-    fetch(`/api/users/${userId}`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(setUser)
-    
-    return () => controller.abort()  // Cleanup
-  }, [userId])
-  
-  return user ? <div>{user.name}</div> : <div>Loading...</div>
-}
+useEffect(() => {
+  const controller = new AbortController()
+  fetch(`/api/users/${userId}`, { signal: controller.signal })
+    .then(res => res.json()).then(setUser)
+  return () => controller.abort()  // Cleanup on unmount
+}, [userId])
 ```
 
 ### Performance Optimization
 
 ```typescript
-function ExpensiveComponent({ items, onSelect }: Props) {
-  // Memoize callback
-  const handleSelect = useCallback((id: number) => {
-    onSelect(id)
-  }, [onSelect])
-  
-  // Memoize expensive calculation
-  const sortedItems = useMemo(() => 
-    [...items].sort((a, b) => a.name.localeCompare(b.name))
-  , [items])
-  
-  return (
-    <ul>
-      {sortedItems.map(item => (
-        <li key={item.id} onClick={() => handleSelect(item.id)}>
-          {item.name}
-        </li>
-      ))}
-    </ul>
-  )
-}
+// Memoize callbacks
+const handleSelect = useCallback((id: number) => onSelect(id), [onSelect])
+
+// Memoize expensive calculations
+const sortedItems = useMemo(() => [...items].sort((a, b) => a.name.localeCompare(b.name)), [items])
 ```
 
 ### Custom Hook

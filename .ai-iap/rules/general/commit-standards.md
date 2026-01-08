@@ -129,8 +129,6 @@ Reviewed-by: Jane Doe
 | Body with bullet lists | Body with prose paragraphs |
 | Body with section headers | Body without sections |
 
----
-
 ## AI Self-Check
 
 - [ ] Valid type (`feat`, `fix`, `docs`, etc.)
@@ -148,6 +146,4 @@ Reviewed-by: Jane Doe
 
 ## Tools
 
-- **commitlint**: Enforce standards
-- **semantic-release**: Automate versioning  
-- **conventional-changelog**: Generate CHANGELOG
+**commitlint** (enforce standards), **semantic-release** (automate versioning), **conventional-changelog** (generate CHANGELOG)
