@@ -19,85 +19,44 @@
 
 ## Core Patterns
 
-### REST Controller
-
 ```kotlin
+// Controller
 @RestController
 @RequestMapping("/api/users")
 class UserController(private val userService: UserService) {
-    
     @GetMapping
-    fun getUsers(): List<UserDto> = userService.findAll()
-    
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    fun createUser(@Valid @RequestBody request: CreateUserRequest) =
-        userService.create(request)
+    fun getUsers() = userService.findAll()
 }
-```
 
-### Service with Coroutines
-
-```kotlin
+// Service with Coroutines
 @Service
-class UserService(
-    private val repository: UserRepository
-) {
-    suspend fun findAll(): List<UserDto> = withContext(Dispatchers.IO) {
-        repository.findAll().map { it.toDto() }
-    }
-    
-    @Transactional
-    suspend fun create(request: CreateUserRequest): UserDto {
-        val user = User(name = request.name, email = request.email)
-        return repository.save(user).toDto()
-    }
+class UserService(private val repository: UserRepository) {
+    suspend fun findAll() = withContext(Dispatchers.IO) { repository.findAll().map { it.toDto() } }
 }
-```
 
-### Exception Handling
-
-```kotlin
+// Exception Handling
 sealed class AppException(message: String) : RuntimeException(message) {
     class UserNotFound(id: Long) : AppException("User $id not found")
-    class InvalidInput(msg: String) : AppException(msg)
 }
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
     @ExceptionHandler(AppException.UserNotFound::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    fun handleNotFound(ex: AppException.UserNotFound) =
-        ErrorResponse(404, ex.message ?: "")
+    fun handleNotFound(ex: AppException.UserNotFound) = ErrorResponse(404, ex.message ?: "")
 }
-```
 
-### Entity (JPA)
-
-```kotlin
+// Entity
 @Entity
-@Table(name = "users")
 data class User(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
-    
-    @Column(nullable = false, length = 100)
-    val name: String,
-    
-    @Column(unique = true, nullable = false)
-    val email: String,
-    
-    @CreationTimestamp
-    val createdAt: Instant? = null
+    @Id @GeneratedValue val id: Long? = null,
+    @Column(nullable = false) val name: String,
+    @Column(unique = true) val email: String
 )
-```
 
-### DTO & Mapper
-
-```kotlin
+// DTO & Mapper
 data class UserDto(val id: Long, val name: String, val email: String)
-
-fun User.toDto() = UserDto(id = id!!, name = name, email = email)
+fun User.toDto() = UserDto(id!!, name, email)
 ```
 
 ## Common AI Mistakes

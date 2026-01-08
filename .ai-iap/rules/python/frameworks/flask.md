@@ -20,104 +20,40 @@
 
 ## Core Patterns
 
-### Application Factory
-
 ```python
-# app/__init__.py
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-
-db = SQLAlchemy()
-migrate = Migrate()
-
-def create_app(config_name='default'):
+# Application Factory
+def create_app(config='default'):
     app = Flask(__name__)
-    app.config.from_object(f'config.{config_name}')
-    
+    app.config.from_object(f'config.{config}')
     db.init_app(app)
-    migrate.init_app(app, db)
-    
-    from app.users import users_bp
     app.register_blueprint(users_bp, url_prefix='/users')
-    
     return app
-```
 
-### Blueprint
-
-```python
-# app/users/routes.py
-from flask import Blueprint, jsonify, request
-
+# Blueprint
 users_bp = Blueprint('users', __name__)
 
 @users_bp.route('', methods=['GET'])
 def list_users():
-    users = User.query.all()
-    return jsonify([user.to_dict() for user in users])
+    return jsonify([user.to_dict() for user in User.query.all()])
 
-@users_bp.route('', methods=['POST'])
-def create_user():
-    data = request.get_json()
-    user = User(**data)
-    db.session.add(user)
-    db.session.commit()
-    return jsonify(user.to_dict()), 201
-```
-
-### Model
-
-```python
-from app import db
-from datetime import datetime
-
+# Model
 class User(db.Model):
-    __tablename__ = 'users'
-    
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    posts = db.relationship('Post', backref='user', lazy='dynamic')
+    posts = db.relationship('Post', backref='user')
     
     def to_dict(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'created_at': self.created_at.isoformat()
-        }
-```
+        return {'id': self.id, 'email': self.email}
 
-### Error Handling
-
-```python
+# Error Handling
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Not found'}), 404
 
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return jsonify({'error': 'Internal server error'}), 500
-```
-
-### Configuration
-
-```python
-# config.py
-import os
-
+# Configuration
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret'
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-class ProductionConfig(Config):
-    DEBUG = False
 ```
 
 ## Common AI Mistakes

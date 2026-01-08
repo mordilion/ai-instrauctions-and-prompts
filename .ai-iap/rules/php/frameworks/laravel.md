@@ -20,103 +20,44 @@
 
 ## Core Patterns
 
-### Resource Controller (Thin)
-
 ```php
-class UserController extends Controller
-{
-    public function __construct(private UserService $userService) {}
-    
-    public function index(): ResourceCollection
-    {
-        return UserResource::collection($this->userService->getAll());
-    }
-    
-    public function store(StoreUserRequest $request): UserResource
-    {
+// Controller (thin)
+class UserController extends Controller {
+    public function store(StoreUserRequest $request) {
         return new UserResource($this->userService->create($request->validated()));
     }
 }
-```
 
-### Form Request
-
-```php
-class StoreUserRequest extends FormRequest
-{
-    public function authorize(): bool { return true; }
-    
-    public function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'min:8', 'confirmed'],
-        ];
+// Form Request (validation)
+class StoreUserRequest extends FormRequest {
+    public function rules(): array {
+        return ['name' => ['required', 'string'], 'email' => ['email', 'unique:users']];
     }
 }
-```
 
-### API Resource
-
-```php
-class UserResource extends JsonResource
-{
-    public function toArray($request): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'created_at' => $this->created_at->toISOString(),
-        ];
+// API Resource (transformation)
+class UserResource extends JsonResource {
+    public function toArray($request): array {
+        return ['id' => $this->id, 'name' => $this->name];
     }
 }
-```
 
-### Eloquent Model
-
-```php
-class User extends Model
-{
-    protected $fillable = ['name', 'email', 'password'];
-    protected $hidden = ['password', 'remember_token'];
-    protected $casts = ['email_verified_at' => 'datetime'];
-    
-    public function posts(): HasMany
-    {
-        return $this->hasMany(Post::class);
-    }
+// Model
+class User extends Model {
+    protected $fillable = ['name', 'email'];
+    public function posts(): HasMany { return $this->hasMany(Post::class); }
 }
-```
 
-### Service
-
-```php
-class UserService
-{
-    public function __construct(private UserRepository $repository) {}
-    
-    public function create(array $data): User
-    {
+// Service (business logic)
+class UserService {
+    public function create(array $data): User {
         $data['password'] = Hash::make($data['password']);
         return $this->repository->create($data);
     }
-    
-    public function getAll(): Collection
-    {
-        return $this->repository->all();
-    }
 }
-```
 
-### Routes
-
-```php
-// routes/api.php
-Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('users', UserController::class);
-});
+// Routes
+Route::middleware('auth:sanctum')->group(fn() => Route::apiResource('users', UserController::class));
 ```
 
 ## Common AI Mistakes
