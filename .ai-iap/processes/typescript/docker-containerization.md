@@ -168,15 +168,6 @@ volumes:
 > - Redis accessible
 > - Hot reload works (if dev mode)
 
-### 2.3 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add docker-compose.yml
-> git commit -m "feat: add docker-compose for local development"
-> git push origin docker/compose
-> ```
-
 ---
 
 ## Phase 3: Production Optimizations
@@ -237,15 +228,6 @@ CMD ["node", "dist/index.js"]
 > - Update dependencies
 > - Remove unnecessary packages
 
-### 3.4 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add Dockerfile .dockerignore
-> git commit -m "feat: optimize Dockerfile for production"
-> git push origin docker/production
-> ```
-
 ---
 
 ## Phase 4: CI/CD Integration
@@ -278,15 +260,6 @@ CMD ["node", "dist/index.js"]
 > - Run health check in CI
 > - Test with docker-compose
 > - Validate image size limits
-
-### 4.3 Commit & Verify
-
-> **Git workflow**:
-> ```
-> git add .github/workflows/docker.yml
-> git commit -m "feat: add Docker build to CI/CD"
-> git push origin docker/ci-cd
-> ```
 
 ---
 

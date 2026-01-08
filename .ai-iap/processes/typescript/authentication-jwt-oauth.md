@@ -180,20 +180,11 @@ passport.use(new GoogleStrategy({
 > - Issue JWT after OAuth success
 > - Link existing accounts by email
 
-### 2.4 Commit & Verify
+### 2.4 Verify
 
-> **Git workflow**:
-> ```
-> git add src/auth/
-> git commit -m "feat: add OAuth 2.0 authentication (Google, GitHub)"
-> git push origin auth/oauth
-> ```
-
-> **Verify**:
 > - GET /auth/google redirects to Google login
 > - Callback creates/finds user and issues JWT
 > - Users can link multiple providers
-> - Email uniqueness enforced
 
 ---
 
@@ -239,20 +230,11 @@ app.delete('/users/:id', authenticateJWT, requireRole('admin'), deleteUser);
 > - Permissions: granular actions (read:users, write:posts)
 > - Check permissions, not roles
 
-### 3.3 Commit & Verify
+### 3.3 Verify
 
-> **Git workflow**:
-> ```
-> git add src/auth/
-> git commit -m "feat: add role-based access control"
-> git push origin auth/rbac
-> ```
-
-> **Verify**:
 > - Admin can delete users
 > - Regular users cannot
 > - 403 returned for insufficient permissions
-> - Permissions documented
 
 ---
 
@@ -305,20 +287,11 @@ app.post('/auth/login', loginLimiter, login);
 > - Permission elevation
 > - Suspicious activity
 
-### 4.4 Commit & Verify
+### 4.4 Verify
 
-> **Git workflow**:
-> ```
-> git add src/auth/
-> git commit -m "feat: add authentication security hardening"
-> git push origin auth/security
-> ```
-
-> **Verify**:
 > - Rate limiting blocks brute force
 > - Refresh tokens rotate on use
 > - Security headers present
-> - Audit log captures auth events
 
 ---
 
