@@ -35,48 +35,10 @@
 > **ALWAYS**: Provide usage examples for complex functions  
 > **NEVER**: Document private/internal functions unless complex
 
-### Format by Language
+### Format
 
-**Python** (docstrings):
-```python
-def calculate_discount(price: float, rate: float) -> float:
-    """Calculate discounted price.
-    
-    Args:
-        price: Original price in USD
-        rate: Discount rate (0.0 to 1.0)
-        
-    Returns:
-        Final price after discount
-        
-    Raises:
-        ValueError: If rate is outside valid range
-    """
-```
-
-**TypeScript/JavaScript** (JSDoc):
-```typescript
-/**
- * Calculate discounted price
- * @param {number} price - Original price in USD
- * @param {number} rate - Discount rate (0.0 to 1.0)
- * @returns {number} Final price after discount
- * @throws {Error} If rate is outside valid range
- */
-function calculateDiscount(price: number, rate: number): number
-```
-
-**Java** (Javadoc):
-```java
-/**
- * Calculate discounted price
- * @param price Original price in USD
- * @param rate Discount rate (0.0 to 1.0)
- * @return Final price after discount
- * @throws IllegalArgumentException if rate is outside valid range
- */
-public double calculateDiscount(double price, double rate)
-```
+**Structure**: Description + Parameters (@param) + Return (@return/@returns) + Exceptions (@throws/@raises)  
+**Tools**: Python docstrings, JSDoc, Javadoc, XML comments (.NET), RDoc (Ruby)
 
 ---
 

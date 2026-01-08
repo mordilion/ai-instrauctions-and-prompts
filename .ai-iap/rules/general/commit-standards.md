@@ -94,29 +94,7 @@ BREAKING CHANGE: response structure changed
 > **NEVER**: Use section headers ("Changes:", "Details:", etc.)  
 > **NEVER**: Include code snippets or file lists
 
-### Body Examples
-
-**✅ Good**:
-```
-feat(api): add pagination
-
-Implement cursor-based pagination for better performance
-with large datasets. This replaces offset-based pagination.
-```
-
-**❌ Bad** (lists, sections, too detailed):
-```
-feat(api): add pagination
-
-Changes:
-- Add cursor-based pagination
-- Update API endpoints
-- Add tests
-
-Process includes:
-- Modified src/api.ts
-- Updated documentation
-```
+**Example**: `feat(api): add pagination\n\nImplement cursor-based pagination for better performance. This replaces offset-based pagination.`
 
 ---
 
