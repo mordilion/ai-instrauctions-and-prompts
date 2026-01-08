@@ -41,84 +41,34 @@ src/users/              # Bounded Context
 
 ## Core Patterns
 
-### Domain Entity (Pure)
-
 ```python
-# domain/entities/user.py
-from dataclasses import dataclass
-from typing import Optional
-
+# 1. Domain Entity (NO Django!)
 @dataclass
 class User:
     id: Optional[int]
     email: str
     name: str
-    
-    def change_email(self, new_email: str) -> 'User':
-        if '@' not in new_email:
-            raise ValueError("Invalid email")
-        return User(self.id, new_email, self.name)
-```
 
-### Repository Interface
-
-```python
-# domain/repositories/user_repository.py
-from abc import ABC, abstractmethod
-
+# 2. Repository Interface
 class UserRepository(ABC):
     @abstractmethod
-    def find_by_id(self, user_id: int) -> Optional[User]: pass
-    
-    @abstractmethod
     def save(self, user: User) -> User: pass
-```
 
-### Command (Use Case)
-
-```python
-# application/commands/create_user.py
+# 3. Command (Use Case)
 class CreateUserCommand:
-    def __init__(self, repository: UserRepository):
-        self.repository = repository
-    
     def execute(self, email: str, name: str) -> User:
-        user = User(id=None, email=email, name=name)
-        return self.repository.save(user)
-```
+        return self.repository.save(User(None, email, name))
 
-### Repository Implementation
-
-```python
-# infrastructure/repositories/django_user_repository.py
-from domain.repositories.user_repository import UserRepository
-from infrastructure.models import UserModel
-
+# 4. Repository Implementation
 class DjangoUserRepository(UserRepository):
-    def find_by_id(self, user_id: int) -> Optional[User]:
-        try:
-            model = UserModel.objects.get(id=user_id)
-            return self._to_entity(model)
-        except UserModel.DoesNotExist:
-            return None
-    
     def save(self, user: User) -> User:
-        model = self._to_model(user)
-        model.save()
-        return self._to_entity(model)
-```
+        model = UserModel.objects.create(email=user.email, name=user.name)
+        return User(model.id, model.email, model.name)
 
-### View
-
-```python
-# presentation/views.py
-from rest_framework.views import APIView
-
+# 5. View
 class UserCreateView(APIView):
     def post(self, request):
-        command = CreateUserCommand(get_user_repository())
-        user = command.execute(request.data['email'], request.data['name'])
-        return Response(UserSerializer(user).data, status=201)
+        return Response(CreateUserCommand().execute(**request.data).to_dict(), status=201)
 ```
 
 ## Common AI Mistakes

@@ -29,95 +29,56 @@ presentation/home/
 
 ## Core Components
 
-### Intent (User Actions)
-
 ```kotlin
+// Intent (User Actions)
 sealed class HomeIntent {
     data object LoadUsers : HomeIntent()
     data class SelectUser(val userId: Long) : HomeIntent()
-    data object RetryLoading : HomeIntent()
 }
-```
 
-### State (UI State)
-
-```kotlin
+// State (UI State)
 data class HomeState(
     val users: List<User> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null,
-    val selectedUserId: Long? = null
+    val error: String? = null
 )
-```
 
-### Effect (One-Time Events)
-
-```kotlin
+// Effect (One-Time Events)
 sealed class HomeEffect {
-    data class ShowToast(val message: String) : HomeEffect()
     data class NavigateToDetail(val userId: Long) : HomeEffect()
 }
-```
 
-### ViewModel
-
-```kotlin
-class HomeViewModel(private val getUsersUseCase: GetUsersUseCase) : ViewModel() {
+// ViewModel
+class HomeViewModel(private val useCase: GetUsersUseCase) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
-    val state: StateFlow<HomeState> = _state.asStateFlow()
+    val state = _state.asStateFlow()
     
     private val _effect = MutableSharedFlow<HomeEffect>()
-    val effect: SharedFlow<HomeEffect> = _effect.asSharedFlow()
+    val effect = _effect.asSharedFlow()
     
     fun processIntent(intent: HomeIntent) {
         when (intent) {
-            is HomeIntent.LoadUsers -> loadUsers()
-            is HomeIntent.SelectUser -> selectUser(intent.userId)
-            is HomeIntent.RetryLoading -> loadUsers()
-        }
-    }
-    
-    private fun loadUsers() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
-            getUsersUseCase().fold(
-                onSuccess = { users -> _state.update { it.copy(users = users, isLoading = false) } },
-                onFailure = { e -> _state.update { it.copy(error = e.message, isLoading = false) } }
-            )
-        }
-    }
-    
-    private fun selectUser(userId: Long) {
-        _state.update { it.copy(selectedUserId = userId) }
-        viewModelScope.launch {
-            _effect.emit(HomeEffect.NavigateToDetail(userId))
+            is HomeIntent.LoadUsers -> viewModelScope.launch {
+                _state.update { it.copy(isLoading = true) }
+                useCase().fold(
+                    { users -> _state.update { it.copy(users = users, isLoading = false) } },
+                    { e -> _state.update { it.copy(error = e.message, isLoading = false) } }
+                )
+            }
+            is HomeIntent.SelectUser -> viewModelScope.launch { _effect.emit(HomeEffect.NavigateToDetail(intent.userId)) }
         }
     }
 }
-```
 
-### Screen (Composable)
-
-```kotlin
+// Screen
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
-    val state by viewModel.state.collectAsState()
-    
+fun HomeScreen(vm: HomeViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsState()
     LaunchedEffect(Unit) {
-        viewModel.processIntent(HomeIntent.LoadUsers)
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is HomeEffect.ShowToast -> { /* Show toast */ }
-                is HomeEffect.NavigateToDetail -> { /* Navigate */ }
-            }
-        }
+        vm.processIntent(HomeIntent.LoadUsers)
+        vm.effect.collect { when (it) { is HomeEffect.NavigateToDetail -> navigate(it.userId) } }
     }
-    
-    when {
-        state.isLoading -> LoadingView()
-        state.error != null -> ErrorView(onRetry = { viewModel.processIntent(HomeIntent.RetryLoading) })
-        else -> UserList(users = state.users, onClick = { viewModel.processIntent(HomeIntent.SelectUser(it)) })
-    }
+    when { state.isLoading -> LoadingView(); else -> UserList(state.users) }
 }
 ```
 
