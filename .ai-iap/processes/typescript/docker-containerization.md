@@ -91,14 +91,12 @@ coverage
 > - Health endpoint responds
 > - Non-root user (check with `docker exec <container> whoami`)
 
-### 1.4 Commit & Verify
+### 1.4 Verify
 
-> **Git workflow**:
-> ```
-> git add Dockerfile .dockerignore
-> git commit -m "feat: add Docker containerization"
-> git push origin docker/basic
-> ```
+> - Image size reasonable (<200MB for Alpine)
+> - App starts correctly
+> - Health endpoint responds
+> - Non-root user
 
 ---
 

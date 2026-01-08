@@ -119,16 +119,8 @@ function authenticateJWT(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
-### 1.5 Commit & Verify
+### 1.5 Verify
 
-> **Git workflow**:
-> ```
-> git add src/auth/
-> git commit -m "feat: add JWT authentication"
-> git push origin auth/jwt-setup
-> ```
-
-> **Verify**:
 > - POST /auth/register creates user with hashed password
 > - POST /auth/login returns access + refresh tokens
 > - Protected routes require valid JWT
