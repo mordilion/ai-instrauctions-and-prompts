@@ -36,12 +36,44 @@ For Spring Boot:
 - @DataJpaTest (repository tests)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - Java version used
+   - Build tool (Maven/Gradle)
+   - Test framework chosen (JUnit 5/TestNG)
+   - Spring Boot usage
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Bugs found but not fixed
+   - Code smells discovered
+   - Areas needing refactoring
+
+3. Read TESTING-SETUP.md if it exists:
+   - Current test configuration
+   - Classes already tested
+   - Mock strategies in use
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing decisions
+- Avoid re-testing already covered classes
+- Build upon existing test infrastructure
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - ANALYSIS
 ========================================
 
 1. Detect Java version from pom.xml or build.gradle
 2. Detect if Spring Boot project
-3. Document in process-docs/PROJECT_MEMORY.md
+3. Document in PROJECT-MEMORY.md
 4. Choose test frameworks
 5. Report findings
 
@@ -154,8 +186,8 @@ class ControllerTest {
 ```
 
 4. Run tests: mvn test (must pass)
-5. If bugs found: Log to LOGIC_ANOMALIES.md (don't fix)
-6. Update STATUS-DETAILS.md
+5. If bugs found: Log to LOGIC-ANOMALIES.md (don't fix)
+6. Update TESTING-SETUP.md with progress
 7. Propose commit
 8. Repeat for next component
 
@@ -165,36 +197,107 @@ Deliverable: All components tested
 DOCUMENTATION
 ========================================
 
-Create in process-docs/:
+Create/update these files for team catch-up:
 
-STATUS-DETAILS.md:
-```
-## Components
-- [x] UserService (10 tests, 90% coverage)
-- [ ] OrderService (pending)
-```
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# Testing Implementation Memory
 
-PROJECT_MEMORY.md:
-```
-Java Version: 17
-Spring Boot: Yes
-Frameworks: JUnit 5, AssertJ, Mockito
-```
+## Detected Versions
+- Java: {version from pom.xml or build.gradle}
+- Build Tool: {Maven or Gradle} v{version}
+- Spring Boot: {Yes/No} v{version if yes}
 
-LOGIC_ANOMALIES.md:
-```
-## UserService.findById
-Issue: Returns null instead of throwing exception
-Location: UserService.java:45
-```
+## Framework Choices
+- Test Framework: JUnit 5 v{version}
+- Assertions: AssertJ v{version}
+- Mocking: Mockito v{version}
+- Why: {reasons for choices}
+
+## Key Decisions
+- Test location: src/test/java
+- Mocking strategy: Mockito
+- Coverage target: 80%+
+
+## Lessons Learned
+- {Challenges encountered}
+- {Solutions that worked}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Bugs Discovered (Not Fixed)
+1. **File**: UserService.java:45
+   **Issue**: Returns null instead of throwing exception
+   **Impact**: High
+   **Note**: Logged only, not fixed
+
+## Code Smells
+- {Areas needing refactoring}
+
+## Missing Tests
+- {Classes needing coverage}
+\```
+
+**TESTING-SETUP.md** (Process-specific):
+```markdown
+# Testing Setup Guide
+
+## Quick Start
+\```bash
+mvn test              # Maven
+gradle test           # Gradle
+mvn test -Dtest=UserServiceTest  # Single test
+\```
+
+## Configuration
+- Framework: JUnit 5 v{version}
+- Build Tool: {Maven/Gradle}
+- Coverage: JaCoCo
+- Target: 80%+
+
+## Test Structure
+- Unit: src/test/java/{package}/*Test.java
+- Integration: src/test/java/{package}/integration/
+- Utils: src/test/java/{package}/utils/
+
+## Mocking Strategy
+- HTTP: MockMvc or RestAssured
+- Database: H2 in-memory or Testcontainers
+- External services: Mockito
+
+## Components Tested
+- [ ] Component A
+- [ ] Service B
+- [x] Controller C (completed)
+
+## Coverage Status
+- Current: {percentage}%
+- Target: 80%
+- Reports: target/site/jacoco/index.html
+
+## Troubleshooting
+- **Tests fail**: Check dependencies in pom.xml/build.gradle
+- **Mock not working**: Verify @Mock and @InjectMocks
+- **Coverage too low**: Review jacoco report
+
+## Maintenance
+- Update dependencies: mvn versions:display-dependency-updates
+- Run tests: mvn clean test
+- Generate coverage: mvn jacoco:report
+\```
 
 ========================================
 EXECUTION
 ========================================
 
-START: Execute Phase 1 - detect Java version, choose frameworks, create strategy
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Execute Phase 1 - detect Java version, choose frameworks, create strategy
 CONTINUE: Execute phases 2-4 iteratively
-REMEMBER: Use team's workflow, don't fix bugs, iterate component by component
+FINISH: Update all documentation files
+REMEMBER: Use team's workflow, don't fix bugs, iterate, document for catch-up
 ```
 
 ---

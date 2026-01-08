@@ -30,6 +30,37 @@ Test Framework: PHPUnit ⭐ (recommended) / Codeception / Pest / PHPSpec
 Mocking: PHPUnit mocks ⭐ (built-in) / Mockery / Prophecy
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - PHP version used
+   - Framework (Laravel/Symfony/etc)
+   - Test framework chosen
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Bugs found but not fixed
+   - Code smells discovered
+   - Areas needing refactoring
+
+3. Read TESTING-SETUP.md if it exists:
+   - Current test configuration
+   - Classes already tested
+   - Mock strategies in use
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing decisions
+- Avoid re-testing already covered classes
+- Build upon existing test infrastructure
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - ANALYSIS
 ========================================
 
@@ -157,19 +188,105 @@ Deliverable: All components tested
 DOCUMENTATION
 ========================================
 
-Create in process-docs/:
+Create/update these files for team catch-up:
 
-STATUS-DETAILS.md - Component checklist
-PROJECT_MEMORY.md - PHP version, framework, lessons
-LOGIC_ANOMALIES.md - Bugs found (audit only)
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# Testing Implementation Memory
+
+## Detected Versions
+- PHP: {version from composer.json}
+- Framework: {Laravel/Symfony/none}
+
+## Framework Choices
+- Test Framework: PHPUnit v{version}
+- Mocking: {PHPUnit/Mockery}
+- Why: {reasons}
+
+## Key Decisions
+- Test location: tests/
+- Mocking strategy: {choice}
+- Coverage target: 80%+
+
+## Lessons Learned
+- {Challenges}
+- {Solutions}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Bugs Discovered (Not Fixed)
+1. **File**: UserService.php:45
+   **Issue**: Description
+   **Impact**: Severity
+   **Note**: Logged only, not fixed
+
+## Code Smells
+- {Areas needing refactoring}
+
+## Missing Tests
+- {Classes needing coverage}
+\```
+
+**TESTING-SETUP.md** (Process-specific):
+```markdown
+# Testing Setup Guide
+
+## Quick Start
+\```bash
+vendor/bin/phpunit              # Run all tests
+vendor/bin/phpunit --filter UserTest  # Single test
+vendor/bin/phpunit --coverage-html coverage/  # With coverage
+\```
+
+## Configuration
+- Framework: PHPUnit v{version}
+- Config: phpunit.xml
+- Coverage: Xdebug / PCOV
+- Target: 80%+
+
+## Test Structure
+- Unit: tests/Unit/
+- Feature: tests/Feature/ (Laravel)
+- Integration: tests/Integration/
+
+## Mocking Strategy
+- HTTP: Guzzle mocks or HTTP mocking
+- Database: SQLite in-memory
+- Services: PHPUnit mocks or Mockery
+
+## Components Tested
+- [ ] Component A
+- [ ] Service B
+- [x] Controller C (completed)
+
+## Coverage Status
+- Current: {percentage}%
+- Target: 80%
+- Reports: coverage/index.html
+
+## Troubleshooting
+- **Tests fail**: Check composer dependencies
+- **Mock not working**: Verify interface usage
+- **No coverage**: Install Xdebug or PCOV
+
+## Maintenance
+- Update dependencies: composer update
+- Run tests: vendor/bin/phpunit
+- Generate coverage: vendor/bin/phpunit --coverage-html coverage/
+\```
 
 ========================================
 EXECUTION
 ========================================
 
-START: Execute Phase 1 - detect PHP version and framework
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Execute Phase 1 - detect PHP version and framework
 CONTINUE: Execute phases 2-4 iteratively
-REMEMBER: Use PHPUnit, don't fix bugs, iterate
+FINISH: Update all documentation files
+REMEMBER: Use PHPUnit, don't fix bugs, iterate, document for catch-up
 ```
 
 ---

@@ -31,11 +31,42 @@ Assertions: Kotest matchers ⭐ (recommended) / AssertJ / Strikt
 Mocking: MockK ⭐ (recommended) / Mockito-Kotlin / Mockito
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - Kotlin/Java versions used
+   - Build tool (Gradle/Maven)
+   - Test framework chosen
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Bugs found but not fixed
+   - Code smells discovered
+   - Areas needing refactoring
+
+3. Read TESTING-SETUP.md if it exists:
+   - Current test configuration
+   - Classes already tested
+   - Mock strategies in use
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing decisions
+- Avoid re-testing already covered classes
+- Build upon existing test infrastructure
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - ANALYSIS
 ========================================
 
 1. Detect Kotlin and Java versions from build.gradle.kts
-2. Document in process-docs/PROJECT_MEMORY.md
+2. Document in PROJECT-MEMORY.md
 3. Choose test frameworks
 4. Report findings
 
@@ -137,19 +168,107 @@ Deliverable: All components tested
 DOCUMENTATION
 ========================================
 
-Create in process-docs/:
+Create/update these files for team catch-up:
 
-STATUS-DETAILS.md - Component checklist
-PROJECT_MEMORY.md - Versions, frameworks, lessons
-LOGIC_ANOMALIES.md - Bugs found (audit only)
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# Testing Implementation Memory
+
+## Detected Versions
+- Kotlin: {version from build.gradle.kts}
+- Java: {version}
+- Build Tool: Gradle v{version}
+
+## Framework Choices
+- Test Framework: JUnit 5 / Kotest v{version}
+- Assertions: Kotest matchers v{version}
+- Mocking: MockK v{version}
+- Why: {reasons for choices}
+
+## Key Decisions
+- Test location: src/test/kotlin
+- Mocking strategy: MockK
+- Coverage target: 80%+
+
+## Lessons Learned
+- {Challenges encountered}
+- {Solutions that worked}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Bugs Discovered (Not Fixed)
+1. **File**: UserService.kt:45
+   **Issue**: Description
+   **Impact**: Severity
+   **Note**: Logged only, not fixed
+
+## Code Smells
+- {Areas needing refactoring}
+
+## Missing Tests
+- {Classes needing coverage}
+\```
+
+**TESTING-SETUP.md** (Process-specific):
+```markdown
+# Testing Setup Guide
+
+## Quick Start
+\```bash
+./gradlew test              # Run all tests
+./gradlew test --continuous # Watch mode
+./gradlew test jacocoTestReport  # With coverage
+\```
+
+## Configuration
+- Framework: JUnit 5 / Kotest v{version}
+- Build Tool: Gradle
+- Coverage: JaCoCo / Kover
+- Target: 80%+
+
+## Test Structure
+- Unit: src/test/kotlin/{package}/*Test.kt
+- Integration: src/test/kotlin/{package}/integration/
+- Utils: src/test/kotlin/{package}/utils/
+
+## Mocking Strategy
+- HTTP: MockK or WireMock
+- Database: H2 in-memory or Testcontainers
+- Services: MockK
+
+## Components Tested
+- [ ] Component A
+- [ ] Service B
+- [x] Repository C (completed)
+
+## Coverage Status
+- Current: {percentage}%
+- Target: 80%
+- Reports: build/reports/jacoco/test/html/index.html
+
+## Troubleshooting
+- **MockK not working**: Verify mockk dependency
+- **Coroutines fail**: Use runBlocking or runTest
+- **Coverage too low**: Review jacoco report
+
+## Maintenance
+- Update dependencies: ./gradlew dependencyUpdates
+- Run tests: ./gradlew test
+- Generate coverage: ./gradlew jacocoTestReport
+\```
 
 ========================================
 EXECUTION
 ========================================
 
-START: Execute Phase 1 - detect versions, choose frameworks
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Execute Phase 1 - detect versions, choose frameworks
 CONTINUE: Execute phases 2-4 iteratively
-REMEMBER: Use Kotlin idioms, don't fix bugs, iterate
+FINISH: Update all documentation files
+REMEMBER: Use Kotlin idioms, don't fix bugs, iterate, document for catch-up
 ```
 
 ---
