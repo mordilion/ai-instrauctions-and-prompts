@@ -26,6 +26,40 @@ CRITICAL REQUIREMENTS:
 TECH STACK SELECTION
 ========================================
 
+========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - .NET version used
+   - Test framework chosen (xUnit/NUnit/MSTest)
+   - Mocking library selected
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Bugs found but not fixed
+   - Code smells discovered
+   - Areas needing refactoring
+
+3. Read TESTING-SETUP.md if it exists:
+   - Current test configuration
+   - Components already tested
+   - Mock strategies in use
+   - Test builders available
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing decisions
+- Avoid re-testing already covered components
+- Build upon existing test infrastructure
+
+If no docs exist: Start fresh and create them.
+
+========================================
+
 TEST FRAMEWORK (choose one):
 
 1. xUnit ⭐ RECOMMENDED
@@ -537,9 +571,57 @@ Final Deliverable (all components):
 DOCUMENTATION
 ========================================
 
-Create these files in process-docs/ directory:
+Create/update these files for team catch-up:
 
-1. STATUS-DETAILS.md:
+1. TESTING-SETUP.md (Process-specific):
+```markdown
+# Testing Setup Guide
+
+## Quick Start
+\```bash
+dotnet test              # Run all tests
+dotnet test --logger "console;verbosity=detailed"  # Detailed output  
+dotnet test /p:CollectCoverage=true  # With coverage
+\```
+
+## Configuration
+- Framework: xUnit v{version} (or NUnit/MSTest)
+- .NET Version: net{version}
+- Mocking: Moq v{version}
+- Assertions: FluentAssertions v{version}
+
+## Test Structure
+- Unit: tests/{Project}.UnitTests/
+- Integration: tests/{Project}.IntegrationTests/
+- TestBuilders: tests/TestBuilders/
+
+## Mocking Strategy
+- HTTP: HttpClient mocking or WireMock
+- Database: InMemory provider or TestContainers
+- Time: IDateTimeProvider interface
+
+## Components Tested
+- [ ] Component A
+- [ ] Service B
+- [x] Controller C (completed)
+
+## Coverage Status
+- Current: {percentage}%
+- Target: 80% line, 75% branch
+- Reports: coverage/index.html
+
+## Troubleshooting
+- **Async tests hang**: Check for missing await
+- **Mock not working**: Verify interface/virtual methods
+- **Coverage not generated**: Install coverlet.collector
+
+## Maintenance
+- Update packages: dotnet list package --outdated
+- Run tests: dotnet test
+- Generate coverage: dotnet test /p:CollectCoverage=true
+\```
+
+2. PROJECT-MEMORY.md (Universal):
 ```markdown
 # Testing Implementation Status
 
@@ -558,7 +640,8 @@ Create these files in process-docs/ directory:
 - UserServiceTests.SomeTest - Bug in production code (see LOGIC_ANOMALIES.md)
 ```
 
-2. PROJECT_MEMORY.md:
+Replace existing with:
+```markdown
 ```markdown
 # .NET Testing Implementation
 
@@ -575,7 +658,7 @@ Create these files in process-docs/ directory:
 - FluentAssertions error messages much clearer than built-in
 ```
 
-3. LOGIC_ANOMALIES.md:
+3. LOGIC-ANOMALIES.md (Universal):
 ```markdown
 # Logic Anomalies Found During Testing
 
@@ -593,10 +676,15 @@ EXECUTION INSTRUCTIONS
 
 START HERE:
 
-1. Execute Phase 1 - ANALYSIS & PLANNING
+1. Read existing documentation (CATCH-UP section above)
+   - Check PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, TESTING-SETUP.md
+   - Understand what's already done
+   - Continue from where work stopped
+
+2. Execute Phase 1 - ANALYSIS & PLANNING
    - Detect .NET version from .csproj
    - Choose test frameworks
-   - Create PROJECT_MEMORY.md
+   - Update PROJECT-MEMORY.md
    - Report findings to user
 
 2. After user confirmation, execute Phase 2 - INFRASTRUCTURE (if needed)

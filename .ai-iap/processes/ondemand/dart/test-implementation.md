@@ -32,12 +32,42 @@ Test Framework:
 Mocking: mockito ⭐ (recommended) / mocktail
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+
+1. Read PROJECT-MEMORY.md if it exists:
+   - Dart/Flutter version used
+   - Test framework chosen (flutter_test vs test package)
+   - Key decisions made
+   - Lessons learned
+
+2. Read LOGIC-ANOMALIES.md if it exists:
+   - Bugs found but not fixed
+   - Code smells discovered
+   - Areas needing refactoring
+
+3. Read TESTING-SETUP.md if it exists:
+   - Current test configuration
+   - Widgets/components already tested
+   - Mock strategies in use
+
+Use this information to:
+- Continue from where previous work stopped
+- Maintain consistency with existing decisions
+- Avoid re-testing already covered components
+- Build upon existing test infrastructure
+
+If no docs exist: Start fresh and create them.
+
+========================================
 PHASE 1 - ANALYSIS
 ========================================
 
 1. Detect Dart/Flutter version from pubspec.yaml
 2. Identify project type (Flutter app or Dart package)
-3. Document in process-docs/PROJECT_MEMORY.md
+3. Document in PROJECT-MEMORY.md
 4. Report findings
 
 Deliverable: Testing strategy documented
@@ -151,19 +181,103 @@ Deliverable: All components tested
 DOCUMENTATION
 ========================================
 
-Create in process-docs/:
+Create/update these files for team catch-up:
 
-STATUS-DETAILS.md - Component checklist
-PROJECT_MEMORY.md - Dart/Flutter version, lessons
-LOGIC_ANOMALIES.md - Bugs found (audit only)
+**PROJECT-MEMORY.md** (Universal):
+```markdown
+# Testing Implementation Memory
+
+## Detected Versions
+- Dart/Flutter: {version from pubspec.yaml}
+- Project Type: {Flutter app or Dart package}
+
+## Framework Choices
+- Test Framework: {flutter_test or test package} v{version}
+- Mocking: mockito v{version}
+- Why: {reason for choices}
+
+## Key Decisions
+- Test location: test/
+- Mocking strategy: mockito
+- Coverage target: 80%+
+
+## Lessons Learned
+- {Challenges encountered}
+- {Solutions that worked}
+\```
+
+**LOGIC-ANOMALIES.md** (Universal):
+```markdown
+# Logic Anomalies Found
+
+## Bugs Discovered (Not Fixed)
+1. **File**: path/to/file.dart
+   **Issue**: Description
+   **Impact**: Severity
+   **Note**: Logged only, not fixed
+
+## Code Smells
+- {Areas needing refactoring}
+
+## Missing Tests
+- {Widgets/components needing coverage}
+\```
+
+**TESTING-SETUP.md** (Process-specific):
+```markdown
+# Testing Setup Guide
+
+## Quick Start
+\```bash
+flutter test              # Run all tests
+flutter test --watch      # Watch mode
+flutter test --coverage   # With coverage
+\```
+
+## Configuration
+- Framework: flutter_test v{version}
+- Coverage: 80%+ target
+- Location: test/**/*_test.dart
+
+## Test Structure
+- Unit: test/unit/
+- Widget: test/widgets/
+- Integration: test/integration/
+
+## Mocking Strategy
+- HTTP: mockito
+- Services: mockito
+- Time: fakeAsync
+
+## Components Tested
+- [ ] Component A
+- [ ] Widget B
+- [x] Service C (completed)
+
+## Coverage Status
+- Current: {percentage}%
+- Target: 80%
+- Reports: coverage/html/index.html
+
+## Troubleshooting
+- **Widget tests fail**: Use WidgetTester
+- **Async issues**: Use fakeAsync
+- **Mock not working**: Check @GenerateMocks
+
+## Maintenance
+- Generate mocks: flutter pub run build_runner build
+- Update golden files: flutter test --update-goldens
+\```
 
 ========================================
 EXECUTION
 ========================================
 
-START: Execute Phase 1 - detect version and project type
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Execute Phase 1 - detect version and project type
 CONTINUE: Execute phases 2-4 iteratively
-REMEMBER: Use flutter_test, don't fix bugs, iterate
+FINISH: Update all documentation files
+REMEMBER: Use flutter_test, don't fix bugs, iterate, document for catch-up
 ```
 
 ---
