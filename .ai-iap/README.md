@@ -28,7 +28,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 
 ## ✨ Features
 
-- **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude CLI, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
+- **🔧 Multi-Tool Support** – 11 AI coding assistants: Cursor, Claude CLI, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
@@ -72,6 +72,7 @@ The setup wizard will guide you through:
 Select AI tools to configure:
   1. Cursor ⭐
   2. Claude CLI ⭐
+  3. Claude Code ⭐
   ...
 ```
 
@@ -189,6 +190,7 @@ Want to add company-specific standards, internal processes, or override core rul
 |------|--------|-------------|
 | **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
 | **Claude CLI** ⭐ | `CLAUDE.md` | Single concatenated file |
+| **Claude Code** ⭐ | `.claude/skills/*/SKILL.md` | Agent Skills with auto-triggered activation |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
