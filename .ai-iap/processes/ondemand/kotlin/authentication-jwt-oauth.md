@@ -1,98 +1,230 @@
-# Authentication Setup Process - Kotlin
+# Kotlin Authentication (JWT/OAuth) - Copy This Prompt
 
-> **Purpose**: Implement secure authentication and authorization in Kotlin applications
-
-> **Core Stack**: Spring Security (Spring Boot), JWT (Ktor), BCrypt
-
----
-
-## Phase 1: Password Hashing
-
-> **ALWAYS use**: BCrypt from Spring Security or jBCrypt
-> **NEVER**: MD5, SHA1, or plain text
-
-**Install** (Gradle):
-```kotlin
-implementation("org.springframework.security:spring-security-crypto")
-// Or for Ktor: implementation("org.mindrot:jbcrypt:0.4")
-```
-
-**Password Encoding**:
-```kotlin
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-
-val passwordEncoder = BCryptPasswordEncoder(12)
-
-fun hashPassword(password: String): String = passwordEncoder.encode(password)
-
-fun verifyPassword(password: String, hash: String): Boolean = 
-    passwordEncoder.matches(password, hash)
-```
-
-> **Git**: `git commit -m "feat: add password hashing"`
+> **Type**: One-time setup process  
+> **When to use**: Implementing authentication for Kotlin API (Ktor/Spring Boot)  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: JWT Authentication
+## 📋 Complete Self-Contained Prompt
 
-### Spring Boot (Kotlin)
+```
+========================================
+KOTLIN AUTHENTICATION - JWT/OAUTH
+========================================
 
-> **Same as Java Spring Security** - use jjwt library
+CONTEXT:
+You are implementing JWT and OAuth authentication for a Kotlin application (Ktor or Spring Boot).
 
-### Ktor
+CRITICAL REQUIREMENTS:
+- ALWAYS use secure password hashing (BCrypt)
+- ALWAYS validate JWT tokens on protected routes
+- NEVER store passwords in plain text
+- NEVER expose JWT secrets
 
-> **ALWAYS use**: ktor-auth-jwt
+========================================
+PHASE 1 - JWT AUTHENTICATION (KTOR)
+========================================
 
-**Install**:
+Add dependencies to build.gradle.kts:
+
 ```kotlin
-implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
+dependencies {
+    implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
+    implementation("org.mindrot:jbcrypt:0.4")
+}
 ```
 
-**JWT Config**:
+Configure JWT in Application.kt:
 ```kotlin
-install(Authentication) {
-    jwt("auth-jwt") {
-        realm = "my-app"
-        verifier(
-            JWT.require(Algorithm.HMAC256(secret))
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+
+fun Application.configureSecurity() {
+    val secret = environment.config.property("jwt.secret").getString()
+    val issuer = environment.config.property("jwt.issuer").getString()
+    val audience = environment.config.property("jwt.audience").getString()
+    
+    authentication {
+        jwt("auth-jwt") {
+            verifier(JWT
+                .require(Algorithm.HMAC256(secret))
+                .withAudience(audience)
                 .withIssuer(issuer)
-                .build()
-        )
-        validate { credential ->
-            if (credential.payload.getClaim("sub").asString() != "") {
-                JWTPrincipal(credential.payload)
-            } else null
+                .build())
+            
+            validate { credential ->
+                if (credential.payload.audience.contains(audience)) {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+            
+            challenge { _, _ ->
+                call.respond(HttpStatusCode.Unauthorized, "Token invalid or expired")
+            }
+        }
+    }
+}
+
+object JwtConfig {
+    private val secret = System.getenv("JWT_SECRET") ?: "default-secret-key"
+    private const val issuer = "my-issuer"
+    private const val audience = "my-audience"
+    private const val validityInMs = 24 * 60 * 60 * 1000 // 24 hours
+    
+    fun generateToken(userId: String): String {
+        return JWT.create()
+            .withAudience(audience)
+            .withIssuer(issuer)
+            .withClaim("userId", userId)
+            .withExpiresAt(Date(System.currentTimeMillis() + validityInMs))
+            .sign(Algorithm.HMAC256(secret))
+    }
+}
+```
+
+Create password hashing utility:
+```kotlin
+import org.mindrot.jbcrypt.BCrypt
+
+object PasswordUtil {
+    fun hashPassword(password: String): String {
+        return BCrypt.hashpw(password, BCrypt.gensalt())
+    }
+    
+    fun verifyPassword(password: String, hashedPassword: String): Boolean {
+        return BCrypt.checkpw(password, hashedPassword)
+    }
+}
+```
+
+Deliverable: JWT configured
+
+========================================
+PHASE 2 - AUTH ENDPOINTS
+========================================
+
+Create auth routes:
+
+```kotlin
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+
+data class RegisterRequest(val email: String, val password: String)
+data class LoginRequest(val email: String, val password: String)
+data class AuthResponse(val token: String)
+
+fun Route.authRoutes(userService: UserService) {
+    route("/auth") {
+        post("/register") {
+            val request = call.receive<RegisterRequest>()
+            
+            if (userService.findByEmail(request.email) != null) {
+                call.respond(HttpStatusCode.Conflict, "User already exists")
+                return@post
+            }
+            
+            val hashedPassword = PasswordUtil.hashPassword(request.password)
+            val user = userService.create(request.email, hashedPassword)
+            val token = JwtConfig.generateToken(user.id.toString())
+            
+            call.respond(HttpStatusCode.Created, AuthResponse(token))
+        }
+        
+        post("/login") {
+            val request = call.receive<LoginRequest>()
+            val user = userService.findByEmail(request.email)
+            
+            if (user == null || !PasswordUtil.verifyPassword(request.password, user.password)) {
+                call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                return@post
+            }
+            
+            val token = JwtConfig.generateToken(user.id.toString())
+            call.respond(AuthResponse(token))
+        }
+    }
+    
+    authenticate("auth-jwt") {
+        get("/me") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.payload?.getClaim("userId")?.asString()
+            
+            val user = userService.findById(userId!!)
+            call.respond(user)
         }
     }
 }
 ```
 
-**Protected Routes**:
+Deliverable: Auth endpoints working
+
+========================================
+PHASE 3 - SPRING BOOT (ALTERNATIVE)
+========================================
+
+For Spring Boot with Kotlin, use same as Java but with Kotlin syntax:
+
 ```kotlin
-authenticate("auth-jwt") {
-    get("/api/protected") {
-        val principal = call.principal<JWTPrincipal>()
-        val userId = principal!!.payload.getClaim("sub").asString()
-        call.respond(mapOf("message" to "Authenticated", "userId" to userId))
+@Configuration
+class SecurityConfig(
+    private val jwtFilter: JwtAuthenticationFilter
+) {
+    @Bean
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        http
+            .csrf { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .authorizeHttpRequests { 
+                it.requestMatchers("/api/auth/**").permitAll()
+                  .anyRequest().authenticated()
+            }
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
+        
+        return http.build()
+    }
+    
+    @Bean
+    fun passwordEncoder() = BCryptPasswordEncoder()
+}
+
+@RestController
+@RequestMapping("/api/auth")
+class AuthController(
+    private val authenticationManager: AuthenticationManager,
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder,
+    private val jwtUtil: JwtUtil
+) {
+    @PostMapping("/login")
+    fun login(@RequestBody dto: LoginDto): ResponseEntity<AuthResponse> {
+        val authentication = authenticationManager.authenticate(
+            UsernamePasswordAuthenticationToken(dto.email, dto.password)
+        )
+        
+        val token = jwtUtil.generateToken(dto.email)
+        return ResponseEntity.ok(AuthResponse(token))
     }
 }
 ```
 
-> **Git**: `git commit -m "feat: add JWT authentication"`
+Deliverable: Spring Boot auth working
 
----
+========================================
+PHASE 4 - OAUTH 2.0 (OPTIONAL)
+========================================
 
-## Phase 3: OAuth 2.0 (Ktor)
+For Ktor with Google OAuth:
 
-> **ALWAYS use**: ktor-auth-oauth
-
-**Install**:
-```kotlin
-implementation("io.ktor:ktor-server-auth:$ktor_version")
-implementation("io.ktor:ktor-client-apache:$ktor_version")
-```
-
-**OAuth Setup**:
 ```kotlin
 install(Authentication) {
     oauth("auth-oauth-google") {
@@ -104,169 +236,46 @@ install(Authentication) {
                 accessTokenUrl = "https://accounts.google.com/o/oauth2/token",
                 requestMethod = HttpMethod.Post,
                 clientId = System.getenv("GOOGLE_CLIENT_ID"),
-                clientSecret = System.getenv("GOOGLE_CLIENT_SECRET")
+                clientSecret = System.getenv("GOOGLE_CLIENT_SECRET"),
+                defaultScopes = listOf("openid", "email", "profile")
             )
         }
-        client = HttpClient(Apache)
+        client = HttpClient(CIO)
     }
 }
 ```
 
-> **Git**: `git commit -m "feat: add OAuth 2.0 (Google)"`
+Deliverable: OAuth configured
 
----
+========================================
+BEST PRACTICES
+========================================
 
-## Phase 4: Authorization & RBAC
+- Use BCrypt for password hashing
+- Store JWT secrets in environment variables
+- Set reasonable token expiry
+- Implement refresh tokens
+- Add rate limiting
+- Use HTTPS only
+- Validate input thoroughly
+- Use Ktor or Spring Security
+- Consider OAuth for social login
 
-### Spring Boot
+========================================
+EXECUTION
+========================================
 
-> **Same as Java** - use @PreAuthorize, SecurityFilterChain
-
-### Ktor
-
-**Role-Based Routing**:
-```kotlin
-fun Route.requireRole(role: String, build: Route.() -> Unit): Route {
-    return authenticate {
-        intercept(ApplicationCallPipeline.Call) {
-            val principal = call.principal<JWTPrincipal>()
-            val userRole = principal?.payload?.getClaim("role")?.asString()
-            
-            if (userRole != role) {
-                call.respond(HttpStatusCode.Forbidden, "Insufficient permissions")
-                finish()
-            }
-        }
-        build()
-    }
-}
-
-// Usage
-requireRole("admin") {
-    delete("/users/{id}") { /* ... */ }
-}
+START: Configure JWT (Phase 1)
+CONTINUE: Create auth endpoints (Phase 2)
+ALTERNATIVE: Use Spring Boot (Phase 3)
+OPTIONAL: Add OAuth (Phase 4)
+REMEMBER: BCrypt, secure secrets, HTTPS
 ```
 
-> **Git**: `git commit -m "feat: add role-based authorization"`
-
 ---
 
-## Phase 5: Security Hardening
+## Quick Reference
 
-> **ALWAYS implement**:
-> - Rate limiting (ktor-server-rate-limit or custom)
-> - CORS configuration
-> - HTTPS enforcement
-
-**Rate Limiting** (Ktor):
-```kotlin
-install(RateLimit) {
-    register(RateLimitName("login")) {
-        rateLimiter(limit = 5, refillPeriod = 15.minutes)
-    }
-}
-
-post("/auth/login") {
-    rateLimit(RateLimitName("login"))
-    // ... login logic
-}
-```
-
-> **Git**: `git commit -m "feat: add authentication security hardening"`
-
----
-
-## Framework-Specific Notes
-
-### Spring Boot (Kotlin)
-- Identical to Java Spring Security
-- Kotlin DSL for configuration
-- Use sealed classes for permissions
-
-### Ktor
-- Lightweight, explicit authentication
-- JWT plugin for token validation
-- Custom interceptors for authorization
-
----
-
-## AI Self-Check
-
-- [ ] Passwords hashed with BCrypt
-- [ ] JWT configured with secret
-- [ ] Access tokens expire in ≤1h
-- [ ] OAuth configured (if needed)
-- [ ] Authorization checks implemented
-- [ ] Rate limiting enabled
-- [ ] HTTPS enforced
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When implementing authentication system with JWT and OAuth
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing authentication system with JWT and OAuth for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
-- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
-- ALWAYS validate tokens on protected endpoints
-- ALWAYS hash passwords with bcrypt/Argon2
-- NEVER store passwords in plain text
-- NEVER commit secrets to version control
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - JWT AUTHENTICATION:
-1. Install JWT library
-2. Configure JWT secret (from environment variable)
-3. Implement token generation (login endpoint)
-4. Implement token validation middleware
-5. Set up token expiration and refresh mechanism
-
-Deliverable: JWT authentication working
-
-PHASE 2 - USER MANAGEMENT:
-1. Create User model/entity
-2. Implement password hashing
-3. Create registration endpoint
-4. Create login endpoint
-5. Implement password reset flow
-
-Deliverable: User management complete
-
-PHASE 3 - OAUTH INTEGRATION (Optional):
-1. Choose OAuth providers (Google, GitHub, etc.)
-2. Register application with providers
-3. Implement OAuth callback handling
-4. Link OAuth accounts with local users
-
-Deliverable: OAuth authentication working
-
-PHASE 4 - ROLE-BASED ACCESS CONTROL:
-1. Define user roles
-2. Implement role checking middleware
-3. Protect endpoints by role
-4. Add role management endpoints
-
-Deliverable: RBAC implemented
-
-SECURITY BEST PRACTICES:
-- Use HTTPS only in production
-- Implement rate limiting
-- Add account lockout after failed attempts
-- Log authentication events
-- Use secure cookie flags (httpOnly, secure, sameSite)
-
-START: Execute Phase 1. Install JWT library and configure token generation.
-```
+**What you get**: Complete JWT/OAuth authentication for Kotlin  
+**Time**: 3-4 hours  
+**Output**: Auth service, protected routes, OAuth

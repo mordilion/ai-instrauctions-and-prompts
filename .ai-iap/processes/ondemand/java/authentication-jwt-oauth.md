@@ -1,49 +1,38 @@
-# Authentication Setup Process - Java
+# Java Authentication (JWT/OAuth) - Copy This Prompt
 
-> **Purpose**: Implement secure authentication and authorization in Java applications
-
-> **Core Stack**: Spring Security, JWT, OAuth 2.0
+> **Type**: One-time setup process  
+> **When to use**: Implementing authentication for Java/Spring Boot API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Spring Security Setup
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: Spring Security ⭐ (industry standard)
-> **NEVER**: Roll your own security
+```
+========================================
+JAVA AUTHENTICATION - JWT/OAUTH
+========================================
 
-**Dependencies** (Maven):
+CONTEXT:
+You are implementing JWT and OAuth authentication for a Java/Spring Boot application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Spring Security
+- ALWAYS validate JWT tokens on protected endpoints
+- NEVER store passwords in plain text
+- NEVER expose JWT secrets
+
+========================================
+PHASE 1 - JWT AUTHENTICATION
+========================================
+
+Add dependencies to pom.xml:
+
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-security</artifactId>
 </dependency>
-<dependency>
-    <groupId>org.springframework.security</groupId>
-    <artifactId>spring-security-crypto</artifactId>
-</dependency>
-```
-
-**Password Encoding**:
-```java
-@Bean
-public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(12); // 12 rounds
-}
-```
-
-> **Git**: `git commit -m "feat: add Spring Security"`
-
----
-
-## Phase 2: JWT Authentication
-
-> **ALWAYS**:
-> - Use jjwt library (io.jsonwebtoken)
-> - Store secret in application.properties (encrypted) or vault
-> - Token expiration: 1h access, 7d refresh
-
-**Dependencies**:
-```xml
 <dependency>
     <groupId>io.jsonwebtoken</groupId>
     <artifactId>jjwt-api</artifactId>
@@ -55,54 +44,256 @@ public PasswordEncoder passwordEncoder() {
     <version>0.12.3</version>
     <scope>runtime</scope>
 </dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.3</version>
+    <scope>runtime</scope>
+</dependency>
 ```
 
-**JWT Util**:
+Create JWT utility class:
 ```java
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+
 @Component
 public class JwtUtil {
+    
     @Value("${jwt.secret}")
     private String secret;
     
-    public String generateToken(UserDetails userDetails) {
+    @Value("${jwt.expiration}")
+    private Long expiration;
+    
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+    
+    public String generateToken(String username) {
         return Jwts.builder()
-            .setSubject(userDetails.getUsername())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1h
-            .signWith(SignatureAlgorithm.HS256, secret)
+            .subject(username)
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSigningKey())
             .compact();
+    }
+    
+    public String extractUsername(String token) {
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getSubject();
+    }
+    
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
     }
 }
 ```
 
-**JWT Filter**:
+Add to application.properties:
+```properties
+jwt.secret=your-secret-key-at-least-256-bits-long
+jwt.expiration=86400000
+```
+
+Deliverable: JWT utility configured
+
+========================================
+PHASE 2 - SECURITY CONFIGURATION
+========================================
+
+Create security configuration:
+
 ```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+public class SecurityConfig {
+    
+    private final JwtAuthenticationFilter jwtFilter;
+    
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated())
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        return http.build();
+    }
+    
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+}
+```
+
+Create JWT filter:
+```java
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+    }
+    
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
                                     HttpServletResponse response, 
-                                    FilterChain filterChain) {
-        String token = extractToken(request);
-        if (token != null && jwtUtil.validateToken(token)) {
-            String username = jwtUtil.extractUsername(token);
-            UsernamePasswordAuthenticationToken auth = 
-                new UsernamePasswordAuthenticationToken(username, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                                    FilterChain filterChain) 
+            throws ServletException, IOException {
+        
+        String authHeader = request.getHeader("Authorization");
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            
+            if (jwtUtil.validateToken(token)) {
+                String username = jwtUtil.extractUsername(token);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                
+                UsernamePasswordAuthenticationToken authentication = 
+                    new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
+        
         filterChain.doFilter(request, response);
     }
 }
 ```
 
-> **Git**: `git commit -m "feat: add JWT authentication"`
+Deliverable: Security configured
 
----
+========================================
+PHASE 3 - AUTH ENDPOINTS
+========================================
 
-## Phase 3: OAuth 2.0 / Social Login
+Create auth controller:
 
-> **ALWAYS use**: Spring Security OAuth 2.0 Client
+```java
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
-**Dependencies**:
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+    
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterDto dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+        
+        User user = new User();
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        userRepository.save(user);
+        
+        String token = jwtUtil.generateToken(user.getEmail());
+        
+        return ResponseEntity.ok(new AuthResponse(token));
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginDto dto) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+        );
+        
+        String token = jwtUtil.generateToken(dto.getEmail());
+        
+        return ResponseEntity.ok(new AuthResponse(token));
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        return ResponseEntity.ok(new UserDto(user.getId(), user.getEmail()));
+    }
+}
+```
+
+Deliverable: Auth endpoints working
+
+========================================
+PHASE 4 - OAUTH 2.0 (OPTIONAL)
+========================================
+
+Add Google OAuth:
+
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -110,171 +301,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 </dependency>
 ```
 
-**Configuration** (application.yml):
-```yaml
-spring:
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: profile, email
+Configure in application.properties:
+```properties
+spring.security.oauth2.client.registration.google.client-id=your-client-id
+spring.security.oauth2.client.registration.google.client-secret=your-client-secret
 ```
 
-> **Git**: `git commit -m "feat: add OAuth 2.0 (Google)"`
+Deliverable: OAuth configured
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use Spring Security
+- Hash passwords with BCrypt
+- Store JWT secrets in configuration
+- Use stateless sessions
+- Implement refresh tokens
+- Add rate limiting
+- Use HTTPS only
+- Validate input thoroughly
+- Implement account lockout
+
+========================================
+EXECUTION
+========================================
+
+START: Configure JWT (Phase 1)
+CONTINUE: Configure Spring Security (Phase 2)
+CONTINUE: Create auth endpoints (Phase 3)
+OPTIONAL: Add OAuth (Phase 4)
+REMEMBER: BCrypt, stateless, secure secrets
+```
 
 ---
 
-## Phase 4: Authorization & RBAC
+## Quick Reference
 
-> **ALWAYS use**: Method security with @PreAuthorize
-
-**Enable Method Security**:
-```java
-@Configuration
-@EnableMethodSecurity
-public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
-        http.authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/admin/**").hasRole("ADMIN")
-            .requestMatchers("/api/public/**").permitAll()
-            .anyRequest().authenticated()
-        );
-        return http.build();
-    }
-}
-```
-
-**Method-Level**:
-```java
-@PreAuthorize("hasRole('ADMIN')")
-public void deleteUser(Long id) { }
-
-@PreAuthorize("hasAuthority('PERMISSION_WRITE')")
-public void updatePost(Post post) { }
-```
-
-> **Git**: `git commit -m "feat: add role-based authorization"`
-
----
-
-## Phase 5: Security Hardening
-
-> **ALWAYS implement**:
-> - Rate limiting (Bucket4j or Resilience4j)
-> - CORS configuration
-> - CSRF protection (stateless: disable; stateful: enable)
-> - Security headers
-
-**Rate Limiting** (Bucket4j):
-```java
-@Bean
-public Bucket bucket() {
-    return Bucket.builder()
-        .addLimit(Limit.of(5, Duration.ofMinutes(15)))
-        .build();
-}
-```
-
-> **Git**: `git commit -m "feat: add authentication security hardening"`
-
----
-
-## Framework-Specific Notes
-
-### Spring Boot
-- Spring Security autoconfiguration
-- UserDetailsService for custom user loading
-- SecurityFilterChain for configuration
-
-### Quarkus
-- SmallRye JWT for JWT
-- Elytron for security
-- @RolesAllowed annotation
-
----
-
-## AI Self-Check
-
-- [ ] Spring Security configured
-- [ ] BCryptPasswordEncoder with 12+ rounds
-- [ ] JWT authentication working
-- [ ] OAuth 2.0 configured (if needed)
-- [ ] Authorization rules defined
-- [ ] Rate limiting enabled
-- [ ] HTTPS enforced
-- [ ] Security headers configured
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When implementing authentication system with JWT and OAuth
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing authentication system with JWT and OAuth for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
-- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
-- ALWAYS validate tokens on protected endpoints
-- ALWAYS hash passwords with bcrypt/Argon2
-- NEVER store passwords in plain text
-- NEVER commit secrets to version control
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - JWT AUTHENTICATION:
-1. Install JWT library
-2. Configure JWT secret (from environment variable)
-3. Implement token generation (login endpoint)
-4. Implement token validation middleware
-5. Set up token expiration and refresh mechanism
-
-Deliverable: JWT authentication working
-
-PHASE 2 - USER MANAGEMENT:
-1. Create User model/entity
-2. Implement password hashing
-3. Create registration endpoint
-4. Create login endpoint
-5. Implement password reset flow
-
-Deliverable: User management complete
-
-PHASE 3 - OAUTH INTEGRATION (Optional):
-1. Choose OAuth providers (Google, GitHub, etc.)
-2. Register application with providers
-3. Implement OAuth callback handling
-4. Link OAuth accounts with local users
-
-Deliverable: OAuth authentication working
-
-PHASE 4 - ROLE-BASED ACCESS CONTROL:
-1. Define user roles
-2. Implement role checking middleware
-3. Protect endpoints by role
-4. Add role management endpoints
-
-Deliverable: RBAC implemented
-
-SECURITY BEST PRACTICES:
-- Use HTTPS only in production
-- Implement rate limiting
-- Add account lockout after failed attempts
-- Log authentication events
-- Use secure cookie flags (httpOnly, secure, sameSite)
-
-START: Execute Phase 1. Install JWT library and configure token generation.
-```
+**What you get**: Complete JWT/OAuth authentication with Spring Security  
+**Time**: 3-4 hours  
+**Output**: Auth service, protected endpoints, OAuth

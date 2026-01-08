@@ -1,251 +1,352 @@
-# Authentication Setup Process - Swift (Server-Side: Vapor)
+# Swift Authentication (JWT/OAuth) - Copy This Prompt
 
-> **Purpose**: Implement secure authentication and authorization in Vapor applications
-
-> **Core Stack**: BCrypt, JWT, OAuth2
+> **Type**: One-time setup process  
+> **When to use**: Implementing authentication for Swift server API (Vapor)  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Password Hashing
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: BCrypt from Vapor
-> **NEVER**: MD5, SHA1, or plain text
+```
+========================================
+SWIFT AUTHENTICATION - JWT/OAUTH
+========================================
 
-**Install**:
+CONTEXT:
+You are implementing JWT and OAuth authentication for a Swift server application using Vapor.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use Bcrypt for password hashing
+- ALWAYS validate JWT tokens on protected routes
+- NEVER store passwords in plain text
+- NEVER expose JWT secrets
+
+========================================
+PHASE 1 - JWT AUTHENTICATION
+========================================
+
+Add dependencies to Package.swift:
+
 ```swift
-// Package.swift
-.package(url: "https://github.com/vapor/vapor.git", from: "4.0.0")
+dependencies: [
+    .package(url: "https://github.com/vapor/vapor.git", from: "4.89.0"),
+    .package(url: "https://github.com/vapor/jwt.git", from: "4.2.2")
+]
 ```
 
-**Password Hashing**:
+Configure JWT in configure.swift:
 ```swift
 import Vapor
+import JWT
 
-func hashPassword(_ password: String, on req: Request) async throws -> String {
-    return try await req.password.async.hash(password)
-}
-
-func verifyPassword(_ password: String, hash: String, on req: Request) async throws -> Bool {
-    return try await req.password.async.verify(password, created: hash)
+public func configure(_ app: Application) throws {
+    // JWT configuration
+    app.jwt.signers.use(.hs256(key: Environment.get("JWT_SECRET") ?? "secret"))
+    
+    try routes(app)
 }
 ```
 
-> **Git**: `git commit -m "feat: add password hashing"`
-
----
-
-## Phase 2: JWT Authentication
-
-> **ALWAYS use**: Vapor's JWT package
-
-**Install**:
-```swift
-.package(url: "https://github.com/vapor/jwt.git", from: "4.0.0")
-```
-
-**JWT Configuration**:
+Create JWT payload:
 ```swift
 import JWT
 
-app.jwt.signers.use(.hs256(key: Environment.get("JWT_SECRET")!))
-
-struct SessionToken: Content, Authenticatable, JWTPayload {
-    var subject: SubjectClaim
-    var expiration: ExpirationClaim
+struct UserPayload: JWTPayload {
+    let userId: UUID
+    let email: String
+    let exp: ExpirationClaim
+    
+    init(userId: UUID, email: String) {
+        self.userId = userId
+        self.email = email
+        self.exp = ExpirationClaim(value: Date().addingTimeInterval(86400)) // 24 hours
+    }
     
     func verify(using signer: JWTSigner) throws {
-        try self.expiration.verifyNotExpired()
+        try self.exp.verifyNotExpired()
+    }
+}
+```
+
+Create auth middleware:
+```swift
+import Vapor
+import JWT
+
+struct JWTAuthenticator: AsyncBearerAuthenticator {
+    typealias User = AppUser
+    
+    func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+        do {
+            let payload = try request.jwt.verify(as: UserPayload.self)
+            guard let user = try await AppUser.find(payload.userId, on: request.db) else {
+                return
+            }
+            request.auth.login(user)
+        } catch {
+            // Invalid token
+        }
+    }
+}
+```
+
+Deliverable: JWT configured
+
+========================================
+PHASE 2 - USER MODEL & AUTH ENDPOINTS
+========================================
+
+Create user model:
+
+```swift
+import Vapor
+import Fluent
+
+final class AppUser: Model, Content, Authenticatable {
+    static let schema = "users"
+    
+    @ID(key: .id)
+    var id: UUID?
+    
+    @Field(key: "email")
+    var email: String
+    
+    @Field(key: "password_hash")
+    var passwordHash: String
+    
+    init() {}
+    
+    init(id: UUID? = nil, email: String, passwordHash: String) {
+        self.id = id
+        self.email = email
+        self.passwordHash = passwordHash
     }
 }
 
-func generateToken(for user: User, on req: Request) throws -> String {
-    let payload = SessionToken(
-        subject: SubjectClaim(value: user.id!.uuidString),
-        expiration: ExpirationClaim(value: Date().addingTimeInterval(3600)) // 1h
-    )
-    return try req.jwt.sign(payload)
+struct CreateUser: Migration {
+    func prepare(on database: Database) -> EventLoopFuture<Void> {
+        database.schema("users")
+            .id()
+            .field("email", .string, .required)
+            .unique(on: "email")
+            .field("password_hash", .string, .required)
+            .create()
+    }
+    
+    func revert(on database: Database) -> EventLoopFuture<Void> {
+        database.schema("users").delete()
+    }
 }
 ```
 
-**JWT Middleware**:
+Create auth controller:
 ```swift
-let protected = app.grouped(SessionToken.authenticator(), SessionToken.guardMiddleware())
+import Vapor
 
-protected.get("profile") { req -> User in
-    let payload = try req.auth.require(SessionToken.self)
-    return try await User.find(UUID(uuidString: payload.subject.value)!, on: req.db)!
+struct AuthController: RouteCollection {
+    func boot(routes: RoutesBuilder) throws {
+        let auth = routes.grouped("auth")
+        auth.post("register", use: register)
+        auth.post("login", use: login)
+        
+        let protected = auth.grouped(JWTAuthenticator())
+        protected.get("me", use: getMe)
+    }
+    
+    func register(req: Request) async throws -> TokenResponse {
+        try RegisterRequest.validate(content: req)
+        let registerRequest = try req.content.decode(RegisterRequest.self)
+        
+        // Check if user exists
+        if let _ = try await AppUser.query(on: req.db)
+            .filter(\.$email == registerRequest.email)
+            .first() {
+            throw Abort(.conflict, reason: "User already exists")
+        }
+        
+        // Hash password
+        let passwordHash = try Bcrypt.hash(registerRequest.password)
+        
+        // Create user
+        let user = AppUser(email: registerRequest.email, passwordHash: passwordHash)
+        try await user.save(on: req.db)
+        
+        // Generate token
+        let payload = UserPayload(userId: user.id!, email: user.email)
+        let token = try req.jwt.sign(payload)
+        
+        return TokenResponse(token: token)
+    }
+    
+    func login(req: Request) async throws -> TokenResponse {
+        let loginRequest = try req.content.decode(LoginRequest.self)
+        
+        // Find user
+        guard let user = try await AppUser.query(on: req.db)
+            .filter(\.$email == loginRequest.email)
+            .first() else {
+            throw Abort(.unauthorized, reason: "Invalid credentials")
+        }
+        
+        // Verify password
+        guard try Bcrypt.verify(loginRequest.password, created: user.passwordHash) else {
+            throw Abort(.unauthorized, reason: "Invalid credentials")
+        }
+        
+        // Generate token
+        let payload = UserPayload(userId: user.id!, email: user.email)
+        let token = try req.jwt.sign(payload)
+        
+        return TokenResponse(token: token)
+    }
+    
+    func getMe(req: Request) async throws -> UserResponse {
+        let user = try req.auth.require(AppUser.self)
+        return UserResponse(id: user.id!, email: user.email)
+    }
+}
+
+struct RegisterRequest: Content, Validatable {
+    let email: String
+    let password: String
+    
+    static func validations(_ validations: inout Validations) {
+        validations.add("email", as: String.self, is: .email)
+        validations.add("password", as: String.self, is: .count(8...))
+    }
+}
+
+struct LoginRequest: Content {
+    let email: String
+    let password: String
+}
+
+struct TokenResponse: Content {
+    let token: String
+}
+
+struct UserResponse: Content {
+    let id: UUID
+    let email: String
 }
 ```
 
-> **Git**: `git commit -m "feat: add JWT authentication"`
+Deliverable: Auth endpoints working
 
----
+========================================
+PHASE 3 - OAUTH 2.0 (OPTIONAL)
+========================================
 
-## Phase 3: OAuth 2.0 / Social Login
+Add Imperial for OAuth:
 
-> **ALWAYS use**: Imperial (Vapor OAuth library)
-
-**Install**:
 ```swift
-.package(url: "https://github.com/vapor-community/Imperial.git", from: "1.0.0")
+dependencies: [
+    .package(url: "https://github.com/vapor-community/Imperial.git", from: "1.0.0")
+]
 ```
 
-**Google OAuth**:
+Configure Google OAuth:
 ```swift
 import Imperial
 
-app.oAuth(
-    from: Google.self,
-    authenticate: "login-google",
-    callback: "http://localhost:8080/oauth/google"
-) { request, token in
-    // Create or find user
-    return request.eventLoop.future()
+app.sessions.use(.fluent)
+
+try app.oAuth(from: Google.self, authenticate: "google", callback: "http://localhost:8080/auth/google/callback") { request, token in
+    // Handle OAuth callback
+    let googleUser = try await GoogleAPI.getUser(on: request, with: token)
+    
+    // Find or create user
+    let user = try await AppUser.query(on: request.db)
+        .filter(\.$email == googleUser.email)
+        .first() ?? {
+            let newUser = AppUser(email: googleUser.email, passwordHash: "")
+            try await newUser.save(on: request.db)
+            return newUser
+        }()
+    
+    // Generate JWT
+    let payload = UserPayload(userId: user.id!, email: user.email)
+    let jwtToken = try request.jwt.sign(payload)
+    
+    return request.redirect(to: "/auth-success?token=\(jwtToken)")
 }
 ```
 
-> **Git**: `git commit -m "feat: add OAuth 2.0 (Google)"`
+Deliverable: OAuth configured
 
----
+========================================
+PHASE 4 - SECURITY BEST PRACTICES
+========================================
 
-## Phase 4: Authorization & RBAC
+Implement security measures:
 
-> **ALWAYS**: Use middleware for role checks
-
-**Role Middleware**:
 ```swift
-struct AdminMiddleware: AsyncMiddleware {
-    func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-        let user = try request.auth.require(User.self)
-        
-        guard user.role == .admin else {
-            throw Abort(.forbidden)
-        }
-        
-        return try await next.respond(to: request)
+// Rate limiting
+import RateLimiter
+
+app.middleware.use(RateLimitMiddleware(
+    config: .init(maxRequests: 5, per: .minute)
+))
+
+// Password validation
+extension RegisterRequest {
+    static func validations(_ validations: inout Validations) {
+        validations.add("email", as: String.self, is: .email)
+        validations.add("password", as: String.self, is: .count(8...))
+        validations.add("password", as: String.self, is: .characterSet(.alphanumerics + .punctuationCharacters))
     }
 }
 
-// Usage
-let admin = app.grouped(SessionToken.authenticator(), AdminMiddleware())
-admin.delete("users", ":id") { req -> HTTPStatus in
-    // Admin-only route
-    return .noContent
+// Refresh tokens
+struct RefreshToken: Model {
+    static let schema = "refresh_tokens"
+    
+    @ID(key: .id)
+    var id: UUID?
+    
+    @Field(key: "token")
+    var token: String
+    
+    @Parent(key: "user_id")
+    var user: AppUser
+    
+    @Field(key: "expires_at")
+    var expiresAt: Date
 }
 ```
 
-> **Git**: `git commit -m "feat: add role-based authorization"`
+Deliverable: Enhanced security
 
----
+========================================
+BEST PRACTICES
+========================================
 
-## Phase 5: Security Hardening
+- Use Bcrypt for password hashing
+- Store JWT secrets in environment variables
+- Use Fluent ORM for database
+- Set reasonable token expiry
+- Implement refresh tokens
+- Add rate limiting
+- Use HTTPS only
+- Validate input thoroughly
+- Consider Imperial for OAuth
 
-> **ALWAYS implement**:
-> - Rate limiting (Redis-based recommended)
-> - CORS configuration
-> - HTTPS enforcement
-> - Security headers
+========================================
+EXECUTION
+========================================
 
-**CORS**:
-```swift
-app.middleware.use(CORSMiddleware(configuration: .init(
-    allowedOrigin: .all,
-    allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-    allowedHeaders: [.accept, .authorization, .contentType, .origin]
-)))
+START: Configure JWT (Phase 1)
+CONTINUE: Create user model and endpoints (Phase 2)
+OPTIONAL: Add OAuth (Phase 3)
+CONTINUE: Add security measures (Phase 4)
+REMEMBER: Bcrypt, Fluent, secure secrets
 ```
 
-> **Git**: `git commit -m "feat: add authentication security hardening"`
-
 ---
 
-## Framework-Specific Notes
+## Quick Reference
 
-### Vapor
-- Fluent for user models
-- JWT middleware for authentication
-- Custom middleware for authorization
-- Imperial for OAuth
-
----
-
-## AI Self-Check
-
-- [ ] Passwords hashed with BCrypt
-- [ ] JWT configured with secret
-- [ ] Access tokens expire in ≤1h
-- [ ] OAuth configured (if needed)
-- [ ] Authorization middleware implemented
-- [ ] HTTPS enforced
-- [ ] CORS configured
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When implementing authentication system with JWT and OAuth
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing authentication system with JWT and OAuth for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
-- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
-- ALWAYS validate tokens on protected endpoints
-- ALWAYS hash passwords with bcrypt/Argon2
-- NEVER store passwords in plain text
-- NEVER commit secrets to version control
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - JWT AUTHENTICATION:
-1. Install JWT library
-2. Configure JWT secret (from environment variable)
-3. Implement token generation (login endpoint)
-4. Implement token validation middleware
-5. Set up token expiration and refresh mechanism
-
-Deliverable: JWT authentication working
-
-PHASE 2 - USER MANAGEMENT:
-1. Create User model/entity
-2. Implement password hashing
-3. Create registration endpoint
-4. Create login endpoint
-5. Implement password reset flow
-
-Deliverable: User management complete
-
-PHASE 3 - OAUTH INTEGRATION (Optional):
-1. Choose OAuth providers (Google, GitHub, etc.)
-2. Register application with providers
-3. Implement OAuth callback handling
-4. Link OAuth accounts with local users
-
-Deliverable: OAuth authentication working
-
-PHASE 4 - ROLE-BASED ACCESS CONTROL:
-1. Define user roles
-2. Implement role checking middleware
-3. Protect endpoints by role
-4. Add role management endpoints
-
-Deliverable: RBAC implemented
-
-SECURITY BEST PRACTICES:
-- Use HTTPS only in production
-- Implement rate limiting
-- Add account lockout after failed attempts
-- Log authentication events
-- Use secure cookie flags (httpOnly, secure, sameSite)
-
-START: Execute Phase 1. Install JWT library and configure token generation.
-```
+**What you get**: Complete JWT/OAuth authentication for Vapor  
+**Time**: 3-4 hours  
+**Output**: Auth service, protected routes, OAuth

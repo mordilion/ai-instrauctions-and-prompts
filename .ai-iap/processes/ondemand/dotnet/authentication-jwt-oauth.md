@@ -1,259 +1,296 @@
-# Authentication Setup Process - .NET/C#
+# .NET Authentication (JWT/OAuth) - Copy This Prompt
 
-> **Purpose**: Implement secure authentication and authorization in .NET applications
-
-> **Core Stack**: ASP.NET Core Identity, JWT Bearer, OAuth 2.0
+> **Type**: One-time setup process  
+> **When to use**: Implementing authentication for .NET API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: ASP.NET Core Identity Setup
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: ASP.NET Core Identity ⭐ (built-in, battle-tested)
-> **NEVER**: Roll your own password hashing, use Identity
+```
+========================================
+.NET AUTHENTICATION - JWT/OAUTH
+========================================
 
-**Setup**:
+CONTEXT:
+You are implementing JWT and OAuth authentication for a .NET application.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS use ASP.NET Core Identity for user management
+- ALWAYS validate JWT tokens on protected endpoints
+- NEVER store passwords in plain text
+- NEVER expose JWT secrets
+
+========================================
+PHASE 1 - JWT AUTHENTICATION
+========================================
+
+Install packages:
+
 ```bash
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
 ```
 
-**Configure**:
+Configure JWT in Program.cs:
 ```csharp
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add authentication
+builder.Services.AddAuthentication(options =>
 {
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
-```
-
-> **Git**: `git commit -m "feat: add ASP.NET Core Identity"`
-
----
-
-## Phase 2: JWT Authentication
-
-> **ALWAYS**:
-> - Use Microsoft.AspNetCore.Authentication.JwtBearer
-> - Store secret in User Secrets (dev) or Azure Key Vault (prod)
-> - Token expiration: 1h access, 7d refresh
-
-**Setup**:
-```bash
-dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
-```
-
-**Configure JWT**:
-```csharp
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-**Token Generation**:
-```csharp
-var tokenHandler = new JwtSecurityTokenHandler();
-var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
-var tokenDescriptor = new SecurityTokenDescriptor
+Add to appsettings.json:
+```json
 {
-    Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, userId) }),
-    Expires = DateTime.UtcNow.AddHours(1),
-    Issuer = _configuration["Jwt:Issuer"],
-    Audience = _configuration["Jwt:Audience"],
-    SigningCredentials = new SigningCredentials(
-        new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-};
-return tokenHandler.CreateToken(tokenDescriptor);
+  "Jwt": {
+    "Key": "your-secret-key-min-32-characters-long",
+    "Issuer": "your-issuer",
+    "Audience": "your-audience",
+    "ExpiryMinutes": 1440
+  }
+}
 ```
 
-> **Git**: `git commit -m "feat: add JWT authentication"`
+Create token service:
+```csharp
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
----
+public class TokenService
+{
+    private readonly IConfiguration _config;
 
-## Phase 3: OAuth 2.0 / Social Login
+    public TokenService(IConfiguration config)
+    {
+        _config = config;
+    }
 
-> **ALWAYS use**: Microsoft.AspNetCore.Authentication.Google/Facebook/Microsoft
+    public string GenerateToken(string userId, string email)
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
 
-**Setup**:
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(int.Parse(_config["Jwt:ExpiryMinutes"]!)),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+```
+
+Deliverable: JWT authentication configured
+
+========================================
+PHASE 2 - AUTH ENDPOINTS
+========================================
+
+Create auth controller:
+
+```csharp
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly TokenService _tokenService;
+
+    public AuthController(
+        UserManager<IdentityUser> userManager,
+        SignInManager<IdentityUser> signInManager,
+        TokenService tokenService)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _tokenService = tokenService;
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponse>> Register(RegisterDto dto)
+    {
+        var user = new IdentityUser
+        {
+            UserName = dto.Email,
+            Email = dto.Email
+        };
+
+        var result = await _userManager.CreateAsync(user, dto.Password);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+
+        var token = _tokenService.GenerateToken(user.Id, user.Email);
+
+        return Ok(new AuthResponse { Token = token, Email = user.Email });
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponse>> Login(LoginDto dto)
+    {
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+        if (!result.Succeeded)
+        {
+            return Unauthorized("Invalid credentials");
+        }
+
+        var token = _tokenService.GenerateToken(user.Id, user.Email);
+
+        return Ok(new AuthResponse { Token = token, Email = user.Email });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> GetMe()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var user = await _userManager.FindByIdAsync(userId!);
+
+        return Ok(new UserDto { Id = user.Id, Email = user.Email });
+    }
+}
+```
+
+Deliverable: Auth endpoints working
+
+========================================
+PHASE 3 - OAUTH 2.0 (OPTIONAL)
+========================================
+
+Add Google OAuth:
+
 ```bash
 dotnet add package Microsoft.AspNetCore.Authentication.Google
 ```
 
-**Configure**:
+Configure in Program.cs:
 ```csharp
 builder.Services.AddAuthentication()
     .AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+        options.ClientId = builder.Configuration["Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
     });
 ```
 
-> **Git**: `git commit -m "feat: add OAuth 2.0 (Google)"`
+Deliverable: OAuth configured
 
----
+========================================
+PHASE 4 - SECURITY BEST PRACTICES
+========================================
 
-## Phase 4: Authorization & RBAC
+Add security features:
 
-> **ALWAYS use**: Policy-based authorization
-
-**Configure Policies**:
 ```csharp
-builder.Services.AddAuthorization(options =>
+// Configure password requirements
+builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("RequirePermission", policy => 
-        policy.RequireClaim("Permission", "write:users"));
-});
-```
-
-**Usage**:
-```csharp
-[Authorize(Policy = "RequireAdminRole")]
-public class AdminController : ControllerBase { }
-```
-
-> **Git**: `git commit -m "feat: add role-based authorization"`
-
----
-
-## Phase 5: Security Hardening
-
-> **ALWAYS implement**:
-> - Rate limiting (ASP.NET Core 7.0+: built-in)
-> - HTTPS enforcement
-> - CORS configuration
-> - Security headers (NWebsec or built-in)
-
-**Rate Limiting** (ASP.NET Core 7.0+):
-```csharp
-builder.Services.AddRateLimiter(options =>
-{
-    options.AddFixedWindowLimiter("login", opt =>
-    {
-        opt.Window = TimeSpan.FromMinutes(15);
-        opt.PermitLimit = 5;
-    });
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequiredLength = 8;
+    
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    
+    options.User.RequireUniqueEmail = true;
 });
 
-app.MapPost("/auth/login", Login).RequireRateLimiting("login");
+// Refresh tokens
+public class RefreshToken
+{
+    public string Token { get; set; }
+    public DateTime Expires { get; set; }
+    public bool IsExpired => DateTime.UtcNow >= Expires;
+    public DateTime Created { get; set; }
+    public string CreatedByIp { get; set; }
+}
 ```
 
-> **Git**: `git commit -m "feat: add authentication security hardening"`
+Deliverable: Enhanced security
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use ASP.NET Core Identity
+- Hash passwords automatically (Identity does this)
+- Store JWT secrets in configuration
+- Set reasonable token expiry
+- Implement refresh tokens
+- Add rate limiting
+- Use HTTPS only
+- Configure password requirements
+- Implement account lockout
+- Add email confirmation
+
+========================================
+EXECUTION
+========================================
+
+START: Configure JWT (Phase 1)
+CONTINUE: Create auth endpoints (Phase 2)
+OPTIONAL: Add OAuth (Phase 3)
+CONTINUE: Add security features (Phase 4)
+REMEMBER: Use Identity, secure secrets, HTTPS
+```
 
 ---
 
-## Framework-Specific Notes
+## Quick Reference
 
-### ASP.NET Core Web API
-- Use [Authorize] attribute
-- JWT in Authorization header
-- Policy-based authorization
-
-### Blazor
-- Server: ASP.NET Core Identity
-- WASM: JWT with custom AuthenticationStateProvider
-
----
-
-## AI Self-Check
-
-- [ ] ASP.NET Core Identity configured
-- [ ] Password hashing automatic (Identity)
-- [ ] JWT authentication working
-- [ ] Refresh tokens implemented
-- [ ] OAuth providers configured (if needed)
-- [ ] Authorization policies defined
-- [ ] Rate limiting enabled
-- [ ] HTTPS enforced
-- [ ] Security headers configured
-- [ ] Audit logging implemented
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When implementing authentication system with JWT and OAuth
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing authentication system with JWT and OAuth for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
-- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
-- ALWAYS validate tokens on protected endpoints
-- ALWAYS hash passwords with bcrypt/Argon2
-- NEVER store passwords in plain text
-- NEVER commit secrets to version control
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - JWT AUTHENTICATION:
-1. Install JWT library
-2. Configure JWT secret (from environment variable)
-3. Implement token generation (login endpoint)
-4. Implement token validation middleware
-5. Set up token expiration and refresh mechanism
-
-Deliverable: JWT authentication working
-
-PHASE 2 - USER MANAGEMENT:
-1. Create User model/entity
-2. Implement password hashing
-3. Create registration endpoint
-4. Create login endpoint
-5. Implement password reset flow
-
-Deliverable: User management complete
-
-PHASE 3 - OAUTH INTEGRATION (Optional):
-1. Choose OAuth providers (Google, GitHub, etc.)
-2. Register application with providers
-3. Implement OAuth callback handling
-4. Link OAuth accounts with local users
-
-Deliverable: OAuth authentication working
-
-PHASE 4 - ROLE-BASED ACCESS CONTROL:
-1. Define user roles
-2. Implement role checking middleware
-3. Protect endpoints by role
-4. Add role management endpoints
-
-Deliverable: RBAC implemented
-
-SECURITY BEST PRACTICES:
-- Use HTTPS only in production
-- Implement rate limiting
-- Add account lockout after failed attempts
-- Log authentication events
-- Use secure cookie flags (httpOnly, secure, sameSite)
-
-START: Execute Phase 1. Install JWT library and configure token generation.
-```
+**What you get**: Complete JWT/OAuth authentication with Identity  
+**Time**: 3-4 hours  
+**Output**: Auth service, protected endpoints, OAuth

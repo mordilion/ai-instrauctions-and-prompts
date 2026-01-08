@@ -1,315 +1,314 @@
-# Authentication Setup Process - PHP
+# PHP Authentication (JWT/OAuth) - Copy This Prompt
 
-> **Purpose**: Implement secure authentication and authorization in PHP applications
-
-> **Core Stack**: password_hash/password_verify, JWT (firebase/php-jwt), OAuth (league/oauth2)
+> **Type**: One-time setup process  
+> **When to use**: Implementing authentication for PHP API  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 1: Password Hashing
+## 📋 Complete Self-Contained Prompt
 
-> **ALWAYS use**: password_hash() with PASSWORD_BCRYPT or PASSWORD_ARGON2ID
-> **NEVER**: md5(), sha1(), crypt() without salt
-
-**Password Functions**:
-```php
-function hashPassword(string $password): string {
-    return password_hash($password, PASSWORD_ARGON2ID); // or PASSWORD_BCRYPT
-}
-
-function verifyPassword(string $password, string $hash): bool {
-    return password_verify($password, $hash);
-}
 ```
+========================================
+PHP AUTHENTICATION - JWT/OAUTH
+========================================
 
-> **Git**: `git commit -m "feat: add password hashing"`
+CONTEXT:
+You are implementing JWT and OAuth authentication for a PHP application.
 
----
+CRITICAL REQUIREMENTS:
+- ALWAYS use password_hash() for passwords
+- ALWAYS validate JWT tokens on protected routes
+- NEVER store passwords in plain text
+- NEVER expose JWT secrets
 
-## Phase 2: JWT Authentication
+========================================
+PHASE 1 - JWT AUTHENTICATION
+========================================
 
-> **ALWAYS use**: firebase/php-jwt library
+Install Firebase JWT library:
 
-**Install** (Composer):
 ```bash
 composer require firebase/php-jwt
 ```
 
-**JWT Functions**:
+Create JWT utility class:
 ```php
+<?php
+
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-function generateToken(int $userId): string {
-    $secret = $_ENV['JWT_SECRET'];
-    $payload = [
-        'sub' => $userId,
-        'iat' => time(),
-        'exp' => time() + 3600 // 1 hour
-    ];
-    return JWT::encode($payload, $secret, 'HS256');
-}
+class JwtUtil
+{
+    private string $secret;
+    private string $issuer;
+    private int $expiration;
 
-function verifyToken(string $token): object {
-    $secret = $_ENV['JWT_SECRET'];
-    return JWT::decode($token, new Key($secret, 'HS256'));
+    public function __construct()
+    {
+        $this->secret = $_ENV['JWT_SECRET'] ?? 'your-secret-key';
+        $this->issuer = $_ENV['JWT_ISSUER'] ?? 'your-issuer';
+        $this->expiration = 86400; // 24 hours
+    }
+
+    public function generateToken(int $userId, string $email): string
+    {
+        $payload = [
+            'iss' => $this->issuer,
+            'iat' => time(),
+            'exp' => time() + $this->expiration,
+            'userId' => $userId,
+            'email' => $email
+        ];
+
+        return JWT::encode($payload, $this->secret, 'HS256');
+    }
+
+    public function validateToken(string $token): ?object
+    {
+        try {
+            return JWT::decode($token, new Key($this->secret, 'HS256'));
+        } catch (Exception $e) {
+            return null;
+        }
+    }
 }
 ```
 
-**Middleware** (Laravel):
+Create auth middleware:
 ```php
-public function handle(Request $request, Closure $next) {
-    $token = $request->bearerToken();
-    
-    if (!$token) {
-        return response()->json(['error' => 'Unauthorized'], 401);
+<?php
+
+class AuthMiddleware
+{
+    private JwtUtil $jwtUtil;
+
+    public function __construct(JwtUtil $jwtUtil)
+    {
+        $this->jwtUtil = $jwtUtil;
     }
-    
-    try {
-        $payload = verifyToken($token);
-        $request->merge(['user_id' => $payload->sub]);
+
+    public function handle($request, Closure $next)
+    {
+        $authHeader = $request->header('Authorization');
+        
+        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $token = substr($authHeader, 7);
+        $payload = $this->jwtUtil->validateToken($token);
+
+        if (!$payload) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+
+        $request->userId = $payload->userId;
         return $next($request);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Invalid token'], 401);
     }
 }
 ```
 
-> **Git**: `git commit -m "feat: add JWT authentication"`
+Deliverable: JWT utility configured
 
----
+========================================
+PHASE 2 - AUTH ENDPOINTS
+========================================
 
-## Phase 3: OAuth 2.0 / Social Login
+Create auth controller:
 
-> **ALWAYS use**: league/oauth2-client or Laravel Socialite
+```php
+<?php
 
-**Install** (Laravel Socialite):
+class AuthController
+{
+    private PDO $db;
+    private JwtUtil $jwtUtil;
+
+    public function register(Request $request): Response
+    {
+        $email = $request->post('email');
+        $password = $request->post('password');
+
+        // Validate input
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json(['error' => 'Invalid email'], 400);
+        }
+
+        // Check if user exists
+        $stmt = $this->db->prepare('SELECT id FROM users WHERE email = :email');
+        $stmt->execute(['email' => $email]);
+        
+        if ($stmt->fetch()) {
+            return response()->json(['error' => 'User already exists'], 409);
+        }
+
+        // Hash password
+        $hashedPassword = password_hash($password, PASSWORD_ARGON2ID);
+
+        // Create user
+        $stmt = $this->db->prepare('INSERT INTO users (email, password) VALUES (:email, :password)');
+        $stmt->execute(['email' => $email, 'password' => $hashedPassword]);
+        
+        $userId = $this->db->lastInsertId();
+
+        // Generate token
+        $token = $this->jwtUtil->generateToken((int)$userId, $email);
+
+        return response()->json(['token' => $token], 201);
+    }
+
+    public function login(Request $request): Response
+    {
+        $email = $request->post('email');
+        $password = $request->post('password');
+
+        // Find user
+        $stmt = $this->db->prepare('SELECT id, email, password FROM users WHERE email = :email');
+        $stmt->execute(['email' => $email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user || !password_verify($password, $user['password'])) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        // Generate token
+        $token = $this->jwtUtil->generateToken($user['id'], $user['email']);
+
+        return response()->json(['token' => $token]);
+    }
+
+    public function me(Request $request): Response
+    {
+        $userId = $request->userId; // Set by middleware
+
+        $stmt = $this->db->prepare('SELECT id, email FROM users WHERE id = :id');
+        $stmt->execute(['id' => $userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return response()->json($user);
+    }
+}
+```
+
+Deliverable: Auth endpoints working
+
+========================================
+PHASE 3 - LARAVEL IMPLEMENTATION
+========================================
+
+For Laravel, use built-in features:
+
+Install Laravel Sanctum:
+```bash
+composer require laravel/sanctum
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+php artisan migrate
+```
+
+Configure in config/sanctum.php and use:
+```php
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens;
+}
+
+// In AuthController
+public function login(Request $request)
+{
+    if (!Auth::attempt($request->only('email', 'password'))) {
+        return response()->json(['error' => 'Invalid credentials'], 401);
+    }
+
+    $user = Auth::user();
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json(['token' => $token]);
+}
+
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+});
+```
+
+Deliverable: Laravel auth working
+
+========================================
+PHASE 4 - OAUTH 2.0 (OPTIONAL)
+========================================
+
+For Laravel with Socialite:
+
 ```bash
 composer require laravel/socialite
 ```
 
-**Configure** (config/services.php):
+Configure in config/services.php:
 ```php
 'google' => [
     'client_id' => env('GOOGLE_CLIENT_ID'),
     'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-    'redirect' => env('GOOGLE_REDIRECT_URI'),
+    'redirect' => 'http://localhost/auth/google/callback',
 ],
 ```
 
-**Controller**:
+Create routes:
 ```php
-use Laravel\Socialite\Facades\Socialite;
-
-public function redirectToGoogle() {
+Route::get('/auth/google', function () {
     return Socialite::driver('google')->redirect();
-}
+});
 
-public function handleGoogleCallback() {
+Route::get('/auth/google/callback', function () {
     $googleUser = Socialite::driver('google')->user();
     
     $user = User::updateOrCreate([
-        'email' => $googleUser->getEmail(),
+        'email' => $googleUser->email,
     ], [
-        'name' => $googleUser->getName(),
-        'google_id' => $googleUser->getId(),
+        'name' => $googleUser->name,
+        'google_id' => $googleUser->id,
     ]);
     
-    $token = generateToken($user->id);
-    return response()->json(['access_token' => $token]);
-}
-```
-
-> **Git**: `git commit -m "feat: add OAuth 2.0 (Google)"`
-
----
-
-## Phase 4: Authorization & RBAC
-
-### Laravel
-
-> **ALWAYS use**: Gates and Policies
-
-**Define Gate**:
-```php
-// App\Providers\AuthServiceProvider
-Gate::define('delete-user', function (User $user, User $targetUser) {
-    return $user->role === 'admin';
+    $token = $user->createToken('auth_token')->plainTextToken;
+    
+    return response()->json(['token' => $token]);
 });
 ```
 
-**Middleware**:
-```php
-Route::delete('/users/{id}', [UserController::class, 'destroy'])
-    ->middleware('can:delete-user');
+Deliverable: OAuth configured
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use password_hash() with ARGON2ID or BCRYPT
+- Store JWT secrets in environment variables
+- Use PDO prepared statements
+- Set reasonable token expiry
+- Implement refresh tokens
+- Add rate limiting
+- Use HTTPS only
+- Validate input thoroughly
+- Use Laravel Sanctum for Laravel projects
+
+========================================
+EXECUTION
+========================================
+
+START: Configure JWT (Phase 1)
+CONTINUE: Create auth endpoints (Phase 2)
+ALTERNATIVE: Use Laravel (Phase 3)
+OPTIONAL: Add OAuth (Phase 4)
+REMEMBER: password_hash, PDO prepared statements
 ```
-
-**Policy**:
-```php
-php artisan make:policy PostPolicy
-
-// PostPolicy
-public function update(User $user, Post $post) {
-    return $user->id === $post->user_id || $user->role === 'admin';
-}
-```
-
-### Symfony
-
-> **ALWAYS use**: Security Voters
-
-**Voter**:
-```php
-class PostVoter extends Voter {
-    protected function supports(string $attribute, mixed $subject): bool {
-        return in_array($attribute, ['POST_EDIT', 'POST_DELETE'])
-            && $subject instanceof Post;
-    }
-    
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool {
-        $user = $token->getUser();
-        
-        if ($attribute === 'POST_DELETE') {
-            return $user->getRole() === 'ROLE_ADMIN';
-        }
-        
-        return $user->getId() === $subject->getUserId();
-    }
-}
-```
-
-> **Git**: `git commit -m "feat: add role-based authorization"`
 
 ---
 
-## Phase 5: Security Hardening
+## Quick Reference
 
-> **ALWAYS implement**:
-> - Rate limiting (Laravel: throttle middleware, Symfony: rate limiter)
-> - CORS configuration
-> - HTTPS enforcement
-> - CSRF protection (if using sessions)
-
-**Rate Limiting** (Laravel):
-```php
-Route::post('/login', [AuthController::class, 'login'])
-    ->middleware('throttle:5,15'); // 5 attempts per 15 minutes
-```
-
-**CORS** (Laravel):
-```bash
-php artisan config:publish cors
-```
-
-**Security Headers** (middleware):
-```php
-public function handle(Request $request, Closure $next) {
-    $response = $next($request);
-    
-    $response->headers->set('X-Content-Type-Options', 'nosniff');
-    $response->headers->set('X-Frame-Options', 'DENY');
-    $response->headers->set('X-XSS-Protection', '1; mode=block');
-    
-    return $response;
-}
-```
-
-> **Git**: `git commit -m "feat: add authentication security hardening"`
-
----
-
-## Framework-Specific Notes
-
-### Laravel
-- Built-in authentication scaffolding (Breeze, Jetstream)
-- Laravel Sanctum for API tokens
-- Laravel Passport for full OAuth 2.0 server
-
-### Symfony
-- Security component for authentication
-- Voters for authorization
-- LexikJWTAuthenticationBundle for JWT
-
----
-
-## AI Self-Check
-
-- [ ] Passwords hashed with password_hash()
-- [ ] JWT configured with secret
-- [ ] Access tokens expire in ≤1h
-- [ ] OAuth configured (if needed)
-- [ ] Authorization (Gates/Policies) implemented
-- [ ] Rate limiting enabled
-- [ ] HTTPS enforced
-- [ ] Security headers configured
-
----
-
-**Process Complete** ✅
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (multi-phase)  
-> **When to use**: When implementing authentication system with JWT and OAuth
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are implementing authentication system with JWT and OAuth for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS use strong JWT secret (min 256 bits, from environment variable)
-- ALWAYS set appropriate token expiration (15-60 minutes for access, days for refresh)
-- ALWAYS validate tokens on protected endpoints
-- ALWAYS hash passwords with bcrypt/Argon2
-- NEVER store passwords in plain text
-- NEVER commit secrets to version control
-- Use team's Git workflow
-
-IMPLEMENTATION PHASES:
-
-PHASE 1 - JWT AUTHENTICATION:
-1. Install JWT library
-2. Configure JWT secret (from environment variable)
-3. Implement token generation (login endpoint)
-4. Implement token validation middleware
-5. Set up token expiration and refresh mechanism
-
-Deliverable: JWT authentication working
-
-PHASE 2 - USER MANAGEMENT:
-1. Create User model/entity
-2. Implement password hashing
-3. Create registration endpoint
-4. Create login endpoint
-5. Implement password reset flow
-
-Deliverable: User management complete
-
-PHASE 3 - OAUTH INTEGRATION (Optional):
-1. Choose OAuth providers (Google, GitHub, etc.)
-2. Register application with providers
-3. Implement OAuth callback handling
-4. Link OAuth accounts with local users
-
-Deliverable: OAuth authentication working
-
-PHASE 4 - ROLE-BASED ACCESS CONTROL:
-1. Define user roles
-2. Implement role checking middleware
-3. Protect endpoints by role
-4. Add role management endpoints
-
-Deliverable: RBAC implemented
-
-SECURITY BEST PRACTICES:
-- Use HTTPS only in production
-- Implement rate limiting
-- Add account lockout after failed attempts
-- Log authentication events
-- Use secure cookie flags (httpOnly, secure, sameSite)
-
-START: Execute Phase 1. Install JWT library and configure token generation.
-```
+**What you get**: Complete JWT/OAuth authentication for PHP  
+**Time**: 3-4 hours  
+**Output**: Auth service, protected routes, OAuth
