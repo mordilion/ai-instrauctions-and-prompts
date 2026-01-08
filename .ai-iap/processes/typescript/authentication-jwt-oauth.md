@@ -16,11 +16,6 @@
 
 ## Phase 1: JWT Authentication
 
-### Branch Strategy
-```
-main → auth/jwt-setup
-```
-
 ### 1.1 Install Dependencies
 
 > **ALWAYS use**:
@@ -143,11 +138,6 @@ function authenticateJWT(req: Request, res: Response, next: NextFunction) {
 
 ## Phase 2: OAuth 2.0 / Social Login
 
-### Branch Strategy
-```
-main → auth/oauth
-```
-
 ### 2.1 Install OAuth Library
 
 > **ALWAYS use**:
@@ -217,11 +207,6 @@ passport.use(new GoogleStrategy({
 
 ## Phase 3: Role-Based Access Control (RBAC)
 
-### Branch Strategy
-```
-main → auth/rbac
-```
-
 ### 3.1 Define Roles & Permissions
 
 > **ALWAYS**:
@@ -280,11 +265,6 @@ app.delete('/users/:id', authenticateJWT, requireRole('admin'), deleteUser);
 ---
 
 ## Phase 4: Security Hardening
-
-### Branch Strategy
-```
-main → auth/security
-```
 
 ### 4.1 Rate Limiting
 
@@ -420,17 +400,6 @@ Before completing this process, verify:
 > - Tag with `bug`, `security`, `authentication`
 > - **NEVER fix production code during auth setup**
 > - Link bug to authentication implementation branch
-
----
-
-## Final Commit
-
-```bash
-git checkout main
-git merge auth/security
-git tag -a v1.0.0-auth -m "Authentication system implemented"
-git push origin main --tags
-```
 
 ---
 
