@@ -25,103 +25,18 @@ val userName: String                       // camelCase
 const val MAX_ATTEMPTS = 3                 // UPPER_SNAKE_CASE
 ```
 
-## Variables
+## Core Patterns
 
-```kotlin
-// ✅ Immutable
-val name = "John"
-val items = listOf(1, 2, 3)
-
-// ✅ Mutable when needed
-var count = 0
-count++
-```
-
-## Data Classes
-
-```kotlin
-data class User(
-    val id: Int,
-    val name: String,
-    val email: String
-)
-```
-
-## Functions
-
-```kotlin
-// Expression body
-fun add(a: Int, b: Int) = a + b
-
-// Block body
-fun processUser(user: User): Result {
-    validate(user)
-    return save(user)
-}
-
-// Named arguments (3+ params)
-createUser(
-    name = "John",
-    email = "john@example.com",
-    age = 30
-)
-```
-
-## Null Safety
-
-```kotlin
-// Safe call
-val length = name?.length
-
-// Elvis operator
-val result = value ?: default
-
-// Let
-user?.let { process(it) }
-
-// !! only when justified
-val id = user.id!!  // Comment: Guaranteed non-null by validation
-```
-
-## When Expression
-
-```kotlin
-sealed class Result {
-    data class Success(val data: String) : Result()
-    data class Error(val message: String) : Result()
-}
-
-when (result) {
-    is Result.Success -> handle(result.data)
-    is Result.Error -> log(result.message)
-}
-```
-
-## Collections
-
-```kotlin
-// Immutable
-val users = listOf(user1, user2)
-val names = mapOf("a" to 1, "b" to 2)
-
-// Mutable
-val items = mutableListOf<Item>()
-items.add(item)
-
-// Functional
-users.filter { it.isActive }
-     .map { it.name }
-     .sorted()
-```
-
-## Extension Functions
-
-```kotlin
-fun String.toTitleCase() =
-    lowercase().replaceFirstChar { it.uppercase() }
-
-val title = "hello world".toTitleCase()  // "Hello world"
-```
+| Pattern | Example |
+|---------|---------|
+| **Variables** | `val name = "John"` (immutable), `var count = 0` (mutable) |
+| **Data Classes** | `data class User(val id: Int, val name: String)` |
+| **Functions** | `fun add(a: Int, b: Int) = a + b` |
+| **Named Args** | `createUser(name = "John", email = "...", age = 30)` |
+| **Null Safety** | `name?.length`, `value ?: default`, `user?.let { }` |
+| **When** | `when (result) { is Success -> ... is Error -> ... }` |
+| **Collections** | `listOf(1, 2)`, `.filter { }.map { }.sorted()` |
+| **Extensions** | `fun String.toTitleCase() = lowercase().replaceFirstChar { it.uppercase() }` |
 
 ## Scope Functions
 

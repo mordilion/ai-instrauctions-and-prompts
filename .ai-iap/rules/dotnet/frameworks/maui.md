@@ -23,28 +23,13 @@
 ### ViewModel (CommunityToolkit)
 
 ```csharp
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-
 public partial class UserViewModel : ObservableObject
 {
-    private readonly IUserService _userService;
-    
     [ObservableProperty]
     private string _username = "";
     
-    [ObservableProperty]
-    private bool _isLoading;
-    
-    public UserViewModel(IUserService userService) => _userService = userService;
-    
     [RelayCommand(CanExecute = nameof(CanSave))]
-    private async Task SaveAsync()
-    {
-        IsLoading = true;
-        await _userService.SaveUserAsync(Username);
-        IsLoading = false;
-    }
+    private async Task SaveAsync() => await _userService.SaveUserAsync(Username);
     
     private bool CanSave() => !string.IsNullOrEmpty(Username);
 }
@@ -53,77 +38,37 @@ public partial class UserViewModel : ObservableObject
 ### View (XAML)
 
 ```xml
-<ContentPage xmlns:vm="clr-namespace:MyApp.ViewModels">
-    <ContentPage.BindingContext>
-        <vm:UserViewModel />
-    </ContentPage.BindingContext>
-    
-    <VerticalStackLayout Padding="20">
-        <Entry Text="{Binding Username}" Placeholder="Enter name" />
-        <Button Text="Save" Command="{Binding SaveCommand}" />
-        <ActivityIndicator IsRunning="{Binding IsLoading}" />
-    </VerticalStackLayout>
-</ContentPage>
+<Entry Text="{Binding Username}" />
+<Button Text="Save" Command="{Binding SaveCommand}" />
+<ActivityIndicator IsRunning="{Binding IsLoading}" />
 ```
 
 ### DI Setup
 
 ```csharp
-// MauiProgram.cs
-public static class MauiProgram
-{
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .ConfigureFonts(fonts => {});
-        
-        builder.Services.AddSingleton<IUserService, UserService>();
-        builder.Services.AddTransient<UserViewModel>();
-        builder.Services.AddTransient<UserPage>();
-        
-        return builder.Build();
-    }
-}
+builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddTransient<UserViewModel>();
+builder.Services.AddTransient<UserPage>();
 ```
 
 ### Shell Navigation
 
 ```csharp
-// AppShell.xaml.cs
 Routing.RegisterRoute("userdetails", typeof(UserDetailsPage));
-
-// Navigate
-await Shell.Current.GoToAsync("userdetails", new Dictionary<string, object>
-{
-    ["UserId"] = userId
-});
+await Shell.Current.GoToAsync("userdetails", new Dictionary<string, object> { ["UserId"] = userId });
 ```
 
 ### Platform-Specific Code
 
 ```csharp
-#if ANDROID
-using Android.Content;
-#elif IOS
-using UIKit;
-#endif
-
 public partial class PlatformService
 {
-    public string GetDeviceId()
-    {
+    public string GetDeviceId() =>
 #if ANDROID
-        return Android.Provider.Settings.Secure.GetString(
-            Android.App.Application.Context.ContentResolver,
-            Android.Provider.Settings.Secure.AndroidId);
+        Android.Provider.Settings.Secure.GetString(...);
 #elif IOS
-        return UIDevice.CurrentDevice.IdentifierForVendor.AsString();
-#else
-        return "Unknown";
+        UIDevice.CurrentDevice.IdentifierForVendor.AsString();
 #endif
-    }
 }
 ```
 

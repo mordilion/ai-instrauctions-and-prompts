@@ -20,111 +20,15 @@
 
 ## Core Patterns
 
-### Server Component (Default)
-
-```typescript
-// app/users/page.tsx
-export default async function UsersPage() {
-  const users = await fetch('https://api.example.com/users').then(r => r.json())
-  
-  return (
-    <div>
-      <h1>Users</h1>
-      {users.map(user => <div key={user.id}>{user.name}</div>)}
-    </div>
-  )
-}
-```
-
-### Client Component
-
-```typescript
-// app/components/Counter.tsx
-'use client'  // Required for hooks
-
-import { useState } from 'react'
-
-export default function Counter() {
-  const [count, setCount] = useState(0)
-  return <button onClick={() => setCount(count + 1)}>Count: {count}</button>
-}
-```
-
-### Server Action
-
-```typescript
-// app/actions.ts
-'use server'
-
-export async function createUser(formData: FormData) {
-  const name = formData.get('name')
-  await db.user.create({ data: { name } })
-  revalidatePath('/users')
-}
-
-// app/users/page.tsx
-export default function CreateUserForm() {
-  return (
-    <form action={createUser}>
-      <input name="name" />
-      <button type="submit">Create</button>
-    </form>
-  )
-}
-```
-
-### Loading State
-
-```typescript
-// app/users/loading.tsx
-export default function Loading() {
-  return <div>Loading users...</div>
-}
-```
-
-### Error Boundary
-
-```typescript
-// app/users/error.tsx
-'use client'
-
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
-  return (
-    <div>
-      <h2>Error: {error.message}</h2>
-      <button onClick={reset}>Try again</button>
-    </div>
-  )
-}
-```
-
-### Dynamic Route
-
-```typescript
-// app/users/[id]/page.tsx
-export default async function UserPage({ params }: { params: { id: string } }) {
-  const user = await fetch(`https://api.example.com/users/${params.id}`).then(r => r.json())
-  return <div>{user.name}</div>
-}
-```
-
-### Route Handler
-
-```typescript
-// app/api/users/route.ts
-import { NextResponse } from 'next/server'
-
-export async function GET() {
-  const users = await db.user.findMany()
-  return NextResponse.json(users)
-}
-
-export async function POST(request: Request) {
-  const body = await request.json()
-  const user = await db.user.create({ data: body })
-  return NextResponse.json(user, { status: 201 })
-}
-```
+| Pattern | Example |
+|---------|---------|
+| **Server Component** | `export default async function Page() { const data = await fetch(...); return <div>...</div> }` |
+| **Client Component** | `'use client'; const [state, setState] = useState()` |
+| **Server Action** | `'use server'; export async function action(formData: FormData) { ... }` |
+| **Loading State** | `// loading.tsx: export default function Loading() { return ... }` |
+| **Error Boundary** | `// error.tsx: 'use client'; export default function Error({ error, reset }) { ... }` |
+| **Dynamic Route** | `// [id]/page.tsx: export default async function Page({ params }) { ... }` |
+| **Route Handler** | `// api/route.ts: export async function GET() { return NextResponse.json(...) }` |
 
 ## Common AI Mistakes
 
