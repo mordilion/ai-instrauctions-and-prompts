@@ -1,14 +1,19 @@
 # Swift Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for Swift projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect Swift version from `Package.swift` or Xcode project settings
 > **ALWAYS**: Match detected version in CI/CD and test configuration
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Use your team's workflow for branching and commits (adapt as needed)
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
 
 ## Tech Stack
 
@@ -73,59 +78,48 @@ test:
 
 ## Implementation Phases
 
-### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect Swift version from `Package.swift` or Xcode → Document in PROJECT_MEMORY.md
-3. Detect project type (iOS App/macOS App/SPM Package/Vapor)
-4. Analyze existing test targets
-5. Propose commit → Wait for user
+### Phase 1: Analysis
+
+**Objective**: Understand project structure and test requirements
+
+1. Detect Swift version from `Package.swift` or Xcode
+2. Identify project type (iOS App/macOS App/SPM Package/Vapor)
+3. Analyze existing test targets
+
+**Deliverable**: Testing strategy documented
 
 ### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/test-target`
 
-1. Create test target if missing (Xcode: File → New → Target → Unit Testing Bundle)
-2. For SPM projects, ensure `Package.swift` has test target:
-   ```swift
-   .testTarget(
-       name: "YourPackageTests",
-       dependencies: ["YourPackage"]
-   )
-   ```
-3. Configure code coverage in Xcode scheme or SPM
-4. Propose commit → Wait for user
+**Objective**: Set up test target and coverage
+
+1. Create test target if missing (Xcode or SPM)
+2. Configure code coverage in Xcode scheme or SPM
+3. Add/update CI/CD pipeline test step
+
+**Deliverable**: Tests can run locally and in CI/CD
 
 ### Phase 3: Test Structure
-**Branch**: `poc/test-establishing/project-skeleton`
 
-1. Create test directory structure:
-   ```
-   Tests/
-   ├── YourPackageTests/
-   │   ├── Unit/              # Unit tests
-   │   ├── Integration/       # Integration tests
-   │   └── Helpers/          # Test utilities
-   └── YourPackageUITests/    # UI tests (iOS/macOS only)
-   ```
-2. Implement base patterns:
-   - `BaseTestCase.swift`
-   - `MockDataFactory.swift`
-   - `TestHelpers.swift`
-   - If iOS: `BaseUITestCase.swift`
-3. Propose commit → Wait for user
+**Objective**: Establish test directory organization
 
-### Phase 4: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+1. Create test structure: `Tests/.../Unit/`, `Integration/`, `Helpers/`
+2. Create base test classes: `BaseTestCase.swift`, `MockDataFactory.swift`
 
-1. Read next untested component from STATUS-DETAILS.md
-2. Understand intent and behavior
-3. Write tests following patterns
-4. Run tests locally → Must pass
-5. If bugs found → Log to LOGIC_ANOMALIES.md (DON'T fix code)
-6. Update STATUS-DETAILS.md
-7. Propose commit: `feat(test): add tests for {Component}`
-8. Wait for user confirmation → Repeat for next component
+**Deliverable**: Test structure in place
+
+### Phase 4: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
+1. Understand component behavior
+2. Write tests (unit/integration/UI)
+3. Ensure tests pass
+4. Log bugs found (don't fix production code)
+
+**Continue until**: All critical components tested
 
 ## Test Patterns
 

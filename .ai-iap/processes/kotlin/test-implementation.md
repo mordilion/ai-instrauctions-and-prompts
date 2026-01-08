@@ -1,14 +1,19 @@
 # Kotlin Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for Kotlin projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect Kotlin version from `build.gradle.kts` or `pom.xml`
 > **ALWAYS**: Match detected version in Docker images, pipelines, and test configuration
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Use your team's workflow for branching and commits (adapt as needed)
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
 
 ## Tech Stack
 
@@ -84,79 +89,58 @@ test:
 
 ## Implementation Phases
 
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+
 ### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect Kotlin & JVM version from `build.gradle.kts` → Document in PROJECT_MEMORY.md
-3. Detect framework (Spring Boot/Ktor/Android/None)
-4. Choose test framework (JUnit 5 or Kotest)
-5. Propose commit → Wait for user
+**Objective**: Understand project structure and choose test framework
 
-### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/docker-infra`
+1. Detect Kotlin & JVM version from `build.gradle.kts`
+2. Identify framework (Spring Boot/Ktor/Android/None)
+3. Choose test framework (JUnit 5 or Kotest)
 
-1. Create `docker/Dockerfile.tests` with detected versions
-2. Create `docker/docker-compose.tests.yml`
-3. Merge CI/CD pipeline step (don't overwrite)
-4. Propose commit → Wait for user
+**Deliverable**: Testing strategy documented
+
+### Phase 2: Infrastructure (Optional)
+
+**Objective**: Set up test infrastructure (skip if using cloud CI/CD)
+
+1. Create Docker test files (if using Docker)
+2. Add/update CI/CD pipeline test step
+3. Configure test reporting
+
+**Deliverable**: Tests can run in CI/CD
 
 ### Phase 3: Framework Setup
-**Branch**: `poc/test-establishing/framework-setup`
 
-1. Add dependencies to `build.gradle.kts`:
-   ```kotlin
-   dependencies {
-       // JUnit 5 Option
-       testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
-       testImplementation("org.assertj:assertj-core:3.24.2")
-       
-       // Kotest Option (alternative)
-       // testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
-       // testImplementation("io.kotest:kotest-assertions-core:5.8.0")
-       
-       // Common
-       testImplementation("io.mockk:mockk:1.13.9")
-       testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-   }
-   
-   tasks.test {
-       useJUnitPlatform()
-   }
-   ```
+**Objective**: Install and configure test dependencies
+
+1. Add dependencies: JUnit 5/Kotest, MockK, Coroutines Test
 2. Configure JaCoCo for coverage
-3. Propose commit → Wait for user
+3. Set up test task configuration
+
+**Deliverable**: Test framework ready
 
 ### Phase 4: Test Structure
-**Branch**: `poc/test-establishing/project-skeleton`
 
-1. Create test directory structure:
-   ```
-   src/
-   ├── main/kotlin/com/company/project/
-   └── test/kotlin/com/company/project/
-       ├── unit/              # Unit tests
-       ├── integration/       # Integration tests
-       └── helpers/          # Test utilities
-   ```
-2. Implement base patterns:
-   - `AbstractUnitTest.kt`
-   - `AbstractIntegrationTest.kt`
-   - `TestDataFactory.kt`
-   - If Spring: `AbstractSpringTest.kt`
-3. Propose commit → Wait for user
+**Objective**: Establish test directory organization
 
-### Phase 5: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+1. Create test structure: `src/test/kotlin/.../unit/`, `integration/`, `helpers/`
+2. Create base test classes: `AbstractUnitTest.kt`, `TestDataFactory.kt`
 
-1. Read next untested component from STATUS-DETAILS.md
-2. Understand intent and behavior
-3. Write tests following patterns
-4. Run tests locally → Must pass
-5. If bugs found → Log to LOGIC_ANOMALIES.md (DON'T fix code)
-6. Update STATUS-DETAILS.md
-7. Propose commit: `feat(test): add tests for {Component}`
-8. Wait for user confirmation → Repeat for next component
+**Deliverable**: Test structure in place
+
+### Phase 5: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
+1. Understand component behavior
+2. Write tests (unit/integration)
+3. Ensure tests pass
+4. Log bugs found (don't fix production code)
+
+**Continue until**: All critical components tested
 
 ## Test Patterns
 

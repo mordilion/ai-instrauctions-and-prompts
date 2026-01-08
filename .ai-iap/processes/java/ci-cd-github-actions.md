@@ -17,22 +17,16 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
+## Workflow Adaptation
 
-> **Standard workflow for each phase**:
-> 1. Create branch: `git checkout -b ci/<phase-name>`
-> 2. Make changes according to phase requirements
-> 3. Commit: `git commit -m "ci: <description>"`
-> 4. Push: `git push origin ci/<phase-name>`
-> 5. Verify: Check CI/CD pipeline runs successfully
-
-Phases below reference this pattern instead of repeating it.
+> **IMPORTANT**: Phases below focus on OBJECTIVES. Use your team's workflow.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for examples.
 
 ---
 
 ## Phase 1: Basic CI Pipeline
 
-**Branch**: `ci/basic-pipeline`
+**Objective**: Establish foundational CI pipeline with build, lint, and test automation
 
 ### 1.1 Basic Build & Test Workflow
 
@@ -75,7 +69,7 @@ Phases below reference this pattern instead of repeating it.
 
 ## Phase 2: Code Quality & Security
 
-**Branch**: `ci/quality-security`
+**Objective**: Add code quality and security scanning to CI pipeline
 
 ### 2.1 Code Quality Analysis
 
@@ -125,7 +119,7 @@ updates:
 
 ## Phase 3: Deployment Pipeline
 
-**Branch**: `ci/deployment`
+**Objective**: Automate app deployment to relevant environments/platforms
 
 ### 3.1 Environment Configuration
 
@@ -196,7 +190,7 @@ mvn liquibase:update -Dliquibase.url=$DB_URL
 
 ## Phase 4: Advanced Features
 
-**Branch**: `ci/advanced`
+**Objective**: Add advanced CI/CD capabilities (integration tests, release automation)
 
 ### 4.1 Performance Testing
 

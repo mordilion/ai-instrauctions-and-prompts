@@ -1,14 +1,19 @@
 # Dart/Flutter Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for Dart/Flutter projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect Dart/Flutter version from `pubspec.yaml`
 > **ALWAYS**: Match detected version in Docker images, pipelines, and test configuration
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Use your team's workflow for branching and commits (adapt as needed)
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
 
 ## Tech Stack
 
@@ -88,81 +93,58 @@ test:
 
 ## Implementation Phases
 
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+
 ### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect Dart/Flutter version from `pubspec.yaml` → Document in PROJECT_MEMORY.md
-3. Detect state management (BLoC/Riverpod/GetX/Provider)
-4. Analyze existing test setup
-5. Propose commit → Wait for user
+**Objective**: Understand project structure and choose test approach
 
-### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/docker-infra`
+1. Detect Dart/Flutter version from `pubspec.yaml`
+2. Identify state management (BLoC/Riverpod/GetX/Provider)
+3. Analyze existing test setup
 
-1. Create `docker/Dockerfile.tests` with detected version
-2. Create `docker/docker-compose.tests.yml`
-3. Merge CI/CD pipeline step (don't overwrite)
-4. Propose commit → Wait for user
+**Deliverable**: Testing strategy documented
+
+### Phase 2: Infrastructure (Optional)
+
+**Objective**: Set up test infrastructure (skip if using cloud CI/CD)
+
+1. Create Docker test files (if using Docker)
+2. Add/update CI/CD pipeline test step
+3. Configure test reporting
+
+**Deliverable**: Tests can run in CI/CD
 
 ### Phase 3: Framework Setup
-**Branch**: `poc/test-establishing/framework-setup`
 
-1. Add dependencies to `pubspec.yaml`:
-   ```yaml
-   dev_dependencies:
-     flutter_test:
-       sdk: flutter
-     test: ^1.24.0
-     mockito: ^5.4.0
-     build_runner: ^2.4.0  # For mockito code generation
-     bloc_test: ^9.1.0     # If using BLoC
-     mocktail: ^1.0.0      # Alternative to mockito
-     integration_test:
-       sdk: flutter
-   ```
+**Objective**: Install and configure test dependencies
+
+1. Add to `pubspec.yaml`: `flutter_test`, `test`, `mockito`/`mocktail`, `bloc_test` (if using BLoC)
 2. Run `flutter pub get`
-3. Create test configuration files
-4. Propose commit → Wait for user
+3. Create test configuration
+
+**Deliverable**: Test framework ready
 
 ### Phase 4: Test Structure
-**Branch**: `poc/test-establishing/project-skeleton`
 
-1. Create test directory structure:
-   ```
-   test/
-   ├── unit/              # Unit tests
-   │   ├── models/
-   │   ├── services/
-   │   └── repositories/
-   ├── widget/            # Widget tests
-   │   ├── screens/
-   │   └── widgets/
-   ├── helpers/          # Test utilities
-   │   ├── test_helpers.dart
-   │   └── mock_data.dart
-   └── fixtures/         # Test data
-   
-   integration_test/
-   └── app_test.dart     # Integration tests
-   ```
-2. Implement base patterns:
-   - `test/helpers/test_helpers.dart`
-   - `test/helpers/mock_data.dart`
-   - `test/helpers/pump_app.dart` (Widget test helper)
-3. Propose commit → Wait for user
+**Objective**: Establish test directory organization
 
-### Phase 5: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+1. Create test directories: `test/unit/`, `test/widget/`, `test/helpers/`, `integration_test/`
+2. Create shared test utilities and mock data helpers
 
-1. Read next untested component from STATUS-DETAILS.md
-2. Understand intent and behavior
-3. Write tests following patterns
-4. Run tests locally → Must pass
-5. If bugs found → Log to LOGIC_ANOMALIES.md (DON'T fix code)
-6. Update STATUS-DETAILS.md
-7. Propose commit: `feat(test): add tests for {Component}`
-8. Wait for user confirmation → Repeat for next component
+**Deliverable**: Test structure in place
+
+### Phase 5: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
+1. Understand component behavior
+2. Write tests (unit/widget/integration)
+3. Ensure tests pass
+4. Log bugs found (don't fix production code)
+
+**Continue until**: All critical components tested
 
 ## Test Patterns
 

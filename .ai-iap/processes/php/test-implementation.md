@@ -1,14 +1,19 @@
 # PHP Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for PHP projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect PHP version from `composer.json` or `.php-version`
 > **ALWAYS**: Match detected version in Docker images, pipelines, and test configuration
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Use your team's workflow for branching and commits (adapt as needed)
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
 
 ## Tech Stack
 
@@ -104,90 +109,59 @@ test:
 
 ## Implementation Phases
 
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+
 ### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect PHP version from `composer.json` → Document in PROJECT_MEMORY.md
-3. Detect framework (Laravel/Symfony/WordPress/None)
-4. Analyze existing test setup
-5. Propose commit → Wait for user
+**Objective**: Understand project structure and test requirements
 
-### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/docker-infra`
+1. Detect PHP version from `composer.json`
+2. Identify framework (Laravel/Symfony/WordPress/None)
+3. Analyze existing test setup
 
-1. Create `docker/Dockerfile.tests` with detected version
-2. Create `docker/docker-compose.tests.yml`
-3. Merge CI/CD pipeline step (don't overwrite)
-4. Propose commit → Wait for user
+**Deliverable**: Testing strategy documented
+
+### Phase 2: Infrastructure (Optional)
+
+**Objective**: Set up test infrastructure (skip if using cloud CI/CD)
+
+1. Create Docker test files (if using Docker)
+2. Add/update CI/CD pipeline test step
+3. Configure test reporting
+
+**Deliverable**: Tests can run in CI/CD
 
 ### Phase 3: Framework Setup
-**Branch**: `poc/test-establishing/framework-setup`
 
-1. Add dependencies to `composer.json`:
-   ```json
-   {
-     "require-dev": {
-       "phpunit/phpunit": "^10.5",
-       "mockery/mockery": "^1.6",
-       "fakerphp/faker": "^1.23"
-     }
-   }
-   ```
-2. Create `phpunit.xml`:
-   ```xml
-   <?xml version="1.0" encoding="UTF-8"?>
-   <phpunit bootstrap="vendor/autoload.php"
-            colors="true"
-            stopOnFailure="false">
-       <testsuites>
-           <testsuite name="Unit">
-               <directory>tests/Unit</directory>
-           </testsuite>
-           <testsuite name="Integration">
-               <directory>tests/Integration</directory>
-           </testsuite>
-       </testsuites>
-       <coverage>
-           <include>
-               <directory suffix=".php">src</directory>
-           </include>
-       </coverage>
-   </phpunit>
-   ```
+**Objective**: Install and configure PHPUnit
+
+1. Add dependencies: PHPUnit, Mockery, Faker
+2. Create `phpunit.xml` configuration
 3. Run `composer install`
-4. Propose commit → Wait for user
+
+**Deliverable**: Test framework ready
 
 ### Phase 4: Test Structure
-**Branch**: `poc/test-establishing/project-skeleton`
 
-1. Create test directory structure:
-   ```
-   tests/
-   ├── Unit/              # Unit tests
-   ├── Integration/       # Integration tests
-   ├── Feature/          # Feature tests (Laravel)
-   └── Helpers/          # Test utilities
-       ├── TestCase.php
-       └── Factories/
-   ```
-2. Implement base patterns:
-   - `tests/Helpers/TestCase.php`
-   - `tests/Helpers/Factories/UserFactory.php`
-   - If Laravel: Extend framework's TestCase
-3. Propose commit → Wait for user
+**Objective**: Establish test directory organization
 
-### Phase 5: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+1. Create test structure: `tests/Unit/`, `Integration/`, `Helpers/`
+2. Create base test class: `TestCase.php`
+3. Set up test helpers/factories
 
-1. Read next untested component from STATUS-DETAILS.md
-2. Understand intent and behavior
-3. Write tests following patterns
-4. Run tests locally → Must pass
-5. If bugs found → Log to LOGIC_ANOMALIES.md (DON'T fix code)
-6. Update STATUS-DETAILS.md
-7. Propose commit: `feat(test): add tests for {Component}`
-8. Wait for user confirmation → Repeat for next component
+**Deliverable**: Test structure in place
+
+### Phase 5: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
+1. Understand component behavior
+2. Write tests (unit/integration/feature)
+3. Ensure tests pass
+4. Log bugs found (don't fix production code)
+
+**Continue until**: All critical components tested
 
 ## Test Patterns
 
