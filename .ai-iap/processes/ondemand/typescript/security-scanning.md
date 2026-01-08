@@ -1,288 +1,236 @@
-# Security Scanning Setup (TypeScript)
+# TypeScript Security Scanning - Copy This Prompt
 
-> **Goal**: Establish automated security vulnerability scanning in existing TypeScript projects using SAST/DAST tools
-
-## Phase 1: Choose Security Scanning Tools
-
-> **ALWAYS**: Use at least one SAST (Static) tool
-> **ALWAYS**: Run security scans in CI/CD pipeline
-> **NEVER**: Skip dependency vulnerability scanning
-> **NEVER**: Ignore high/critical vulnerabilities
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **npm audit** ⭐ | Dependency | Built-in, free | `npm audit` |
-| **Snyk** ⭐ | SAST + Dependencies | Free for open-source | `npm i -g snyk` |
-| **ESLint Security Plugin** | SAST | Code patterns | `npm i -D eslint-plugin-security` |
-| **SonarQube/SonarCloud** | SAST | Comprehensive | Cloud or self-hosted |
-| **OWASP Dependency-Check** | Dependencies | Java/JS/etc | CLI tool |
-| **Semgrep** | SAST | Custom rules | `pip install semgrep` |
+> **Type**: One-time setup process  
+> **When to use**: Setting up security scanning for TypeScript/Node.js project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Dependency Scanning Setup
+## 📋 Complete Self-Contained Prompt
 
-### npm audit (Built-in)
-
-```json
-// package.json
-{
-  "scripts": {
-    "security:audit": "npm audit --audit-level=moderate",
-    "security:audit:fix": "npm audit fix",
-    "security:audit:ci": "npm audit --audit-level=high --production"
-  }
-}
 ```
+========================================
+TYPESCRIPT SECURITY SCANNING
+========================================
 
-### Snyk Setup
+CONTEXT:
+You are implementing security scanning for a TypeScript/Node.js project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS scan dependencies for vulnerabilities (npm audit)
+- ALWAYS integrate security checks in CI
+- NEVER ignore critical vulnerabilities
+- Use SAST tools (ESLint security + Snyk)
+
+========================================
+PHASE 1 - DEPENDENCY SCANNING
+========================================
+
+Use npm audit:
 
 ```bash
-# Install
-npm install -g snyk
+# Check for vulnerabilities
+npm audit
 
-# Authenticate
-snyk auth
+# Auto-fix
+npm audit fix
 
-# Test project
-snyk test
-
-# Monitor (CI/CD)
-snyk monitor
+# For production only
+npm audit --production
 ```
 
-**Configuration** (`.snyk`):
+Add to .github/workflows/security.yml:
 ```yaml
-# Snyk configuration
-version: v1.22.0
-ignore:
-  'SNYK-JS-AXIOS-1234567':
-    - '*':
-        reason: 'False positive - not exploitable in our context'
-        expires: '2025-12-31'
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  push:
+    branches: [ main ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Security audit
+      run: npm audit --audit-level=high || exit 1
 ```
 
----
+Deliverable: Dependency scanning active
 
-## Phase 3: SAST Configuration
+========================================
+PHASE 2 - SAST SCANNING
+========================================
 
-### ESLint Security Plugin
+Install ESLint security plugins:
 
 ```bash
-npm install --save-dev eslint-plugin-security eslint-plugin-no-secrets
+npm install --save-dev eslint-plugin-security @typescript-eslint/eslint-plugin
 ```
 
-**Configuration** (`.eslintrc.json`):
+Update .eslintrc.json:
 ```json
 {
-  "extends": ["plugin:security/recommended"],
-  "plugins": ["security", "no-secrets"],
+  "plugins": ["security", "@typescript-eslint"],
+  "extends": [
+    "plugin:security/recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
   "rules": {
     "security/detect-object-injection": "warn",
     "security/detect-non-literal-regexp": "warn",
-    "security/detect-unsafe-regex": "error",
-    "security/detect-buffer-noassert": "error",
-    "security/detect-child-process": "warn",
-    "security/detect-disable-mustache-escape": "error",
-    "security/detect-eval-with-expression": "error",
-    "security/detect-no-csrf-before-method-override": "error",
-    "security/detect-non-literal-fs-filename": "warn",
-    "security/detect-non-literal-require": "warn",
-    "security/detect-possible-timing-attacks": "warn",
-    "security/detect-pseudoRandomBytes": "error",
-    "no-secrets/no-secrets": "error"
+    "security/detect-eval-with-expression": "error"
   }
 }
 ```
 
-### SonarQube Setup (Optional)
+Use Snyk:
+```yaml
+    - name: Run Snyk
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+```
+
+Use SonarQube/SonarCloud:
+```yaml
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+Deliverable: SAST scanning configured
+
+========================================
+PHASE 3 - SECRETS DETECTION
+========================================
+
+Add to GitHub Actions:
 
 ```yaml
-# sonar-project.properties
-sonar.projectKey=my-typescript-project
-sonar.projectName=My TypeScript Project
-sonar.sources=src
-sonar.tests=tests
-sonar.typescript.lcov.reportPaths=coverage/lcov.info
-sonar.exclusions=**/node_modules/**,**/dist/**
+    - name: Scan for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+```
+
+Deliverable: Secrets scanning active
+
+========================================
+PHASE 4 - CODE SECURITY BEST PRACTICES
+========================================
+
+Implement security best practices:
+
+```typescript
+// Use parameterized queries (TypeORM)
+import { getRepository } from 'typeorm';
+
+const user = await getRepository(User).findOne({ 
+  where: { email } 
+});
+
+// Validate input
+import { IsString, Length, Matches } from 'class-validator';
+
+class UserDTO {
+  @IsString()
+  @Length(3, 50)
+  @Matches(/^[a-zA-Z0-9]+$/)
+  username: string;
+}
+
+// Hash passwords
+import bcrypt from 'bcrypt';
+
+const hashedPassword = await bcrypt.hash(password, 12);
+const isValid = await bcrypt.compare(inputPassword, hashedPassword);
+
+// Prevent XSS
+import DOMPurify from 'isomorphic-dompurify';
+
+const clean = DOMPurify.sanitize(userInput);
+
+// Use helmet for security headers
+import helmet from 'helmet';
+
+app.use(helmet());
+
+// Rate limiting
+import rateLimit from 'express-rate-limit';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use(limiter);
+
+// CSRF protection
+import csrf from 'csurf';
+
+app.use(csrf({ cookie: true }));
+
+// Use HTTPS
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+```
+
+Deliverable: Security best practices implemented
+
+========================================
+BEST PRACTICES
+========================================
+
+- Run npm audit regularly
+- Use ESLint security plugin
+- Scan with Snyk for vulnerabilities
+- Use parameterized queries (TypeORM/Prisma)
+- Validate input with class-validator
+- Hash passwords with bcrypt
+- Sanitize output to prevent XSS
+- Use helmet for security headers
+- Implement rate limiting
+- Use CSRF protection
+- Enforce HTTPS
+- Keep dependencies up to date
+
+========================================
+EXECUTION
+========================================
+
+START: Set up npm audit (Phase 1)
+CONTINUE: Add ESLint security (Phase 2)
+CONTINUE: Add secrets detection (Phase 3)
+CONTINUE: Implement security practices (Phase 4)
+REMEMBER: Never ignore critical vulnerabilities
 ```
 
 ---
 
-## Phase 4: CI/CD Integration
+## Quick Reference
 
-### GitHub Actions
-
-```yaml
-# .github/workflows/security.yml
-name: Security Scanning
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-  schedule:
-    - cron: '0 0 * * 1' # Weekly
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run npm audit
-        run: npm audit --audit-level=high --production
-        continue-on-error: true
-      
-      - name: Run Snyk
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-      
-      - name: Run ESLint Security
-        run: npm run lint
-      
-      - name: Upload Snyk results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: snyk.sarif
-```
-
----
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **npm audit finds too many issues** | Start with `--audit-level=high`, fix critical first |
-| **Snyk rate limiting** | Use `SNYK_TOKEN`, authenticate properly |
-| **False positives** | Add to `.snyk` ignore file with expiration |
-| **CI fails on vulnerabilities** | Use `continue-on-error: true` initially, then enforce |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Scan dependencies before every release
-> **ALWAYS**: Fix high/critical vulnerabilities within 7 days
-> **ALWAYS**: Review and update dependencies monthly
-> **ALWAYS**: Use lock files (`package-lock.json`)
-> **NEVER**: Commit secrets (use `.env`, environment variables)
-> **NEVER**: Disable security checks without documentation
-> **NEVER**: Use outdated dependencies in production
-
----
-
-## AI Self-Check
-
-- [ ] npm audit configured in package.json?
-- [ ] Snyk or equivalent SAST tool configured?
-- [ ] ESLint security plugin installed?
-- [ ] Security scanning in CI/CD pipeline?
-- [ ] High/critical vulnerabilities addressed?
-- [ ] Lock files committed?
-- [ ] Secrets excluded from repository?
-- [ ] Weekly/monthly security scans scheduled?
-- [ ] False positives documented?
-- [ ] Team trained on vulnerability triage?
-
----
-
-## Security Checklist
-
-**Dependencies:**
-- [ ] `npm audit` passing (high/critical only)
-- [ ] Snyk test passing
-- [ ] All dependencies up-to-date (within 6 months)
-
-**Code:**
-- [ ] ESLint security rules enabled
-- [ ] No hardcoded secrets
-- [ ] Input validation on all user inputs
-- [ ] SQL injection prevention (parameterized queries)
-- [ ] XSS prevention (sanitize outputs)
-
-**CI/CD:**
-- [ ] Security scans on every PR
-- [ ] Weekly scheduled scans
-- [ ] Fail build on high/critical issues
-
----
-
-## Tools Comparison
-
-| Tool | Cost | Coverage | CI/CD | Best For |
-|------|------|----------|-------|----------|
-| npm audit | Free | Dependencies | ✅ | Basic scanning |
-| Snyk | Free/Paid | Deps + Code | ✅ | Comprehensive |
-| ESLint Security | Free | Code patterns | ✅ | Code quality |
-| SonarQube | Free/Paid | Comprehensive | ✅ | Enterprise |
-| Semgrep | Free/Paid | Custom rules | ✅ | Advanced |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up security vulnerability scanning
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring security vulnerability scanning for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS scan dependencies for known vulnerabilities
-- ALWAYS integrate with CI/CD pipeline
-- ALWAYS configure to fail on high/critical vulnerabilities
-- ALWAYS keep scanning tools updated
-
-IMPLEMENTATION STEPS:
-
-1. CHOOSE SCANNING TOOLS:
-   Select tools for the language (see Tech Stack section):
-   - Dependency scanning (npm audit, safety, etc.)
-   - SAST (CodeQL, Snyk, SonarQube)
-   - Container scanning (Trivy, Grype)
-
-2. CONFIGURE DEPENDENCY SCANNING:
-   Enable dependency vulnerability scanning
-   Set severity thresholds
-   Configure auto-fix for known vulnerabilities
-
-3. CONFIGURE SAST:
-   Set up static application security testing
-   Configure scan rules
-   Integrate with CI/CD
-
-4. CONFIGURE CONTAINER SCANNING:
-   Scan Docker images for vulnerabilities
-   Fail builds on critical issues
-
-5. SET UP MONITORING:
-   Configure security alerts
-   Set up regular scanning schedule
-   Create remediation workflow
-
-DELIVERABLE:
-- Dependency scanning active
-- SAST integrated
-- Container scanning configured
-- Security alerts enabled
-
-START: Choose scanning tools and configure dependency scanning.
-```
+**What you get**: Automated security scanning with npm audit and ESLint  
+**Time**: 2 hours  
+**Output**: Security CI workflow, SAST integration, best practices

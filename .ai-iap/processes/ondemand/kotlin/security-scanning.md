@@ -1,307 +1,192 @@
-# Security Scanning Setup (Kotlin)
+# Kotlin Security Scanning - Copy This Prompt
 
-> **Goal**: Establish automated security vulnerability scanning in existing Kotlin projects using SAST/DAST tools
-
-## Phase 1: Choose Security Scanning Tools
-
-> **ALWAYS**: Use at least one SAST (Static) tool
-> **ALWAYS**: Run security scans in CI/CD pipeline
-> **NEVER**: Skip dependency vulnerability scanning
-> **NEVER**: Ignore high/critical vulnerabilities
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **OWASP Dependency-Check** ⭐ | Dependency | Free, comprehensive | Gradle plugin |
-| **Snyk** ⭐ | SAST + Dependencies | Free for open-source | CLI or plugin |
-| **Detekt** ⭐ | SAST | Code quality + security | Gradle plugin |
-| **SonarQube/SonarCloud** | SAST | Comprehensive | Cloud or self-hosted |
-| **Semgrep** | SAST | Custom rules | `pip install semgrep` |
+> **Type**: One-time setup process  
+> **When to use**: Setting up security scanning for Kotlin project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Dependency Scanning Setup
+## 📋 Complete Self-Contained Prompt
 
-### OWASP Dependency-Check (Gradle)
+```
+========================================
+KOTLIN SECURITY SCANNING
+========================================
+
+CONTEXT:
+You are implementing security scanning for a Kotlin project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS scan dependencies for vulnerabilities
+- ALWAYS integrate security checks in CI
+- NEVER ignore critical vulnerabilities
+- Use SAST tools (detekt + OWASP Dependency-Check + Snyk)
+
+========================================
+PHASE 1 - DEPENDENCY SCANNING
+========================================
+
+Add OWASP Dependency-Check to build.gradle.kts:
 
 ```kotlin
-// build.gradle.kts
 plugins {
-    id("org.owasp.dependencycheck") version "9.0.0"
+    id("org.owasp.dependencycheck") version "9.0.7"
 }
 
 dependencyCheck {
     failBuildOnCVSS = 7.0f
-    suppressionFile = "dependency-check-suppressions.xml"
-    analyzers.apply {
-        assemblyEnabled = false
-    }
 }
 ```
 
-**Suppressions** (`dependency-check-suppressions.xml`):
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
-  <suppress>
-    <notes>False positive - not exploitable in our context</notes>
-    <cve>CVE-2023-12345</cve>
-  </suppress>
-</suppressions>
-```
-
-### Snyk Setup
-
+Run:
 ```bash
-# Install
-npm install -g snyk
-
-# Authenticate
-snyk auth
-
-# Test Gradle project
-snyk test --file=build.gradle.kts
-
-# Monitor (CI/CD)
-snyk monitor
+./gradlew dependencyCheckAnalyze
 ```
 
----
+Add to .github/workflows/security.yml:
+```yaml
+name: Security Scan
 
-## Phase 3: SAST Configuration
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  push:
+    branches: [ main ]
 
-### Detekt with Security Rules
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+    
+    - name: Dependency Check
+      run: ./gradlew dependencyCheckAnalyze
+```
+
+Deliverable: Dependency scanning active
+
+========================================
+PHASE 2 - SAST SCANNING
+========================================
+
+Configure detekt with security rules in build.gradle.kts:
 
 ```kotlin
-// build.gradle.kts
-plugins {
-    id("io.gitlab.arturbosch.detekt") version "1.23.0"
-}
-
 detekt {
     buildUponDefaultConfig = true
-    allRules = false
-    config.setFrom("$projectDir/detekt.yml")
+    config.setFrom("$projectDir/config/detekt.yml")
 }
 
 dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.0")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.4")
 }
 ```
 
-**Configuration** (`detekt.yml`):
+Use Snyk:
 ```yaml
-potential-bugs:
-  active: true
-  UnsafeCast:
-    active: true
-  UnsafeCallOnNullableType:
-    active: true
-
-security:
-  active: true
-  HardcodedPassword:
-    active: true
-    ignoreVariableNames: ['mockPassword', 'testPassword']
+    - name: Run Snyk
+      uses: snyk/actions/gradle@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
 ```
 
-### Semgrep
+Deliverable: SAST scanning configured
 
-```bash
-# Install
-pip install semgrep
+========================================
+PHASE 3 - SECRETS DETECTION
+========================================
 
-# Run with Kotlin security rules
-semgrep --config=p/kotlin src/
-
-# CI mode
-semgrep ci
-```
-
----
-
-## Phase 4: CI/CD Integration
-
-### GitHub Actions
+Add to GitHub Actions:
 
 ```yaml
-# .github/workflows/security.yml
-name: Security Scanning
+    - name: Scan for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+```
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-  schedule:
-    - cron: '0 0 * * 1' # Weekly
+Deliverable: Secrets scanning active
 
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version-file: '.java-version'
-          cache: 'gradle'
-      
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-      
-      - name: Run OWASP Dependency-Check
-        run: ./gradlew dependencyCheckAnalyze
-        continue-on-error: true
-      
-      - name: Run Detekt
-        run: ./gradlew detekt
-      
-      - name: Run Snyk
-        uses: snyk/actions/gradle@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-      
-      - name: Upload Dependency-Check report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dependency-check-report
-          path: build/reports/dependency-check-report.html
-      
-      - name: Upload Detekt report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: detekt-report
-          path: build/reports/detekt/
+========================================
+PHASE 4 - CODE SECURITY BEST PRACTICES
+========================================
+
+Implement security best practices:
+
+```kotlin
+// Use parameterized queries (Exposed)
+import org.jetbrains.exposed.sql.select
+
+val user = Users.select { Users.email eq email }.singleOrNull()
+
+// Validate input
+import javax.validation.constraints.*
+
+data class UserDTO(
+    @field:NotBlank
+    @field:Size(min = 3, max = 50)
+    @field:Pattern(regexp = "^[a-zA-Z0-9]+$")
+    val username: String
+)
+
+// Hash passwords
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+
+val encoder = BCryptPasswordEncoder()
+val hashedPassword = encoder.encode(password)
+
+// Prevent XSS
+import org.owasp.encoder.Encode
+
+val safe = Encode.forHtml(userInput)
+
+// Use HTTPS (Ktor)
+import io.ktor.server.application.*
+import io.ktor.server.plugins.httpsredirect.*
+
+fun Application.module() {
+    install(HttpsRedirect)
+}
+```
+
+Deliverable: Security best practices implemented
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use OWASP Dependency-Check
+- Configure detekt for security rules
+- Use Snyk for vulnerability detection
+- Use parameterized queries (Exposed/JPA)
+- Validate input with Bean Validation
+- Hash passwords with BCrypt
+- Sanitize output to prevent XSS
+- Enforce HTTPS
+- Keep dependencies up to date
+
+========================================
+EXECUTION
+========================================
+
+START: Set up OWASP Dependency-Check (Phase 1)
+CONTINUE: Configure detekt (Phase 2)
+CONTINUE: Add secrets detection (Phase 3)
+CONTINUE: Implement security practices (Phase 4)
+REMEMBER: Never ignore critical vulnerabilities
 ```
 
 ---
 
-## Troubleshooting
+## Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| **Dependency-Check slow** | Cache NVD database, use `--noupdate` locally |
-| **Detekt false positives** | Add to `detekt.yml` ignore list with justification |
-| **Snyk authentication fails** | Use `snyk auth` or set `SNYK_TOKEN` |
-| **CI fails on vulnerabilities** | Use `continue-on-error: true` initially, then enforce |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Scan dependencies before every release
-> **ALWAYS**: Fix high/critical vulnerabilities within 7 days
-> **ALWAYS**: Use latest stable Kotlin version
-> **ALWAYS**: Update dependencies monthly
-> **NEVER**: Commit secrets (use environment variables, vault)
-> **NEVER**: Disable security checks without documentation
-> **NEVER**: Use outdated dependencies in production
-
----
-
-## AI Self-Check
-
-- [ ] OWASP Dependency-Check or Snyk configured?
-- [ ] Detekt with security rules installed?
-- [ ] Security scanning in CI/CD pipeline?
-- [ ] High/critical vulnerabilities addressed?
-- [ ] Suppressions documented with justification?
-- [ ] Weekly/monthly security scans scheduled?
-- [ ] Secrets excluded from repository?
-- [ ] Team trained on vulnerability triage?
-- [ ] Kotlin version up-to-date?
-- [ ] Dependencies updated regularly?
-
----
-
-## Security Checklist
-
-**Dependencies:**
-- [ ] OWASP Dependency-Check passing (CVSS < 7)
-- [ ] Snyk test passing
-- [ ] All dependencies up-to-date (within 6 months)
-
-**Code:**
-- [ ] Detekt security rules enabled
-- [ ] No hardcoded secrets
-- [ ] Input validation on all user inputs
-- [ ] SQL injection prevention (parameterized queries, Exposed ORM)
-- [ ] Null safety enforced
-
-**CI/CD:**
-- [ ] Security scans on every PR
-- [ ] Weekly scheduled scans
-- [ ] Fail build on high/critical issues
-
----
-
-## Tools Comparison
-
-| Tool | Cost | Coverage | CI/CD | Best For |
-|------|------|----------|-------|----------|
-| OWASP Dependency-Check | Free | Dependencies | ✅ | Basic scanning |
-| Snyk | Free/Paid | Deps + Code | ✅ | Comprehensive |
-| Detekt | Free | Code patterns | ✅ | Static analysis |
-| SonarQube | Free/Paid | Comprehensive | ✅ | Enterprise |
-| Semgrep | Free/Paid | Custom rules | ✅ | Advanced |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up security vulnerability scanning
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring security vulnerability scanning for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS scan dependencies for known vulnerabilities
-- ALWAYS integrate with CI/CD pipeline
-- ALWAYS configure to fail on high/critical vulnerabilities
-- ALWAYS keep scanning tools updated
-
-IMPLEMENTATION STEPS:
-
-1. CHOOSE SCANNING TOOLS:
-   Select tools for the language (see Tech Stack section):
-   - Dependency scanning (npm audit, safety, etc.)
-   - SAST (CodeQL, Snyk, SonarQube)
-   - Container scanning (Trivy, Grype)
-
-2. CONFIGURE DEPENDENCY SCANNING:
-   Enable dependency vulnerability scanning
-   Set severity thresholds
-   Configure auto-fix for known vulnerabilities
-
-3. CONFIGURE SAST:
-   Set up static application security testing
-   Configure scan rules
-   Integrate with CI/CD
-
-4. CONFIGURE CONTAINER SCANNING:
-   Scan Docker images for vulnerabilities
-   Fail builds on critical issues
-
-5. SET UP MONITORING:
-   Configure security alerts
-   Set up regular scanning schedule
-   Create remediation workflow
-
-DELIVERABLE:
-- Dependency scanning active
-- SAST integrated
-- Container scanning configured
-- Security alerts enabled
-
-START: Choose scanning tools and configure dependency scanning.
-```
+**What you get**: Automated security scanning with OWASP and detekt  
+**Time**: 2 hours  
+**Output**: Security CI workflow, SAST integration, best practices

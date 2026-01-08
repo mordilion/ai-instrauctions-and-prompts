@@ -1,303 +1,219 @@
-# Security Scanning Setup (Swift)
+# Swift Security Scanning - Copy This Prompt
 
-> **Goal**: Establish automated security vulnerability scanning in existing Swift projects using SAST/DAST tools
-
-## Phase 1: Choose Security Scanning Tools
-
-> **ALWAYS**: Use at least one SAST (Static) tool
-> **ALWAYS**: Run security scans in CI/CD pipeline
-> **NEVER**: Skip dependency vulnerability scanning
-> **NEVER**: Ignore high/critical vulnerabilities
-
-### Recommended Tools
-
-| Tool | Type | Use Case | Setup |
-|------|------|----------|-------|
-| **Snyk** ⭐ | SAST + Dependencies | Free for open-source | CLI or Xcode plugin |
-| **SwiftLint Security** ⭐ | SAST | Code patterns | CocoaPods/SPM |
-| **MobSF** | Dynamic | iOS app analysis | Docker |
-| **SonarQube/SonarCloud** | SAST | Comprehensive | Cloud or self-hosted |
-| **Semgrep** | SAST | Custom rules | `pip install semgrep` |
+> **Type**: One-time setup process  
+> **When to use**: Setting up security scanning for Swift project  
+> **Instructions**: Copy the complete prompt below and paste into your AI tool
 
 ---
 
-## Phase 2: Dependency Scanning Setup
+## 📋 Complete Self-Contained Prompt
 
-### Snyk Setup
+```
+========================================
+SWIFT SECURITY SCANNING
+========================================
+
+CONTEXT:
+You are implementing security scanning for a Swift project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS scan dependencies for vulnerabilities
+- ALWAYS integrate security checks in CI
+- NEVER ignore critical vulnerabilities
+- Use SAST tools (SwiftLint + Snyk)
+
+========================================
+PHASE 1 - DEPENDENCY SCANNING
+========================================
+
+For CocoaPods projects:
 
 ```bash
-# Install
-npm install -g snyk
+# Install cocoapods-check
+gem install cocoapods-check
 
-# Authenticate
-snyk auth
-
-# Test Swift Package Manager project
-snyk test --file=Package.swift
-
-# Test CocoaPods project
-snyk test --file=Podfile
-
-# Monitor (CI/CD)
-snyk monitor
+# Check for vulnerabilities
+pod check
 ```
 
-**Configuration** (`.snyk`):
+For SPM projects, use Snyk:
+```bash
+snyk test --all-projects
+```
+
+Add to .github/workflows/security.yml:
 ```yaml
-version: v1.25.0
-ignore:
-  SNYK-SWIFT-SWIFT-12345:
-    - '*':
-        reason: 'Not exploitable in our use case'
-        expires: '2025-12-31'
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  push:
+    branches: [ main ]
+
+jobs:
+  security:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Snyk
+      run: npm install -g snyk
+    
+    - name: Authenticate Snyk
+      run: snyk auth ${{ secrets.SNYK_TOKEN }}
+    
+    - name: Scan dependencies
+      run: snyk test --all-projects --severity-threshold=high
 ```
 
-### Manual Dependency Audit
+Deliverable: Dependency scanning active
 
-```bash
-# Check for outdated Swift packages
-swift package update --dry-run
+========================================
+PHASE 2 - SAST SCANNING
+========================================
 
-# List dependencies
-swift package show-dependencies
+Configure SwiftLint with security rules:
 
-# CocoaPods outdated check
-pod outdated
-```
-
----
-
-## Phase 3: SAST Configuration
-
-### SwiftLint with Security Rules
-
-```ruby
-# Podfile
-pod 'SwiftLint'
-```
-
-**Configuration** (`.swiftlint.yml`):
+Create .swiftlint.yml:
 ```yaml
 opt_in_rules:
   - force_unwrapping
   - implicitly_unwrapped_optional
   - weak_delegate
-  - unowned_variable_capture
-  
-disabled_rules:
-  - line_length  # Adjust as needed
 
 excluded:
   - Pods
-  - Tests
+  - Build
 
 force_unwrapping:
   severity: error
 
-weak_delegate:
+implicitly_unwrapped_optional:
   severity: warning
 ```
 
-### Semgrep
-
+Add to Xcode Run Script:
 ```bash
-# Install
-pip install semgrep
-
-# Run with Swift security rules
-semgrep --config=p/swift src/
-
-# CI mode
-semgrep ci
+if which swiftlint >/dev/null; then
+  swiftlint --strict
+else
+  echo "error: SwiftLint not installed"
+  exit 1
+fi
 ```
 
-**Configuration** (`.semgrep.yml`):
+Use Snyk Code for SAST:
 ```yaml
-rules:
-  - id: hardcoded-api-key
-    pattern: let apiKey = "..."
-    message: Hardcoded API key detected
-    severity: ERROR
-    languages: [swift]
+    - name: Run Snyk Code
+      uses: snyk/actions/swift@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
 ```
 
----
+Deliverable: SAST scanning configured
 
-## Phase 4: CI/CD Integration
+========================================
+PHASE 3 - SECRETS DETECTION
+========================================
 
-### GitHub Actions
+Add to GitHub Actions:
 
 ```yaml
-# .github/workflows/security.yml
-name: Security Scanning
+    - name: Scan for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+```
 
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-  schedule:
-    - cron: '0 0 * * 1' # Weekly
+Deliverable: Secrets scanning active
 
-jobs:
-  security-scan:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version-file: '.xcode-version'
-      
-      - name: Install SwiftLint
-        run: brew install swiftlint
-      
-      - name: Run SwiftLint
-        run: swiftlint lint --reporter json > swiftlint-report.json
-        continue-on-error: true
-      
-      - name: Run Snyk
-        run: |
-          npm install -g snyk
-          snyk auth ${{ secrets.SNYK_TOKEN }}
-          snyk test --file=Package.swift --severity-threshold=high
-        continue-on-error: true
-      
-      - name: Check for sensitive data
-        run: |
-          # Search for potential secrets
-          grep -r "api.*key" --include="*.swift" . || true
-          grep -r "password.*=" --include="*.swift" . || true
-      
-      - name: Upload SwiftLint report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: swiftlint-report
-          path: swiftlint-report.json
+========================================
+PHASE 4 - CODE SECURITY BEST PRACTICES
+========================================
+
+Implement security best practices:
+
+```swift
+// Use Keychain for sensitive data
+import Security
+
+func saveToKeychain(key: String, data: Data) {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrAccount as String: key,
+        kSecValueData as String: data
+    ]
+    SecItemAdd(query as CFDictionary, nil)
+}
+
+// Validate input
+func validateUsername(_ username: String) -> Bool {
+    let pattern = "^[a-zA-Z0-9]{3,50}$"
+    let regex = try? NSRegularExpression(pattern: pattern)
+    return regex?.firstMatch(in: username, range: NSRange(username.startIndex..., in: username)) != nil
+}
+
+// Use CryptoKit for hashing
+import CryptoKit
+
+let hash = SHA256.hash(data: data)
+
+// Prevent force unwrapping
+guard let user = user else { return }
+
+// Use HTTPS only
+let url = URL(string: "https://api.example.com")!
+
+// Certificate pinning
+let session = URLSession(configuration: .default, 
+                        delegate: self, 
+                        delegateQueue: nil)
+
+// Implement URLSessionDelegate
+func urlSession(_ session: URLSession, 
+               didReceive challenge: URLAuthenticationChallenge,
+               completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    // Implement certificate pinning
+}
+```
+
+Deliverable: Security best practices implemented
+
+========================================
+BEST PRACTICES
+========================================
+
+- Use Snyk for dependency scanning
+- Configure SwiftLint with security rules
+- Scan for secrets in commits
+- Use Keychain for sensitive data
+- Validate all user input
+- Use CryptoKit for cryptography
+- Avoid force unwrapping
+- Implement certificate pinning
+- Use HTTPS only
+- Keep dependencies up to date
+
+========================================
+EXECUTION
+========================================
+
+START: Set up dependency scanning (Phase 1)
+CONTINUE: Configure SwiftLint (Phase 2)
+CONTINUE: Add secrets detection (Phase 3)
+CONTINUE: Implement security practices (Phase 4)
+REMEMBER: Never ignore critical vulnerabilities
 ```
 
 ---
 
-## Troubleshooting
+## Quick Reference
 
-| Issue | Solution |
-|-------|----------|
-| **SwiftLint false positives** | Add to `.swiftlint.yml` disabled_rules or excluded paths |
-| **Snyk authentication fails** | Use `snyk auth` or set `SNYK_TOKEN` |
-| **Xcode version mismatch** | Pin Xcode version in `.xcode-version` |
-| **CI fails on vulnerabilities** | Use `continue-on-error: true` initially, then enforce |
-
----
-
-## Best Practices
-
-> **ALWAYS**: Scan dependencies before every release
-> **ALWAYS**: Fix high/critical vulnerabilities within 7 days
-> **ALWAYS**: Use latest stable Swift version
-> **ALWAYS**: Update dependencies monthly
-> **NEVER**: Commit secrets (use Keychain, environment variables)
-> **NEVER**: Force unwrap optionals without validation
-> **NEVER**: Use outdated dependencies in production
-
----
-
-## AI Self-Check
-
-- [ ] Snyk or equivalent dependency scanner configured?
-- [ ] SwiftLint with security rules installed?
-- [ ] Security scanning in CI/CD pipeline?
-- [ ] High/critical vulnerabilities addressed?
-- [ ] No hardcoded secrets in codebase?
-- [ ] Weekly/monthly security scans scheduled?
-- [ ] Optional unwrapping enforced?
-- [ ] Team trained on vulnerability triage?
-- [ ] Swift version up-to-date?
-- [ ] Dependencies updated regularly?
-
----
-
-## Security Checklist
-
-**Dependencies:**
-- [ ] Snyk test passing
-- [ ] All dependencies up-to-date (within 6 months)
-- [ ] CocoaPods/SPM vulnerabilities addressed
-
-**Code:**
-- [ ] SwiftLint security rules enabled
-- [ ] No hardcoded secrets (API keys, tokens)
-- [ ] Input validation on all user inputs
-- [ ] Safe optional handling (guard, if let, nil coalescing)
-- [ ] Keychain used for sensitive data storage
-
-**CI/CD:**
-- [ ] Security scans on every PR
-- [ ] Weekly scheduled scans
-- [ ] Fail build on high/critical issues
-
----
-
-## Tools Comparison
-
-| Tool | Cost | Coverage | CI/CD | Best For |
-|------|------|----------|-------|----------|
-| Snyk | Free/Paid | Deps + Code | ✅ | Comprehensive |
-| SwiftLint | Free | Code patterns | ✅ | Static analysis |
-| MobSF | Free | iOS app | ⚠️ | Dynamic testing |
-| SonarQube | Free/Paid | Comprehensive | ✅ | Enterprise |
-| Semgrep | Free/Paid | Custom rules | ✅ | Advanced |
-
-
-## Usage - Copy This Complete Prompt
-
-> **Type**: One-time setup process (simple)  
-> **When to use**: When setting up security vulnerability scanning
-
-### Complete Implementation Prompt
-
-```
-CONTEXT:
-You are configuring security vulnerability scanning for this project.
-
-CRITICAL REQUIREMENTS:
-- ALWAYS scan dependencies for known vulnerabilities
-- ALWAYS integrate with CI/CD pipeline
-- ALWAYS configure to fail on high/critical vulnerabilities
-- ALWAYS keep scanning tools updated
-
-IMPLEMENTATION STEPS:
-
-1. CHOOSE SCANNING TOOLS:
-   Select tools for the language (see Tech Stack section):
-   - Dependency scanning (npm audit, safety, etc.)
-   - SAST (CodeQL, Snyk, SonarQube)
-   - Container scanning (Trivy, Grype)
-
-2. CONFIGURE DEPENDENCY SCANNING:
-   Enable dependency vulnerability scanning
-   Set severity thresholds
-   Configure auto-fix for known vulnerabilities
-
-3. CONFIGURE SAST:
-   Set up static application security testing
-   Configure scan rules
-   Integrate with CI/CD
-
-4. CONFIGURE CONTAINER SCANNING:
-   Scan Docker images for vulnerabilities
-   Fail builds on critical issues
-
-5. SET UP MONITORING:
-   Configure security alerts
-   Set up regular scanning schedule
-   Create remediation workflow
-
-DELIVERABLE:
-- Dependency scanning active
-- SAST integrated
-- Container scanning configured
-- Security alerts enabled
-
-START: Choose scanning tools and configure dependency scanning.
-```
+**What you get**: Automated security scanning with Snyk and SwiftLint  
+**Time**: 2 hours  
+**Output**: Security CI workflow, SAST integration, best practices
