@@ -141,14 +141,114 @@ services:
 - **PROJECT_MEMORY.md**: Detected .NET version + lessons learned
 - **LOGIC_ANOMALIES.md**: Found bugs (audit only, don't fix)
 
-## Usage
+## Usage - Copy This Complete Prompt
 
-**Start**:
-```
-Implement .NET testing. Detect .NET version, analyze structure, execute Phase 1.
-```
+> **Type**: One-time setup process (iterative, multi-phase)  
+> **When to use**: When establishing testing infrastructure in a .NET project
 
-**Continue**:
+### Complete Implementation Prompt
+
 ```
-Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
+CONTEXT:
+You are implementing comprehensive .NET testing infrastructure for this project.
+
+CRITICAL REQUIREMENTS:
+- ALWAYS detect .NET version from .csproj TargetFramework (e.g., net8.0, net6.0)
+- ALWAYS match detected version in Docker images, pipelines, and test projects
+- NEVER fix production code bugs found during testing (log in LOGIC_ANOMALIES.md only)
+- Use team's Git workflow (no prescribed branch names or commit patterns)
+
+TECH STACK TO CHOOSE:
+Test Framework (choose one):
+- xUnit ⭐ (recommended) - .NET default, modern async support
+- NUnit - Mature, feature-rich
+- MSTest - Microsoft official
+
+Assertions (choose one):
+- FluentAssertions ⭐ (recommended) - Readable, extensible
+- Shouldly - Similar to FluentAssertions
+- Built-in (xUnit.Assert, NUnit.Assert, MSTest.Assert)
+
+Mocking (choose one):
+- Moq ⭐ (recommended) - Most popular, simple API
+- NSubstitute - Clean syntax
+- FakeItEasy - Discoverable API
+
+---
+
+PHASE 1 - ANALYSIS:
+Objective: Understand project structure and choose test framework
+
+1. Scan all .csproj files for TargetFramework property
+2. Document detected .NET version in process-docs/PROJECT_MEMORY.md
+3. Identify existing test framework or choose based on team preference
+4. Analyze current test infrastructure (if any)
+5. Report findings and proposed framework choices
+
+Deliverable: Testing strategy documented, framework chosen
+
+---
+
+PHASE 2 - INFRASTRUCTURE (Optional - skip if using cloud CI/CD):
+Objective: Set up test infrastructure
+
+1. Create docker/Dockerfile.tests with detected .NET SDK version
+2. Create docker/docker-compose.tests.yml for test execution
+3. Add/update CI/CD pipeline test step (merge with existing, don't overwrite)
+4. Configure test reporting (Coverlet for coverage)
+
+Deliverable: Tests can run in CI/CD environment
+
+Infrastructure Templates:
+- Dockerfile.tests: FROM mcr.microsoft.com/dotnet/sdk:{VERSION}
+- CI/CD: Use mcr.microsoft.com/dotnet/sdk:{VERSION} image
+- Commands: dotnet restore → dotnet build → dotnet test with coverage
+
+---
+
+PHASE 3 - TEST PROJECTS:
+Objective: Create test project structure
+
+1. Create test projects:
+   - tests/{ProjectName}.UnitTests (fast, isolated tests)
+   - tests/{ProjectName}.IntegrationTests (full-stack tests)
+
+2. Implement shared test utilities:
+   - CustomWebApplicationFactory<TProgram> for integration tests
+   - IntegrationTestBase base class with common setup
+   - TestDataBuilder for test data generation
+
+3. Add test project references to solution
+
+Deliverable: Test project structure in place with shared utilities
+
+---
+
+PHASE 4 - TEST IMPLEMENTATION (Iterative):
+Objective: Write tests for all components
+
+For each component:
+1. Identify component to test (from STATUS-DETAILS.md)
+2. Understand component intent and behavior
+3. Write unit tests (fast, isolated, mocked dependencies)
+4. Write integration tests if applicable (full-stack, real dependencies)
+5. Run tests locally - must pass
+6. If bugs found: Log to LOGIC_ANOMALIES.md (DON'T fix production code)
+7. Update STATUS-DETAILS.md with completion status
+8. Propose commit using team's commit format
+9. Wait for user confirmation
+10. Repeat for next component
+
+Deliverable: Comprehensive test coverage for all components
+
+---
+
+DOCUMENTATION (create in process-docs/):
+- STATUS-DETAILS.md: Component test checklist (track progress)
+- PROJECT_MEMORY.md: Detected .NET version, chosen frameworks, lessons learned
+- LOGIC_ANOMALIES.md: Bugs found during testing (audit only, don't fix)
+
+---
+
+START: Execute Phase 1. Analyze project, detect .NET version, propose test framework choices.
 ```
