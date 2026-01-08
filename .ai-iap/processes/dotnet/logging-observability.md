@@ -13,16 +13,6 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
-
-> **Standard workflow for each phase**:
-> 1. Create branch: `git checkout -b logging/<phase-name>`
-> 2. Make changes, commit, push, verify
-
-Phases below reference this pattern instead of repeating it.
-
----
-
 ## Phase 1: Structured Logging
 
 **Branch**: `logging/structured`

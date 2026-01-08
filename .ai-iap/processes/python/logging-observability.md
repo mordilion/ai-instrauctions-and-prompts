@@ -13,14 +13,6 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
-
-> **Standard workflow**: Create branch → Make changes → Commit → Push → Verify
-
-Phases below reference this pattern.
-
----
-
 ## Phase 1: Structured Logging
 
 **Branch**: `logging/structured`

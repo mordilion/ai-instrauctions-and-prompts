@@ -277,14 +277,13 @@ class TestAsyncService:
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start Python testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect Python version, analyze project, initialize docs.
+Implement Python testing. Detect Python version, analyze structure, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

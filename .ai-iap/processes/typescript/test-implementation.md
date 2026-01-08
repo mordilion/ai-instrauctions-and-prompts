@@ -238,14 +238,13 @@ describe('API Endpoints', () => {
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start TypeScript testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect Node version, choose test framework, initialize docs.
+Implement TypeScript testing. Detect Node version, analyze structure, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

@@ -249,14 +249,13 @@ class UserControllerIntegrationTest {
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start Java testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect Java version, analyze project, initialize docs.
+Implement Java testing. Detect Java version, analyze structure, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

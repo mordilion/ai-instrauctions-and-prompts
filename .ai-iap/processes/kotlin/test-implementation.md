@@ -249,14 +249,13 @@ class UserControllerIntegrationTest {
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start Kotlin testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect versions, choose test framework, initialize docs.
+Implement Kotlin testing. Detect Kotlin/Java versions, analyze structure, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

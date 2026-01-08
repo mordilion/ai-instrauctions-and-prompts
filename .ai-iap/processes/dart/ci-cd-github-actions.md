@@ -218,10 +218,9 @@ updates:
 ## Final Commit
 
 ```bash
-git checkout main
-git merge ci/advanced
+# Merge all phases and tag release using your team's workflow
 git tag -a v1.0.0-ci -m "CI/CD pipeline implemented"
-git push origin main --tags
+git push --tags
 ```
 
 ---

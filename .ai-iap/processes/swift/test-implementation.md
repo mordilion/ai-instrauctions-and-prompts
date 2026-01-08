@@ -359,14 +359,13 @@ final class UserRoutesTests: XCTestCase {
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start Swift testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect Swift version, analyze project type, initialize docs.
+Implement Swift testing. Detect Swift version, analyze project type, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

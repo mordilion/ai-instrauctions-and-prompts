@@ -376,14 +376,13 @@ class UserControllerTest extends WebTestCase
 
 ## Usage
 
-**Initial**:
+**Start**:
 ```
-Act as Senior SDET. Start PHP testing implementation.
-Phase 1: Create branch `poc/test-establishing/init-analysis`, detect PHP version, analyze project, initialize docs.
+Implement PHP testing. Detect PHP version, analyze structure, execute Phase 1.
 ```
 
 **Continue**:
 ```
-Act as Senior SDET. Check STATUS-DETAILS.md for next phase/component. Execute and propose commit.
+Continue testing implementation. Check STATUS-DETAILS.md for next phase/component.
 ```
 

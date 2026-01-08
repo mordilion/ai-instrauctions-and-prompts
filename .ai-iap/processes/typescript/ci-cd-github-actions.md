@@ -17,22 +17,7 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
-
-> **Standard workflow for each phase**:
-> 1. Create branch: `git checkout -b ci/<phase-name>`
-> 2. Make changes according to phase requirements
-> 3. Commit: `git commit -m "ci: <description>"`
-> 4. Push: `git push origin ci/<phase-name>`
-> 5. Verify: Check CI/CD pipeline runs successfully
-
-Phases below reference this pattern instead of repeating it.
-
----
-
 ## Phase 1: Basic CI Pipeline
-
-**Branch**: `ci/basic-pipeline`
 
 ### 1.1 Basic Build & Test Workflow
 
@@ -75,8 +60,6 @@ Phases below reference this pattern instead of repeating it.
 
 ## Phase 2: Code Quality & Security
 
-**Branch**: `ci/quality-security`
-
 ### 2.1 Dependency Security Scanning
 
 > **ALWAYS include**:
@@ -112,8 +95,6 @@ updates:
 ---
 
 ## Phase 3: Deployment Pipeline
-
-**Branch**: `ci/deployment`
 
 ### 3.1 Environment Configuration
 
@@ -169,8 +150,6 @@ updates:
 ---
 
 ## Phase 4: Advanced Features
-
-**Branch**: `ci/advanced`
 
 ### 4.1 Performance Testing
 
@@ -272,10 +251,9 @@ Before completing this process, verify:
 ## Final Commit
 
 ```bash
-git checkout main
-git merge ci/advanced
+# Merge all phases and tag release using your team's workflow
 git tag -a v1.0.0-ci -m "CI/CD pipeline implemented"
-git push origin main --tags
+git push --tags
 ```
 
 ---
