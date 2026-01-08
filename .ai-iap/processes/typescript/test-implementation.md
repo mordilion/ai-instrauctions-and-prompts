@@ -1,24 +1,24 @@
 # TypeScript/Node.js Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for TypeScript/Node.js projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect Node.js version from `package.json` engines or `.nvmrc`
-> **ALWAYS**: Match detected version in Docker images, pipelines, and CI/CD
-> **ALWAYS**: Create new branch for each phase (adapt naming to your workflow - see [Git Workflow Adaptation](../_templates/git-workflow-adaptation.md))
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Match detected version in Docker images, pipelines, and CI/CD  
+> **ALWAYS**: Use your team's workflow for branching and commits (see [Workflow Adaptation](#workflow-adaptation))  
 > **NEVER**: Fix production code bugs found during testing (log only)
 
 ## Workflow Adaptation
 
-> **Important**: This guide uses example branch names (`poc/test-establishing/{phase-name}`).  
-> **Your team's Git conventions take precedence**.  
-> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for adapting to:
-> - JIRA/Linear integration
-> - Trunk-based development
-> - GitFlow, GitHub Flow
-> - Your custom naming conventions
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for:
+> - Branch naming (feature/, PROJ-123/, or trunk-based)
+> - Commit patterns (conventional commits, JIRA format, etc.)
+> - Docker usage (skip if using serverless/PaaS)
+> - CI/CD platform (adapt GitHub Actions examples)
+> 
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for complete guidance
 
 ## Tech Stack
 
@@ -102,25 +102,33 @@ test:
 
 ## Implementation Phases
 
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+
 ### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect Node.js version from `package.json` or `.nvmrc` → Document in PROJECT_MEMORY.md
-3. Detect if Vite/Next.js/Express → Choose Jest or Vitest
-4. Analyze existing test setup
-5. Propose commit → Wait for user
+**Objective**: Understand project structure and choose test framework
 
-### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/docker-infra`
+1. Detect Node.js version from `package.json` or `.nvmrc`
+2. Detect project type (Vite/Next.js/Express/etc.)
+3. Choose test framework (Jest for Next.js/React, Vitest for Vite, either for Node.js)
+4. Analyze existing test setup (if any)
+5. Document decisions
 
-1. Create `docker/Dockerfile.tests` with detected version
-2. Create `docker/docker-compose.tests.yml`
-3. Merge CI/CD pipeline step (don't overwrite)
-4. Propose commit → Wait for user
+**Deliverable**: Testing strategy documented, framework chosen
+
+### Phase 2: Infrastructure (Optional)
+
+**Objective**: Set up test infrastructure (skip if using serverless/PaaS)
+
+1. Create Docker test files (if using Docker)
+2. Add/update CI/CD pipeline test step
+3. Configure test reporting
+
+**Deliverable**: Tests can run in CI/CD
 
 ### Phase 3: Framework Setup
-**Branch**: `poc/test-establishing/framework-setup`
+
+**Objective**: Install and configure test framework
 
 1. Install test framework:
    - Jest: `npm install --save-dev jest @types/jest ts-jest jest-junit`
@@ -137,10 +145,12 @@ test:
      }
    }
    ```
-4. Propose commit → Wait for user
+
+**Deliverable**: Framework installed, basic test runs
 
 ### Phase 4: Test Structure
-**Branch**: `poc/test-establishing/project-skeleton`
+
+**Objective**: Establish test directory organization and shared utilities
 
 1. Create test directory structure:
    ```
@@ -153,26 +163,26 @@ test:
    ├── e2e/               # E2E tests
    └── helpers/           # Test utilities
    ```
-2. Implement base patterns:
-   - `tests/helpers/testHelpers.ts`
-   - `tests/helpers/mockData.ts`
-   - `tests/helpers/setup.ts`
-3. Configure test setup files
-4. Propose commit → Wait for user
+2. Create shared test utilities:
+   - `tests/helpers/testHelpers.ts` - Common test functions
+   - `tests/helpers/mockData.ts` - Reusable mock data
+   - `tests/helpers/setup.ts` - Test environment setup
 
-### Phase 5: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+**Deliverable**: Test structure in place, helpers available
 
-1. Read next untested component from STATUS-DETAILS.md
-2. Understand intent and behavior
-3. Write tests following patterns:
-   - Unit tests: `{filename}.test.ts` or `__tests__/{filename}.test.ts`
+### Phase 5: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
+1. Understand component behavior and requirements
+2. Write tests following patterns (see below):
+   - Unit tests: `{filename}.test.ts`
    - Integration tests: `tests/integration/{feature}.test.ts`
-4. Run tests locally → Must pass
-5. If bugs found → Log to LOGIC_ANOMALIES.md (DON'T fix code)
-6. Update STATUS-DETAILS.md
-7. Propose commit: `feat(test): add tests for {Component}`
-8. Wait for user confirmation → Repeat for next component
+3. Run tests locally → Ensure all pass
+4. If bugs found → Log only (don't fix production code)
+
+**Continue until**: All critical components tested
 
 ## Test Patterns
 

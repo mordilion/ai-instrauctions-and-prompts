@@ -1,14 +1,19 @@
 ﻿# .NET Testing Implementation Process
 
-> **ALWAYS**: Follow phases sequentially. One branch per phase. Atomic commits only.
+> **Purpose**: Establish comprehensive testing infrastructure for .NET projects
 
 ## Critical Requirements
 
 > **ALWAYS**: Detect `.TargetFramework` from `.csproj` files (e.g., `net6.0`, `net8.0`)
-> **ALWAYS**: Match detected version in Docker images, pipelines, and test projects
-> **ALWAYS**: Create new branch for each phase: `poc/test-establishing/{phase-name}`
-> **NEVER**: Combine multiple phases in one commit
+> **ALWAYS**: Match detected version in Docker images, pipelines, and test projects  
+> **ALWAYS**: Use your team's workflow for branching and commits (adapt as needed)  
 > **NEVER**: Fix production code bugs found during testing (log only)
+
+## Workflow Adaptation
+
+> **IMPORTANT**: This guide focuses on OBJECTIVES, not specific workflows.  
+> **Your team's conventions take precedence** for Git, commits, Docker, CI/CD.  
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md)
 
 ## Tech Stack
 
@@ -82,46 +87,47 @@ services:
 
 ## Implementation Phases
 
+> **For each phase**: Use your team's workflow ([see adaptation guide](../_templates/git-workflow-adaptation.md))
+
 ### Phase 1: Analysis
-**Branch**: `poc/test-establishing/init-analysis`
 
-1. Initialize `process-docs/` (STATUS-DETAILS.md, PROJECT_MEMORY.md, LOGIC_ANOMALIES.md)
-2. Detect .NET version from `.csproj` → Document in PROJECT_MEMORY.md
-3. Analyze existing test framework and pipeline
-4. Propose commit → Wait for user
+**Objective**: Understand project structure and choose test framework
 
-### Phase 2: Infrastructure
-**Branch**: `poc/test-establishing/docker-infra`
+1. Detect .NET version from `.csproj` files
+2. Identify existing test framework (xUnit/NUnit/MSTest) or choose based on team preference
+3. Analyze current test infrastructure
 
-1. Create `docker/Dockerfile.tests` with detected version
-2. Create `docker/docker-compose.tests.yml`
-3. Merge CI/CD pipeline step (don't overwrite)
-4. Propose commit → Wait for user
+**Deliverable**: Testing strategy documented, framework chosen
 
-### Phase 3: Framework Migration (if needed)
-**Branch**: `poc/test-establishing/framework-migration`
+### Phase 2: Infrastructure (Optional)
 
-1. Detect if xUnit/MSTest is used
-2. Uninstall old → Install NUnit packages
-3. Refactor test syntax to NUnit
-4. Propose commit → Wait for user
+**Objective**: Set up test infrastructure (skip if using cloud CI/CD)
 
-### Phase 4: Test Projects
-**Branch**: `poc/test-establishing/project-skeleton`
+1. Create Docker test files (if using Docker)
+2. Add/update CI/CD pipeline test step
+3. Configure test reporting (Coverlet for coverage)
 
-1. Create `tests/{ProjectName}.UnitTests` using detected framework
-2. Create `tests/{ProjectName}.IntegrationTests` using detected framework
-3. Implement base patterns:
-   - `CustomWebApplicationFactory<TProgram>`
-   - `IntegrationTestBase`
-   - `DatabaseSeeder`
-   - `TestDataBuilder`
-4. Propose commit → Wait for user
+**Deliverable**: Tests can run in CI/CD
 
-### Phase 5: Test Implementation (Loop)
-**Branch**: `poc/test-establishing/test-{component}` (new branch per component)
+### Phase 3: Test Projects
 
-1. Read next untested component from STATUS-DETAILS.md
+**Objective**: Create test project structure
+
+1. Create test projects:
+   - `tests/{ProjectName}.UnitTests` - Fast, isolated tests
+   - `tests/{ProjectName}.IntegrationTests` - Full-stack tests
+2. Implement shared test utilities:
+   - `CustomWebApplicationFactory<TProgram>` (for integration tests)
+   - `IntegrationTestBase` - Base class with common setup
+   - `TestDataBuilder` - Test data generation
+
+**Deliverable**: Test project structure in place
+
+### Phase 4: Test Implementation (Iterative)
+
+**Objective**: Write tests for all components
+
+**For each component**:
 2. Understand intent and behavior
 3. Write tests using established patterns
 4. Run tests locally → Must pass

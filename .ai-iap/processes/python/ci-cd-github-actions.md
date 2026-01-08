@@ -22,22 +22,23 @@
 
 ---
 
-## Git Workflow Pattern (All Phases)
+## Workflow Adaptation
 
-> **Standard workflow for each phase**:
-> 1. Create branch: `git checkout -b ci/<phase-name>`
-> 2. Make changes according to phase requirements
-> 3. Commit: `git commit -m "ci: <description>"`
-> 4. Push: `git push origin ci/<phase-name>`
-> 5. Verify: Check CI/CD pipeline runs successfully
+> **IMPORTANT**: This guide focuses on CI/CD objectives, not specific Git workflows.  
+> **Your team's conventions take precedence** for:
+> - Branch naming (feature/, PROJ-123/, or trunk-based)
+> - Commit format (conventional commits, JIRA format, etc.)
+> - Deployment platforms (adapt GitHub Actions examples to your platform)
+> 
+> See [Git Workflow Adaptation Guide](../_templates/git-workflow-adaptation.md) for complete guidance
 
-Phases below reference this pattern instead of repeating it.
+**For each phase below**: Apply your team's workflow, not the example branch names.
 
 ---
 
 ## Phase 1: Basic CI Pipeline
 
-**Branch**: `ci/basic-pipeline`
+**Objective**: Establish core build, lint, and test pipeline
 
 ### 1.1 Basic Build & Test Workflow
 
@@ -86,7 +87,7 @@ pytest --cov=src --cov-report=xml --cov-report=html --cov-report=term
 
 ## Phase 2: Code Quality & Security
 
-**Branch**: `ci/quality-security`
+**Objective**: Add code quality checks and security scanning
 
 ### 2.1 Code Quality Analysis
 
@@ -141,7 +142,7 @@ pip-audit
 
 ## Phase 3: Deployment Pipeline
 
-**Branch**: `ci/deployment`
+**Objective**: Automate deployment to staging/production
 
 ### 3.1 Environment Configuration
 
@@ -215,7 +216,7 @@ python manage.py migrate --no-input
 
 ## Phase 4: Advanced Features
 
-**Branch**: `ci/advanced`
+**Objective**: Add matrix testing, caching optimizations, and notifications
 
 ### 4.1 Performance Testing
 
