@@ -59,6 +59,7 @@
 ## Files Optimized by Category
 
 ### Framework Rules (60+ files)
+
 **Examples**:
 
 - `nextjs.md`: 164 â†’ 68 lines (96 saved, 59% reduction)
@@ -72,6 +73,7 @@
 - `jquery.md`: 159 â†’ 65 lines (94 saved, 59% reduction)
 
 ### CI/CD Process Files (6 files)
+
 **Examples**:
 
 - `dart/ci-cd`: 343 â†’ 230 lines (113 saved, 33% reduction)
@@ -85,6 +87,7 @@
 - `swift/ci-cd`: 307 â†’ 204 lines (103 saved, 34% reduction)
 
 ### Code Coverage Files (4 files)
+
 **Examples**:
 
 - `java/code-coverage`: 320 â†’ 169 lines (151 saved after fix, 47% reduction)
@@ -96,6 +99,7 @@
 - `swift/code-coverage`: 302 â†’ 162 lines (140 saved after fix, 46% reduction)
 
 ### General Documentation (3 files)
+
 **Examples**:
 
 - `api.md`: 291 â†’ 137 lines (154 saved total, 53% reduction)
@@ -105,6 +109,7 @@
 - `code.md`: 182 â†’ 144 lines (38 saved, 21% reduction)
 
 ### Other Process Files (12+ files)
+
 **Examples**:
 
 - `python/linting`: 304 â†’ 203 lines (101 saved after fix, 33% reduction)
@@ -198,6 +203,7 @@
 ## Commits Made (12 total)
 
 ### Initial Optimization Phase (8 commits)
+
 1. Optimized TypeScript process files
 2. Optimized general documentation files
 3. Optimized all CI/CD github-actions files (5 files)
@@ -208,10 +214,12 @@
 8. Additional framework rules (batch)
 
 ### Fix Phase (1 commit)
-9. **947e5ef** - Restored minimal config examples for cross-AI understandability
+
+1. **947e5ef** - Restored minimal config examples for cross-AI understandability
 
 ### Final Optimization Phase (3 commits)
-10. **20cbc47** - Optimized vapor.md to target (181 â†’ 150)
+
+1. **20cbc47** - Optimized vapor.md to target (181 â†’ 150)
 
 11. **4dc398f** - Optimized spring-boot, react, api.md to targets
 
@@ -272,6 +280,7 @@
 ## Lessons Learned
 
 ### What Worked Well
+
 1. âœ… **Aggressive optimization with validation** - Optimized heavily, then validated and fixed
 
 2. âœ… **Minimal but complete examples** - 5-15 lines showing structure + syntax
@@ -283,6 +292,7 @@
 5. âœ… **Cross-AI testing** - Validated against GPT-3.5 baseline
 
 ### What Required Adjustment
+
 1. âš ï¸ **Initial over-condensing** - Removed ALL config examples (too aggressive)
 
 2. âš ï¸ **Fixed quickly** - Restored minimal examples in 1 commit
@@ -290,6 +300,7 @@
 3. âš ï¸ **Balance achieved** - Token efficiency + understandability
 
 ### Best Practices Established
+
 1. âœ… Always show config file location (`pom.xml`, `build.gradle`, etc.)
 2. âœ… Always show section structure (`[tool.ruff]`, `<plugin>`, etc.)
 3. âœ… Always include key settings (thresholds, rules, excludes)
@@ -301,6 +312,7 @@
 ## Files Intentionally Not Optimized
 
 ### User-Preferred Verbose (2 files)
+
 1. **php/test-implementation.md** (390 lines)
    - User reverted optimization
 
@@ -351,6 +363,7 @@ serve as comprehensive references that benefit from verbosity.
 ## Recommendations for Future
 
 ### Maintenance
+
 1. âœ… **Monitor user feedback** - Track if any files cause AI confusion
 
 2. âœ… **Maintain minimal examples** - Don't remove config structure
@@ -360,12 +373,14 @@ serve as comprehensive references that benefit from verbosity.
 4. âœ… **Validate new files** - Ensure cross-AI compatibility
 
 ### Extension System
+
 1. âœ… **Use `.ai-iap-custom/`** for project-specific overrides
 2. âœ… **Don't modify core files** - Maintain upgrade path
 
 3. âœ… **Follow same token efficiency** - Keep custom files concise
 
 ### Future Optimizations
+
 1. âš ï¸ **Not recommended** - Further optimization risks clarity
 
 2. âš ï¸ **If needed** - Only optimize newly-added verbose content

@@ -127,6 +127,7 @@ These may conflict with established practices:
 - âœ… No strong existing conventions
 
 **Steps**:
+
 1. Run setup for all tools: `.ai-iap/setup.sh`
 2. Select all applicable languages/frameworks
 3. Commit generated configs
@@ -265,7 +266,7 @@ Track these after 30-60 days:
 
 ## Decision Tree
 
-```
+```text
 START: Should we adopt AI Instructions & Prompts?
 â”‚
 â”œâ”€ Do you have ZERO coding standards?

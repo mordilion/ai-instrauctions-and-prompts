@@ -109,6 +109,7 @@
 - Continue.dev
 
 **Validation Methods**:
+
 1. **Explicit Directives Present**: All files use `> **ALWAYS**`, `> **NEVER**` format
 2. **Code Examples Included**: 5-15 line examples showing structure + syntax
 3. **Config File Names Specified**: `pom.xml`, `build.gradle`, `pyproject.toml`, etc.
@@ -168,6 +169,7 @@
 - AI models couldn't infer correct syntax/structure
 
 **Files Affected**:
+
 1. `java/code-coverage.md`
 2. `kotlin/code-coverage.md`
 3. `dart/code-coverage.md`
@@ -276,6 +278,7 @@ kept verbose.
 ## Validation Methodology
 
 ### Sample Testing Strategy
+
 1. **Representative Sampling**: Tested 10 files across all categories
 2. **GPT-3.5 Baseline**: All samples validated against "lowest common denominator"
 3. **Mental Model Test**: "Would this be clear to GPT-3.5?"
@@ -292,7 +295,8 @@ kept verbose.
 
 ### Specific Test Cases
 
-**Test 1: Configuration Files**
+
+#### Test 1: Configuration Files
 
 - File: `java/code-coverage.md`
 
@@ -302,7 +306,8 @@ kept verbose.
 
 - After Fix: âœ… PASS (15-line XML example)
 
-**Test 2: Python Config**
+
+#### Test 2: Python Config
 
 - File: `python/linting-formatting.md`
 
@@ -312,7 +317,8 @@ kept verbose.
 
 - After Fix: âœ… PASS (`[tool.ruff]`, `[tool.ruff.lint]` shown)
 
-**Test 3: Framework Patterns**
+
+#### Test 3: Framework Patterns
 
 - File: `nextjs.md`
 
@@ -320,7 +326,8 @@ kept verbose.
 
 - Result: âœ… PASS (table format, clear examples)
 
-**Test 4: CI/CD Commands**
+
+#### Test 4: CI/CD Commands
 
 - File: `dotnet/ci-cd-github-actions.md`
 
@@ -328,7 +335,8 @@ kept verbose.
 
 - Result: âœ… PASS (explicit commands, Dependabot YAML)
 
-**Test 5: Docker Containers**
+
+#### Test 5: Docker Containers
 
 - File: `typescript/docker-containerization.md`
 
@@ -341,12 +349,14 @@ kept verbose.
 ## Recommendations
 
 ### Immediate Actions: âœ… COMPLETE
+
 1. âœ… All optimization goals achieved
 2. âœ… Cross-AI understandability validated
 3. âœ… Minimal examples restored where needed
 4. âœ… User preferences respected
 
 ### Optional Future Optimizations
+
 1. **Review 5 rule files over 150 lines** (if desired)
    - `api.md` (199) - Could condense templates further
 
