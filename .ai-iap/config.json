@@ -13,11 +13,10 @@
                   "claude":  {
                                  "name":  "Claude (CLI \u0026 Code)",
                                  "outputFile":  "CLAUDE.md",
-                                 "outputDir":  ".claude/skills",
+                                 "outputDir":  ".claude/rules",
                                  "fileExtension":  ".md",
-                                 "useFrontmatter":  false,
-                                 "concatenate":  true,
-                                 "skillFilename":  "SKILL.md",
+                                 "useFrontmatter":  true,
+                                 "concatenate":  false,
                                  "supportsGlobs":  false,
                                  "supportsSubfolders":  true,
                                  "recommended":  true

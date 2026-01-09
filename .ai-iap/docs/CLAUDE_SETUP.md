@@ -229,21 +229,21 @@ and Prisma migration commands with rollback support."
 - Keep concise (10-30KB max)
 
 ❌ **DON'T**:
-- Include framework-specific details (use skills)
-- Add implementation processes (use skills)
+- Include framework-specific details (use rules)
+- Add implementation processes (use rules)
 - Make it too large (token cost)
 
-### Skills (Context-Triggered)
+### Rules (.claude/rules/)
 
 ✅ **DO**:
-- Create granular skills (React, Vue, Django)
-- Use clear, descriptive names
-- Write specific trigger descriptions
-- Include concrete examples
+- Create focused rules per topic (React, Vue, Django)
+- Use descriptive filenames
+- Add `paths:` frontmatter for file-specific rules
+- Organize by category subdirectories
 
 ❌ **DON'T**:
 - Duplicate content from CLAUDE.md
-- Make skills too broad
+- Make rules too broad
 - Forget to update after framework changes
 
 ### Memory Feature
@@ -269,23 +269,22 @@ and Prisma migration commands with rollback support."
 # Re-run setup after changing rules
 ./ai-iap/setup.sh
 
-# Skills are regenerated automatically
+# Rules are regenerated automatically
 # Memory persists across setups
 ```
 
-### Adding Custom Skills
+### Adding Custom Rules
 
-Create custom skills manually:
+Create custom rules manually:
 
 ```bash
-mkdir -p .claude/skills/my-custom-skill
+mkdir -p .claude/rules/custom
 ```
 
 ```markdown
-# .claude/skills/my-custom-skill/SKILL.md
+# .claude/rules/custom/company-standards.md
 ---
-name: my-custom-skill
-description: Custom company standards. Use when working with internal tools.
+paths: src/**/*.ts
 ---
 
 # Company-Specific Standards
@@ -304,41 +303,52 @@ To reset Claude's memory for your project:
 
 ## Token Efficiency
 
-### Before (without skills)
+### Before (everything in one file)
 
 - All rules in CLAUDE.md: **50,000 tokens**
 - Loaded in every conversation
-- High cost per interaction
+- Difficult to maintain
 
-### After (with skills)
+### After (with modular rules)
 
-- CLAUDE.md: **15,000 tokens** (always)
-- Skills: **5,000 tokens** (when triggered)
-- **70% token savings** on non-framework conversations
+- CLAUDE.md: **15,000 tokens** (core rules)
+- .claude/rules/: **Modular organization** (frontend/, backend/, etc.)
+- Path-specific rules only apply to relevant files
+- **Better organization and maintainability**
 
 ---
 
 ## Troubleshooting
 
-### Skills Not Triggering
+### Rules Not Loading
 
-**Problem**: Claude doesn't load expected skill
+**Problem**: Custom rules don't seem to be active
 
 **Solutions**:
-1. Check skill name matches pattern
-2. Verify SKILL.md has frontmatter
-3. Make description more specific
-4. Mention framework explicitly in conversation
+1. Verify files are in `.claude/rules/` directory
+2. Check file extension is `.md`
+3. Ensure no syntax errors in YAML frontmatter
+4. Re-run setup script to regenerate
+
+### Path-Specific Rules Not Working
+
+**Problem**: Rules with `paths:` don't apply to expected files
+
+**Solutions**:
+1. Check glob pattern syntax (e.g., `**/*.tsx`)
+2. Test pattern matches your file paths
+3. Ensure no leading/trailing whitespace in paths field
+4. Try without paths field first to test rule loads
 
 ### CLAUDE.md Too Large
 
 **Problem**: Token limit warnings
 
 **Solutions**:
-1. Move framework rules to skills
-2. Move processes to skills
-3. Keep only core standards
-4. Remove verbose examples
+1. Move framework rules to .claude/rules/
+2. Move processes to .claude/rules/
+3. Keep only core standards in CLAUDE.md
+4. Use path-specific rules to reduce active content
 
 ### Memory Not Persisting
 
@@ -363,9 +373,9 @@ To reset Claude's memory for your project:
 
 # 3. Generated:
 ✓ CLAUDE.md (core rules)
-✓ .claude/skills/typescript-framework-react/SKILL.md
-✓ .claude/skills/typescript-react-feature/SKILL.md
-✓ .claude/skills/typescript-process-database-migrations/SKILL.md
+✓ .claude/rules/frontend/react.md
+✓ .claude/rules/frontend/react-feature.md
+✓ .claude/rules/processes/typescript-database-migrations.md
 ```
 
 ### Using with Claude
@@ -377,8 +387,8 @@ Claude: "Noted. I'll use those standards."
 
 You: "Create a new user authentication feature"
 
-Claude: [Automatically loads typescript-framework-react and 
-typescript-react-feature skills, applies Prisma + Postgres 
+Claude: [Uses React rules from .claude/rules/frontend/ 
+and feature-first architecture, applies Prisma + Postgres 
 preferences from memory]
 ```
 

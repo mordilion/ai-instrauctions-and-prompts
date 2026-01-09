@@ -189,7 +189,7 @@ Want to add company-specific standards, internal processes, or override core rul
 | Tool | Output | Description |
 |------|--------|-------------|
 | **Cursor** ⭐ | `.cursor/rules/*.mdc` | Separate rule files with glob patterns |
-| **Claude** ⭐ | `CLAUDE.md` + `.claude/skills/*/SKILL.md` | Always-on rules + auto-triggered Agent Skills |
+| **Claude** ⭐ | `CLAUDE.md` + `.claude/rules/**/*.md` | Always-on rules + modular path-specific rules |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Repository-level instructions |
 | **Windsurf** | `.windsurfrules` | Single concatenated file |
 | **Aider** | `CONVENTIONS.md` | Convention file for Aider |
