@@ -11,6 +11,10 @@
 
 # Cursor AI
 .cursor/
+!.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
 # Claude CLI
 CLAUDE.md

@@ -1,0 +1,126 @@
+---
+alwaysApply: true
+---
+
+# AI Instructions & Prompts (A setup routine for Coding AI's)
+
+> **Scope**: This applies to ALL tasks. Always active.
+
+**Project Nature**: This is a **meta-project** that creates AI rules, processes, and prompts for end users to configure in their own projects.
+
+**Project Goals**: 
+- Users **MUST** be able to setup AI rules, borders, and prompts for multiple AI's via bash script for their new or existing projects
+- Providing files with rules and processes in AI's specific ways (`.cursor/rules/*.mdc`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.windsurfrules`, `CONVENTIONS.md`)
+- All files for rules and processes **MUST** be token efficient and understandable for all AI's at the same time!
+- **NEVER** work with fixed versions. Use user's project-related versions and make it flexible (read from `.nvmrc`, `global.json`, `pom.xml`, etc.)
+- Files **MUST** follow the same structure for a better maintainability
+- All rules and processes **MUST** be understandable the same way for all AI's - The goal is to have the same result no matter which AI is used
+
+**Supported AI Tools** (10 total):
+- Cursor (`.cursor/rules/*.mdc` - multiple files with glob patterns)
+- Claude (`CLAUDE.md` + `.claude/rules/` - always-on rules + modular path-specific rules)
+- GitHub Copilot (`.github/copilot-instructions.md`)
+- Windsurf (`.windsurfrules` - single concatenated file)
+- Aider (`CONVENTIONS.md`)
+- Google AI Studio (`GOOGLE_AI_STUDIO.md` - single concatenated file)
+- Amazon Q Developer (`AMAZON_Q.md` - single concatenated file)
+- Tabnine (`TABNINE.md` - single concatenated file)
+- Cody / Sourcegraph (`.cody/instructions.md`)
+- Continue.dev (`.continue/instructions.md`)
+
+**Project Structure** (`.ai-iap/`):
+- `rules/` - Hierarchical rules (general → language → framework → structure → security)
+- `processes/` - Step-by-step implementation guides (test, CI/CD, logging, docker, auth, migrations, API docs)
+- `functions/` - Cross-language implementation patterns (5-20 lines each, reduces AI guessing)
+  - INDEX.md - Quick reference for all functions
+  - One file per pattern, all 8 languages in same file for comparison
+  - Examples: error-handling, async-operations, input-validation, database-query, http-requests
+- `setup.sh` / `setup.ps1` - Interactive setup scripts
+- `config.json` - Metadata for all languages, frameworks, structures, and processes
+
+**Success Criteria** - "Same Result" means:
+- Consistent code structure and architecture patterns
+- Same security practices applied (OWASP Top 10, input validation, etc.)
+- Same testing approaches (unit, integration, mocking)
+- Same CI/CD best practices (version detection, caching, matrix testing)
+- Not byte-for-byte identical, but architecturally equivalent
+
+**🚨 CRITICAL RULE - Check Functions BEFORE Generating Code**
+
+> **BEFORE** implementing error handling, async operations, input validation, database queries, or HTTP requests:
+>
+> 1. **CHECK** `.ai-iap/functions/INDEX.md` for available patterns
+> 2. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
+> 3. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
+> 4. **COPY** the exact code pattern (no installation commands)
+>
+> **DO NOT** waste tokens generating code from scratch when patterns exist.
+> **DO NOT** guess implementations - use proven, secure patterns.
+>
+> This saves 70-80% of tokens and ensures consistent, secure code across all projects.
+
+---
+
+**Key Principles** (Priority Order):
+
+1. **Cross-AI Understandability** (PRIMARY GOAL)
+   - **ALWAYS** prioritize clarity over brevity
+   - **ALWAYS** test mental model: "Would GPT-3.5, GPT-4, Claude, Gemini, and Codestral understand this the SAME way?"
+   - **ALWAYS** provide enough context and examples for consistent interpretation
+   - **ALWAYS** use explicit directives: `> **ALWAYS**` and `> **NEVER**`
+   - **ALWAYS** include concrete examples when ambiguity is possible
+   - **NEVER** sacrifice clarity for token count
+   - Goal: Same architectural result across all AIs
+
+2. **Token Efficiency** (SECONDARY - only where clarity is maintained)
+   - Prefer concise directives over verbose paragraphs (if equally clear)
+   - Use tables instead of prose for comparisons (better structure)
+   - Prefer pattern names over code examples (if pattern is well-known)
+   - One clear example per concept (not zero, not five)
+   - Target guidelines: 80-150 lines for rules, 200-300 for processes
+   - **BUT**: If clarity requires more examples or explanation, ADD THEM
+
+3. **Consistency & Structure**
+   - Pattern-based: Consistent format across all files
+   - Self-validating: AI Self-Check sections with 10-12 items
+   - Git Workflow reference pattern to avoid repetition
+   - Same section order across similar file types
+
+4. **Change Propagation** (CRITICAL - Keep the meta-project consistent)
+   - **Whenever you change ANYTHING**, you **MUST** evaluate and update all dependent parts.
+   - **ALWAYS** assume a change can require updates in:
+     - `.ai-iap/setup.sh` and `.ai-iap/setup.ps1` (generation logic, new/renamed files, paths)
+     - `.ai-iap/config.json` (metadata and output mappings)
+     - `.ai-iap/rules/**` (language/framework/structure rules)
+     - `.ai-iap/processes/**` (permanent and on-demand processes)
+     - `.ai-iap/functions/**` + `.ai-iap/functions/INDEX.md` (patterns and index)
+     - Root docs like `README.md`, `.ai-iap/README.md`, `CUSTOMIZATION.md`, and `.ai-iap/docs/**`
+   - **NEVER** leave docs/scripts pointing to old paths or concepts.
+   - **ALWAYS** update the generated outputs for the supported AI tools when applicable (see **Supported AI Tools** above).
+
+5. **Functions System** (CRITICAL - Reduce AI Guessing & Token Waste)
+   - **Purpose**: Provide exact implementation patterns across all 8 languages to reduce token consumption and guessing
+   - **Location**: `.ai-iap/functions/` 
+   - **Structure**: ONE file per pattern, ALL languages in same file
+   - **INDEX.md**: Quick lookup table - **ALWAYS CHECK INDEX FIRST** before implementing common patterns
+   
+   **🚨 MANDATORY RULE FOR ALL AIs:**
+   
+   > **BEFORE** implementing ANY of these patterns, **CHECK** `.ai-iap/functions/INDEX.md` and use the provided pattern
+   > **DO NOT GUESS** or generate code from scratch if a function pattern exists.
+   > **DO NOT WASTE TOKENS** generating what already exists in `/functions/`.
+   
+   - **When to use**: ALWAYS check before implementing the 5 core patterns above
+   - **How to use**: 
+     1. Check `INDEX.md` for pattern availability
+     2. Open relevant function file (e.g., `error-handling.md`)
+     3. Choose appropriate framework/library version for the project
+     4. Copy exact code pattern (no installation commands)
+   - **Benefits**: Consistent code, 70-80% less token waste, fewer bugs, faster development
+   - **Pattern**: Each function file shows TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart with 2-4 framework versions each
+   
+6. **File Scope & Pattern Lookup**
+   - **ALWAYS** analyse and work on all files in `.ai-iap` and `.ai-iap-custom`
+   - **ALWAYS** check all files for dependencies
+   - **ALWAYS** check `.ai-iap/functions/INDEX.md` **BEFORE** implementing patterns
+   - **NEVER** generate these patterns from scratch - use the provided implementations
