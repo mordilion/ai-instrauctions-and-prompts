@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use SAST tools (dotnet list package --vulnerable + Security Code Scan)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, SECURITY-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - DEPENDENCY SCANNING
 ========================================
 
@@ -182,14 +191,22 @@ BEST PRACTICES
 - Keep dependencies up to date
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, SECURITY-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Set up dependency scanning (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Set up dependency scanning (Phase 1)
 CONTINUE: Add SAST scanning (Phase 2)
 CONTINUE: Add secrets detection (Phase 3)
 CONTINUE: Implement security practices (Phase 4)
-REMEMBER: Never ignore critical vulnerabilities
+FINISH: Update all documentation files
+REMEMBER: Never ignore critical vulnerabilities, document for catch-up
 ```
 
 ---
