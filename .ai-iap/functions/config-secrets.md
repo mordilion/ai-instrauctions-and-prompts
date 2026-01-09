@@ -15,12 +15,24 @@ languages:
       recommended: true
     - name: dotenv (local development)
       library: dotenv
+    - name: NestJS ConfigModule
+      library: "@nestjs/config"
+    - name: Next.js runtime config (process.env)
+      library: next
+    - name: AdonisJS Env/Config
+      library: "@adonisjs/core"
+    - name: Angular environment files
+      library: "@angular/core"
   python:
     - name: os.environ (Built-in)
       library: python-core
       recommended: true
     - name: Pydantic Settings
       library: pydantic
+    - name: Django settings
+      library: django
+    - name: Flask config
+      library: flask
   java:
     - name: System.getenv / System.getProperty (Built-in)
       library: java-core
@@ -37,6 +49,8 @@ languages:
       recommended: true
     - name: Symfony Dotenv
       library: symfony/dotenv
+    - name: Laravel config/env
+      library: laravel/framework
   kotlin:
     - name: System.getenv (Built-in)
       library: kotlin-stdlib
@@ -45,12 +59,16 @@ languages:
     - name: ProcessInfo environment (Built-in)
       library: Foundation
       recommended: true
+    - name: Vapor Environment
+      library: vapor/vapor
   dart:
     - name: const String.fromEnvironment (Built-in)
       library: dart-core
       recommended: true
     - name: flutter_dotenv (runtime)
       library: flutter_dotenv
+    - name: Flutter --dart-define (compile-time)
+      library: flutter
 common_patterns:
   - Required config validation at startup (fail fast)
   - Defaults for non-sensitive values
@@ -102,6 +120,34 @@ import 'dotenv/config';
 const apiUrl = process.env.API_URL;
 ```
 
+### NestJS ConfigModule
+```typescript
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+ConfigModule.forRoot({ isGlobal: true });
+const apiUrl = new ConfigService().get<string>('API_URL');
+```
+
+### Next.js runtime config (process.env)
+```typescript
+export const apiUrl = process.env.API_URL;
+```
+
+### AdonisJS Env/Config
+```typescript
+import env from '#start/env';
+
+const apiUrl = env.get('API_URL');
+```
+
+### Angular environment files
+```typescript
+// environment.ts / environment.prod.ts
+export const environment = {
+  apiUrl: 'https://api.example.com',
+};
+```
+
 ---
 
 ## Python
@@ -136,6 +182,22 @@ class Settings(BaseSettings):
     database_url: str
 
 settings = Settings()
+```
+
+### Django settings
+```python
+# settings.py
+import os
+
+API_URL = os.getenv("API_URL")
+```
+
+### Flask config
+```python
+from flask import Flask
+
+app = Flask(__name__)
+app.config["API_URL"] = os.getenv("API_URL")
 ```
 
 ---
@@ -223,6 +285,14 @@ $config = [
 use Symfony\Component\Dotenv\Dotenv;
 
 (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
+```
+
+### Laravel config/env
+```php
+<?php
+
+$apiUrl = config('app.api_url');
+$databaseUrl = env('DATABASE_URL');
 ```
 
 ---

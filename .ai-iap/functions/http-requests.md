@@ -17,6 +17,12 @@ languages:
       recommended: true
     - name: axios
       library: axios
+    - name: NestJS HttpService
+      library: "@nestjs/axios"
+    - name: Angular HttpClient
+      library: "@angular/common/http"
+    - name: Next.js Route Handler (fetch)
+      library: next
   python:
     - name: httpx (Async)
       library: httpx
@@ -191,6 +197,46 @@ axiosRetry(axios, {
 });
 
 const response = await axios.get(url);
+```
+
+### NestJS HttpService
+```typescript
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
+const response = await firstValueFrom(
+  httpService.get('https://api.example.com/users/123', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+);
+
+const user = response.data;
+```
+
+### Angular HttpClient
+```typescript
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+const user = await firstValueFrom(
+  http.get<User>('https://api.example.com/users/123', { headers })
+);
+```
+
+### Next.js Route Handler (fetch)
+```typescript
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  const response = await fetch('https://api.example.com/users/123', {
+    headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
+  return NextResponse.json(await response.json());
+}
 ```
 
 ---

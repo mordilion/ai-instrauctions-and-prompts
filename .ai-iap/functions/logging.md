@@ -18,46 +18,76 @@ languages:
       library: pino
     - name: winston
       library: winston
+    - name: NestJS Logger
+      library: "@nestjs/common"
+    - name: Next.js (server logs)
+      library: next
+    - name: AdonisJS Logger
+      library: "@adonisjs/core"
+    - name: Angular Logger service (built-in)
+      library: "@angular/core"
+    - name: Vue app.config.errorHandler logging
+      library: vue
   python:
     - name: logging (Built-in)
       library: python-core
       recommended: true
     - name: structlog
       library: structlog
+    - name: Django LOGGING config
+      library: django
+    - name: FastAPI request logging
+      library: fastapi
+    - name: Flask app.logger
+      library: flask
   java:
     - name: SLF4J + Logback
       library: org.slf4j:slf4j-api
       recommended: true
     - name: java.util.logging (Built-in)
       library: java-core
+    - name: Spring Boot Logger (SLF4J)
+      library: org.springframework.boot:spring-boot
   csharp:
     - name: Microsoft.Extensions.Logging
       library: Microsoft.Extensions.Logging
       recommended: true
     - name: Serilog
       library: Serilog
+    - name: ASP.NET Core request logging
+      library: Microsoft.AspNetCore.App
   php:
     - name: error_log + JSON (Built-in)
       library: php-core
       recommended: true
     - name: Monolog
       library: monolog/monolog
+    - name: Laravel Log facade
+      library: laravel/framework
+    - name: Symfony Monolog bundle
+      library: symfony/monolog-bundle
   kotlin:
     - name: SLF4J + Logback
       library: org.slf4j:slf4j-api
       recommended: true
     - name: KotlinLogging
       library: io.github.microutils:kotlin-logging
+    - name: Ktor CallLogging
+      library: io.ktor:ktor-server-call-logging
   swift:
     - name: Logger (OSLog)
       library: os
       recommended: true
+    - name: Vapor Logger
+      library: vapor/vapor
   dart:
     - name: log() (dart:developer)
       library: dart:developer
       recommended: true
     - name: logging
       library: logging
+    - name: Flutter debugPrint
+      library: flutter
 common_patterns:
   - Structured logs (event name + JSON fields)
   - Correlation/request IDs for tracing
@@ -126,6 +156,52 @@ const logger = winston.createLogger({
 logger.info('user.create.success', { event: 'user.create.success', userId, requestId });
 ```
 
+### NestJS Logger
+```typescript
+import { Logger } from '@nestjs/common';
+
+const logger = new Logger('UsersService');
+logger.log('user.create.success');
+logger.error('user.create.failure', err?.stack);
+```
+
+### Next.js (server logs)
+```typescript
+export async function GET() {
+  console.log('users.list', { requestId });
+  return new Response('ok');
+}
+```
+
+### AdonisJS Logger
+```typescript
+import logger from '@adonisjs/core/services/logger';
+
+logger.info({ event: 'user.create.success', userId, requestId });
+```
+
+### Angular Logger service (built-in)
+```typescript
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class LogService {
+  info(event: string, fields: Record<string, unknown> = {}) {
+    console.log(event, fields);
+  }
+}
+```
+
+### Vue app.config.errorHandler logging
+```typescript
+import { createApp } from 'vue';
+
+const app = createApp(App);
+app.config.errorHandler = (err, instance, info) => {
+  console.error('vue.error', { err, info });
+};
+```
+
 ---
 
 ## Python
@@ -160,6 +236,37 @@ logger.info("user.fetch.success", event="user.fetch.success", userId=user_id, re
 logger.error("user.fetch.failure", event="user.fetch.failure", userId=user_id, requestId=request_id, exc_info=True)
 ```
 
+### Django LOGGING config
+```python
+LOGGING = {
+    "version": 1,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
+}
+```
+
+### FastAPI request logging
+```python
+import logging
+from fastapi import FastAPI, Request
+
+log = logging.getLogger("app")
+app = FastAPI()
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    log.info("http.request", extra={"path": request.url.path})
+    return await call_next(request)
+```
+
+### Flask app.logger
+```python
+from flask import Flask
+
+app = Flask(__name__)
+app.logger.info("app.started")
+```
+
 ---
 
 ## Java
@@ -190,6 +297,15 @@ Logger log = Logger.getLogger("app");
 log.info("{\"event\":\"user.create.success\",\"userId\":\"" + userId + "\",\"requestId\":\"" + requestId + "\"}");
 ```
 
+### Spring Boot Logger (SLF4J)
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+private static final Logger log = LoggerFactory.getLogger(UserService.class);
+log.info("user.fetch.success userId={} requestId={}", userId, requestId);
+```
+
 ---
 
 ## C#
@@ -216,6 +332,15 @@ using Serilog;
 
 Log.Information("user.fetch.success {@Fields}", new { eventName = "user.fetch.success", userId, requestId });
 Log.Error(ex, "user.fetch.failure {@Fields}", new { eventName = "user.fetch.failure", userId, requestId });
+```
+
+### ASP.NET Core request logging
+```csharp
+app.Use(async (context, next) =>
+{
+    logger.LogInformation("http.request {Path}", context.Request.Path);
+    await next();
+});
 ```
 
 ---
@@ -253,6 +378,22 @@ $logger->pushHandler(new StreamHandler('php://stdout'));
 $logger->info('user.fetch.success', ['event' => 'user.fetch.success', 'userId' => $userId, 'requestId' => $requestId]);
 ```
 
+### Laravel Log facade
+```php
+<?php
+
+use Illuminate\Support\Facades\Log;
+
+Log::info('user.fetch.success', ['event' => 'user.fetch.success', 'userId' => $userId, 'requestId' => $requestId]);
+```
+
+### Symfony Monolog bundle
+```php
+<?php
+
+$logger->info('user.fetch.success', ['event' => 'user.fetch.success', 'userId' => $userId, 'requestId' => $requestId]);
+```
+
 ---
 
 ## Kotlin
@@ -279,6 +420,16 @@ private val log = KotlinLogging.logger {}
 log.info { "user.fetch.success userId=$userId requestId=$requestId" }
 ```
 
+### Ktor CallLogging
+```kotlin
+import io.ktor.server.application.*
+import io.ktor.server.plugins.callloging.*
+
+fun Application.module() {
+  install(CallLogging)
+}
+```
+
 ---
 
 ## Swift
@@ -290,6 +441,13 @@ import os
 let logger = Logger(subsystem: "com.example.app", category: "app")
 
 logger.info("user.create.success userId=\(userId, privacy: .private) requestId=\(requestId, privacy: .public)")
+```
+
+### Vapor Logger
+```swift
+import Vapor
+
+req.logger.info("user.fetch.success userId=\(userId)")
 ```
 
 ---

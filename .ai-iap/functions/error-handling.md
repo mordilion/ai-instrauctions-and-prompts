@@ -19,6 +19,22 @@ languages:
       library: neverthrow
     - name: React Error Boundary (React)
       library: react
+    - name: Express error middleware
+      library: express
+    - name: Fastify error handler
+      library: fastify
+    - name: NestJS Exception Filter
+      library: "@nestjs/common"
+    - name: Next.js Route Handler (errors)
+      library: next
+    - name: AdonisJS Exception Handler
+      library: "@adonisjs/core"
+    - name: Angular ErrorHandler
+      library: "@angular/core"
+    - name: Vue app.config.errorHandler
+      library: vue
+    - name: Browser global error handler (SPA)
+      library: javascript-core
   python:
     - name: Native try-except (Built-in)
       library: python-core
@@ -27,6 +43,12 @@ languages:
       library: result
     - name: Context managers (Built-in)
       library: python-core
+    - name: FastAPI exception handlers
+      library: fastapi
+    - name: Django middleware (error handling)
+      library: django
+    - name: Flask errorhandler
+      library: flask
   java:
     - name: Native try-catch (Built-in)
       library: java-core
@@ -35,6 +57,8 @@ languages:
       library: java-core
     - name: Vavr (Result/Either type)
       library: io.vavr:vavr
+    - name: Spring Boot @ControllerAdvice
+      library: org.springframework.boot:spring-boot
   csharp:
     - name: Native try-catch (Built-in)
       library: dotnet-core
@@ -43,12 +67,18 @@ languages:
       library: dotnet-core
     - name: LanguageExt (Result/Either type)
       library: LanguageExt.Core
+    - name: ASP.NET Core exception handler middleware
+      library: Microsoft.AspNetCore.App
   php:
     - name: Native try-catch (Built-in)
       library: php-core
       recommended: true
     - name: Laravel Exception Handler
       library: laravel/framework
+    - name: Symfony exception listener
+      library: symfony/http-kernel
+    - name: Slim ErrorMiddleware
+      library: slim/slim
   kotlin:
     - name: Native try-catch (Built-in)
       library: kotlin-stdlib
@@ -57,18 +87,24 @@ languages:
       library: kotlin-stdlib
     - name: Arrow (Either type)
       library: io.arrow-kt:arrow-core
+    - name: Ktor StatusPages
+      library: io.ktor:ktor-server-status-pages
   swift:
     - name: Native do-catch (Built-in)
       library: swift-stdlib
       recommended: true
     - name: Result type (Built-in)
       library: swift-stdlib
+    - name: Vapor AbortError
+      library: vapor/vapor
   dart:
     - name: Native try-catch (Built-in)
       library: dart-core
       recommended: true
     - name: dartz (Either type)
       library: dartz
+    - name: FlutterError + Zone
+      library: flutter
 common_patterns:
   - Custom error classes with status codes
   - Error type discrimination (instanceof, is, etc.)
@@ -180,6 +216,89 @@ class ErrorBoundary extends React.Component {
 }
 ```
 
+### Express error middleware
+```typescript
+import type { NextFunction, Request, Response } from 'express';
+
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  req.log?.error?.({ err }, 'request failed');
+  res.status(500).json({ error: 'internal_error' });
+}
+```
+
+### Fastify error handler
+```typescript
+app.setErrorHandler((err, request, reply) => {
+  request.log.error({ err }, 'request failed');
+  reply.code(500).send({ error: 'internal_error' });
+});
+```
+
+### NestJS Exception Filter
+```typescript
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+
+    const status =
+      exception instanceof HttpException ? exception.getStatus() : 500;
+
+    response.status(status).json({ error: 'request_failed' });
+  }
+}
+```
+
+### Next.js Route Handler (errors)
+```typescript
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+  try {
+    throw new Error('boom');
+  } catch {
+    return NextResponse.json({ error: 'internal_error' }, { status: 500 });
+  }
+}
+```
+
+### Angular ErrorHandler
+```typescript
+import { ErrorHandler, Injectable } from '@angular/core';
+
+@Injectable()
+export class AppErrorHandler implements ErrorHandler {
+  handleError(error: unknown) {
+    // send to logging backend here
+    console.error(error);
+  }
+}
+```
+
+### Vue app.config.errorHandler
+```typescript
+import { createApp } from 'vue';
+
+const app = createApp(App);
+app.config.errorHandler = (err, instance, info) => {
+  console.error('vue.error', { err, info });
+};
+```
+
+### Browser global error handler (SPA)
+```typescript
+window.addEventListener('error', (event) => {
+  console.error('window.error', { message: event.message, filename: event.filename });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('window.unhandledrejection', { reason: event.reason });
+});
+```
+
 ---
 
 ## Python
@@ -230,6 +349,42 @@ def handle_db_errors():
 with handle_db_errors():
     db.session.add(user)
     db.session.commit()
+```
+
+### FastAPI exception handlers
+```python
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+app = FastAPI()
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": "internal_error"})
+```
+
+### Django middleware (error handling)
+```python
+class HandleExceptionsMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            return self.get_response(request)
+        except Exception:
+            return JsonResponse({"error": "internal_error"}, status=500)
+```
+
+### Flask errorhandler
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify({"error": "internal_error"}), 500
 ```
 
 ---
@@ -292,6 +447,21 @@ import io.vavr.control.Try;
 Try<User> result = Try.of(() -> database.getUser(userId));
 result.onSuccess(user -> System.out.println(user))
       .onFailure(error -> logger.error("Error", error));
+```
+
+### Spring Boot @ControllerAdvice
+```java
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<?> handle(Exception ex) {
+    return ResponseEntity.status(500).body(Map.of("error", "internal_error"));
+  }
+}
 ```
 
 ---
@@ -372,6 +542,18 @@ result.Match(
 );
 ```
 
+### ASP.NET Core exception handler middleware
+```csharp
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { error = "internal_error" });
+    });
+});
+```
+
 ---
 
 ## PHP
@@ -426,6 +608,29 @@ public function register()
         ], 404);
     });
 }
+```
+
+### Symfony exception listener
+```php
+<?php
+
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+
+public function onKernelException(ExceptionEvent $event): void
+{
+    $event->setResponse(new JsonResponse(['error' => 'internal_error'], 500));
+}
+```
+
+### Slim ErrorMiddleware
+```php
+<?php
+
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$errorMiddleware->setDefaultErrorHandler(function ($request, Throwable $exception) {
+    return new \Slim\Psr7\Response(500);
+});
 ```
 
 ---
@@ -490,6 +695,19 @@ fun validateEmail(email: String): Either<ValidationError, String> {
 }
 ```
 
+### Ktor StatusPages
+```kotlin
+import io.ktor.server.application.*
+import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.response.*
+
+install(StatusPages) {
+  exception<Throwable> { call, _ ->
+    call.respond(500, mapOf("error" to "internal_error"))
+  }
+}
+```
+
 ---
 
 ## Swift
@@ -543,6 +761,13 @@ case .success(let user):
 case .failure(let error):
     handleError(error)
 }
+```
+
+### Vapor AbortError
+```swift
+import Vapor
+
+throw Abort(.notFound, reason: "user not found")
 ```
 
 ---
@@ -602,4 +827,20 @@ result.fold(
   (failure) => handleError(failure),
   (user) => displayUser(user),
 );
+```
+
+### FlutterError + Zone
+```dart
+import 'package:flutter/foundation.dart';
+
+FlutterError.onError = (details) {
+  FlutterError.presentError(details);
+  // send to crash reporting here
+};
+
+runZonedGuarded(() {
+  runApp(const MyApp());
+}, (error, stack) {
+  debugPrint('unhandled: $error');
+});
 ```

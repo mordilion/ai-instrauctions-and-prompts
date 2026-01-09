@@ -21,6 +21,10 @@ languages:
       library: knex
     - name: pg (PostgreSQL)
       library: pg
+    - name: AdonisJS Lucid ORM
+      library: "@adonisjs/lucid"
+    - name: NestJS (TypeORM)
+      library: "@nestjs/typeorm"
   python:
     - name: SQLAlchemy
       library: sqlalchemy
@@ -51,8 +55,12 @@ languages:
       recommended: true
     - name: Doctrine
       library: doctrine/orm
+    - name: Symfony + Doctrine
+      library: symfony/framework-bundle
     - name: PDO
       library: PDO (built-in)
+    - name: WordPress $wpdb
+      library: wordpress
   kotlin:
     - name: Exposed
       library: org.jetbrains.exposed:exposed-core
@@ -63,6 +71,8 @@ languages:
     - name: CoreData
       library: CoreData (built-in)
       recommended: true
+    - name: Vapor Fluent ORM
+      library: vapor/fluent
   dart:
     - name: Drift
       library: drift
@@ -199,6 +209,30 @@ await pool.query(
   'INSERT INTO users (email, name) VALUES ($1, $2)',
   [email, name]
 );
+```
+
+### NestJS (TypeORM)
+```typescript
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+@Injectable()
+export class UsersRepo {
+  constructor(@InjectRepository(User) private readonly repo: Repository<User>) {}
+
+  findActive() {
+    return this.repo.find({ where: { active: true }, take: 10 });
+  }
+}
+```
+
+### AdonisJS Lucid ORM
+```typescript
+import User from '#models/user';
+
+const user = await User.findOrFail(userId);
+const users = await User.query().where('active', true).orderBy('createdAt', 'desc').limit(10);
 ```
 
 ---
@@ -503,6 +537,16 @@ $entityManager->remove($user);
 $entityManager->flush();
 ```
 
+### Symfony + Doctrine
+```php
+<?php
+
+use Doctrine\Persistence\ManagerRegistry;
+
+$em = $doctrine->getManager();
+$user = $em->getRepository(User::class)->find($userId);
+```
+
 ### PDO - Raw SQL
 ```php
 $pdo = new PDO($dsn, $username, $password);
@@ -513,6 +557,19 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare('INSERT INTO users (email, name) VALUES (:email, :name)');
 $stmt->execute(['email' => $email, 'name' => $name]);
+```
+
+### WordPress $wpdb
+```php
+<?php
+
+global $wpdb;
+$table = $wpdb->prefix . 'users';
+
+$user = $wpdb->get_row(
+  $wpdb->prepare("SELECT * FROM {$table} WHERE email = %s", $email),
+  ARRAY_A
+);
 ```
 
 ---
@@ -620,6 +677,20 @@ context.performAndWait {
     
     try? context.save()
 }
+```
+
+### Vapor Fluent ORM
+```swift
+import Fluent
+
+final class User: Model {
+  static let schema = "users"
+  @ID var id: UUID?
+  @Field(key: "email") var email: String
+  init() {}
+}
+
+let users = try await User.query(on: db).filter(\.$email == email).all()
 ```
 
 ---

@@ -16,6 +16,12 @@ languages:
       recommended: true
     - name: class-validator (Decorator-based)
       library: class-validator
+    - name: NestJS ValidationPipe (class-validator)
+      library: "@nestjs/common"
+    - name: Angular Validators (Reactive Forms)
+      library: "@angular/forms"
+    - name: AdonisJS Validator
+      library: "@adonisjs/validator"
     - name: DOMPurify (HTML sanitization)
       library: isomorphic-dompurify
   python:
@@ -26,6 +32,10 @@ languages:
       library: marshmallow
     - name: Django Forms (Django projects)
       library: django
+    - name: FastAPI (Pydantic models)
+      library: fastapi
+    - name: Flask (request validation)
+      library: flask
     - name: bleach (HTML sanitization)
       library: bleach
   java:
@@ -50,6 +60,8 @@ languages:
       recommended: true
     - name: Symfony Validator (Symfony framework)
       library: symfony/validator
+    - name: WordPress sanitization
+      library: wordpress
     - name: HTML Purifier (HTML sanitization)
       library: ezyang/htmlpurifier
   kotlin:
@@ -147,6 +159,40 @@ const clean = DOMPurify.sanitize(dirty, {
 });
 ```
 
+### NestJS ValidationPipe (class-validator)
+```typescript
+import { ValidationPipe } from '@nestjs/common';
+
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  })
+);
+```
+
+### Angular Validators (Reactive Forms)
+```typescript
+import { FormControl, Validators } from '@angular/forms';
+
+const email = new FormControl('', [Validators.required, Validators.email]);
+const age = new FormControl(0, [Validators.min(1), Validators.max(120)]);
+```
+
+### AdonisJS Validator
+```typescript
+import { schema, rules } from '@adonisjs/validator';
+
+const userSchema = schema.create({
+  email: schema.string({}, [rules.email()]),
+  age: schema.number([rules.range(1, 120)]),
+  name: schema.string({}, [rules.minLength(1), rules.maxLength(100)]),
+});
+
+const payload = await request.validate({ schema: userSchema });
+```
+
 ---
 
 ## Python
@@ -195,6 +241,25 @@ class UserForm(forms.Form):
 form = UserForm(request.POST)
 if form.is_valid():
     save_user(form.cleaned_data)
+```
+
+### FastAPI (Pydantic models)
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/users")
+async def create_user(payload: UserCreate):
+    return payload.model_dump()
+```
+
+### Flask (request validation)
+```python
+from flask import request
+
+payload = request.get_json(force=True, silent=False)
+validated = schema.load(payload)
 ```
 
 ### bleach
@@ -309,6 +374,35 @@ $validated = $request->validate([
         'regex:/[0-9]/',
     ],
 ]);
+```
+
+### Symfony Validator
+```php
+<?php
+
+use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Constraints as Assert;
+
+$validator = Validation::createValidator();
+$violations = $validator->validate($data['email'] ?? null, [
+  new Assert\NotBlank(),
+  new Assert\Email(),
+]);
+```
+
+### HTML Purifier
+```php
+<?php
+
+$cleanHtml = $purifier->purify($dirtyHtml);
+```
+
+### WordPress sanitization
+```php
+<?php
+
+$email = sanitize_email($_POST['email'] ?? '');
+$name = sanitize_text_field($_POST['name'] ?? '');
 ```
 
 ### Plain PHP

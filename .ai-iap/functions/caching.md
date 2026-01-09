@@ -16,12 +16,18 @@ languages:
       recommended: true
     - name: Redis cache
       library: redis
+    - name: NestJS CacheModule (cache-manager)
+      library: "@nestjs/cache-manager"
+    - name: Next.js fetch caching
+      library: next
   python:
     - name: functools.lru_cache (Built-in)
       library: python-core
       recommended: true
     - name: Redis cache
       library: redis
+    - name: Django cache framework
+      library: django
   java:
     - name: Caffeine
       library: com.github.ben-manes.caffeine:caffeine
@@ -40,6 +46,10 @@ languages:
       recommended: true
     - name: Laravel Cache
       library: laravel/framework
+    - name: Symfony Cache
+      library: symfony/cache
+    - name: WordPress transients
+      library: wordpress
   kotlin:
     - name: Caffeine
       library: com.github.ben-manes.caffeine:caffeine
@@ -131,6 +141,30 @@ async function getOrSetJson<T>(key: string, ttlSeconds: number, fn: () => Promis
 }
 ```
 
+### NestJS CacheModule (cache-manager)
+```typescript
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
+
+@Controller('users')
+@UseInterceptors(CacheInterceptor)
+export class UsersController {
+  @Get()
+  @CacheTTL(30)
+  list() {
+    return this.usersService.findActive();
+  }
+}
+```
+
+### Next.js fetch caching
+```typescript
+const response = await fetch('https://api.example.com/users', {
+  next: { revalidate: 30 },
+});
+const users = await response.json();
+```
+
 ---
 
 ## Python
@@ -160,6 +194,17 @@ def get_or_set_json(key: str, ttl_seconds: int, fn):
     value = fn()
     r.setex(key, ttl_seconds, json.dumps(value))
     return value
+```
+
+### Django cache framework
+```python
+from django.core.cache import cache
+
+key = f"user:v1:{user_id}"
+user = cache.get(key)
+if user is None:
+    user = load_user(user_id)
+    cache.set(key, user, timeout=60)
 ```
 
 ---
@@ -271,6 +316,29 @@ $user = Cache::remember(
     now()->addMinutes(5),
     fn () => User::findOrFail($userId)
 );
+```
+
+### Symfony Cache
+```php
+<?php
+
+use Symfony\Contracts\Cache\CacheInterface;
+
+$user = $cache->get("user:v1:$userId", function () use ($userId) {
+    return User::findOrFail($userId);
+});
+```
+
+### WordPress transients
+```php
+<?php
+
+$key = "user_v1_$userId";
+$user = get_transient($key);
+if ($user === false) {
+  $user = load_user($userId);
+  set_transient($key, $user, 60);
+}
 ```
 
 ---
