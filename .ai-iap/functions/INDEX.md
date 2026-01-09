@@ -1,8 +1,6 @@
 # Functions Index - Cross-Language Implementation Patterns
 
 > **Purpose**: Quick reference for common coding patterns across all supported languages
->
-> **Usage**: Find the function you need, check language availability, use exact patterns to reduce AI guessing
 
 ---
 
@@ -17,33 +15,12 @@
 - ❌ **DON'T** implement HTTP clients without checking available options
 
 - ✅ **DO** check this INDEX before implementing the 5 core patterns
-- ✅ **DO** use exact patterns from function files
-- ✅ **DO** choose appropriate framework version (Plain vs Framework)
-- ✅ **DO** copy installation commands and implementations
+- ✅ **DO** open the function file and read YAML metadata for framework options
+- ✅ **DO** use exact code patterns from function files
+- ✅ **DO** choose appropriate framework version (Native, ORM, Library, etc.)
 - ✅ **DO** save 70-80% of tokens by using proven patterns
 
 **This is MANDATORY to reduce token waste and ensure consistent, secure code.**
-
----
-
-## How to Use This Index
-
-1. **Find your pattern** in the table below
-2. **Check language support** for your project
-3. **Open the function file** for complete implementation
-4. **Choose your approach** - Plain language, Framework ORM, or specific library
-5. **Check dependencies** - Each function file lists required packages and installation commands
-6. **Copy the exact pattern** - don't let AI guess, use proven implementations
-
-### 📦 What's Inside Each Function File
-
-Each function file includes:
-- **YAML frontmatter** with metadata (languages, tags, difficulty)
-- **Multiple implementation approaches** per language (Plain, Framework 1, Framework 2, etc.)
-- **Dependency tables** with installation commands for each approach
-- **Real-world code examples** (5-20 lines each)
-- **Best practices** and common pitfalls
-- **Security checklists** where applicable
 
 ---
 
@@ -74,92 +51,71 @@ All functions cover these 8 languages:
 
 ---
 
-## Framework & Library Versions
+## Function File Structure
 
-Each function file provides **multiple implementations** for the same pattern using different libraries/frameworks:
+Each function file contains:
 
-### Database Queries Example
-- **TypeScript**: Plain pg, Prisma, TypeORM, Knex.js
-- **Python**: Plain psycopg2, SQLAlchemy, Django ORM, asyncpg
-- **PHP**: Plain PDO, Laravel Eloquent, Doctrine ORM
-- **Java**: Plain JDBC, Spring Data JPA, Hibernate, jOOQ
-- **C#**: Plain ADO.NET, Entity Framework Core, Dapper
-- **Kotlin**: Plain JDBC, Exposed, Room (Android), Spring Data
-- **Swift**: CoreData, SQLite.swift, GRDB
-- **Dart**: Plain sqflite, Drift (Moor), Floor
+### YAML Frontmatter (Metadata Header)
+- **title**: Function name
+- **category**: Classification (Security, Performance, etc.)
+- **difficulty**: beginner | intermediate | advanced
+- **purpose**: What this pattern solves
+- **when_to_use**: List of use cases
+- **languages**: All 8 languages with framework variants
+  - Each language lists 2-4 implementations (Native, Framework A, Framework B, etc.)
+  - Marks recommended approach for each language
+  - Includes library names for quick lookup
+- **common_patterns** / **common_regex**: Quick reference tables
+- **best_practices**: DO/DON'T lists
+- **related_functions**: Links to related patterns
+- **tags**: Search keywords
+- **updated**: Last modification date
 
-### Error Handling Example
-- **TypeScript**: Native try-catch, neverthrow (Result type), React Error Boundaries
-- **Python**: Native try-except, result library
-- **Kotlin**: Native try-catch, Built-in Result, Arrow (Either)
-- **Swift**: Native do-catch, Built-in Result type
+### Code Examples (After Metadata)
+- Pure code only, no explanations
+- Organized by language, then by framework variant
+- 5-20 lines per example
+- Real-world, copy-paste ready
 
-**Benefit**: Choose the approach that fits your project (plain for flexibility, framework for productivity)
-
----
-
-## Quick Selection Guide
-
-### By Use Case
-
-**Building APIs?**
-→ Start with: Error Handling, Input Validation, Database Queries
-
-**Frontend Applications?**
-→ Start with: Async Operations, HTTP Requests, Input Validation
-
-**Backend Services?**
-→ Start with: Database Queries, Error Handling, HTTP Requests
-
-**Mobile Apps?**
-→ Start with: Async Operations, HTTP Requests, Error Handling
+**No installation commands** - check project's existing dependencies first
 
 ---
 
-## Pattern Benefits
+## How to Use
 
-✅ **Consistency**: Same pattern across all your projects
-✅ **Security**: Validated, safe implementations
-✅ **Performance**: Optimized for each language
-✅ **Maintainability**: Well-documented, proven patterns
-✅ **Reduced Errors**: Less guessing = fewer bugs
+1. **Find your pattern** in the table above
+2. **Open the function file** (e.g., `error-handling.md`)
+3. **Read YAML metadata** to see all framework options for your language
+4. **Scroll to your language section**
+5. **Choose framework variant** that matches your project
+6. **Copy exact code pattern**
+
+**Example workflow**:
+- Need: Database query in PHP
+- Open: `database-query.md`
+- Check YAML: See options → Plain PDO, Doctrine, Laravel Eloquent
+- Find: PHP section in file
+- Copy: Laravel Eloquent pattern (if using Laravel)
 
 ---
 
-## How Functions Differ from Processes
+## Framework Variants Available
 
-| Aspect | Functions | Processes |
-|--------|-----------|-----------|
-| **Scope** | Single coding pattern | Complete workflow |
-| **Size** | 5-20 lines of code | Multi-step implementation |
-| **Languages** | All in one file | Separate file per language |
-| **Usage** | Copy exact pattern | Follow step-by-step guide |
-| **Example** | "How to handle errors" | "How to implement testing" |
+Each function provides **multiple implementations** per language:
+
+**Database Queries**: Plain (native drivers), ORM frameworks, query builders
+**Error Handling**: Native try-catch, Result types, Framework error boundaries
+**Async Operations**: Native async/await, Reactive libraries, Concurrency tools
+**Input Validation**: Manual validation, Schema validators, Framework validators
+**HTTP Requests**: Native HTTP clients, Popular libraries, Framework HTTP clients
+
+**Check YAML metadata in each file for complete framework list per language.**
 
 ---
 
 ## Adding Custom Functions
 
-To add your own function patterns:
-
-1. Create `custom-pattern.md` in `.ai-iap/functions/`
-2. Follow existing file structure
-3. Include all languages your team uses
-4. Add entry to this INDEX
-5. Update `.cursor/rules/` to reference it
-
----
-
-## Quick Reference Checklist
-
-Before implementing ANY function, ask:
-
-- [ ] Is there a pattern in `/functions/` for this?
-- [ ] Have I checked the INDEX?
-- [ ] Am I using the exact pattern (not guessing)?
-- [ ] Have I checked for language-specific variations?
-
-**Remember**: Copy patterns = Consistent code. Guessing = Inconsistent code.
+See **CUSTOMIZATION.md** for instructions on adding your own function patterns.
 
 ---
 
