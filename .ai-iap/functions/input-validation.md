@@ -2,24 +2,108 @@
 title: Input Validation Patterns
 category: Security & Data Integrity
 difficulty: intermediate
-languages: [typescript, python, java, csharp, php, kotlin, swift, dart]
-tags: [validation, sanitization, security, xss]
+purpose: Validate and sanitize user input to prevent security issues and data corruption
+when_to_use:
+  - API endpoints receiving user data
+  - Form submissions
+  - File uploads
+  - Query parameters
+  - Any user-provided input
+languages:
+  typescript:
+    - name: Zod (Type-safe schema validation)
+      library: zod
+      recommended: true
+    - name: class-validator (Decorator-based)
+      library: class-validator
+    - name: DOMPurify (HTML sanitization)
+      library: isomorphic-dompurify
+  python:
+    - name: Pydantic (Type hints validation)
+      library: pydantic
+      recommended: true
+    - name: marshmallow (Serialization + validation)
+      library: marshmallow
+    - name: Django Forms (Django projects)
+      library: django
+    - name: bleach (HTML sanitization)
+      library: bleach
+  java:
+    - name: Bean Validation JSR-380 (Standard)
+      library: javax.validation
+      recommended: true
+    - name: Hibernate Validator (Implementation)
+      library: hibernate-validator
+    - name: Spring Boot Validation (Auto-validation)
+      library: spring-boot-starter-validation
+  csharp:
+    - name: Data Annotations (Built-in)
+      library: System.ComponentModel.DataAnnotations
+      recommended: true
+    - name: FluentValidation (Fluent API)
+      library: FluentValidation
+    - name: HtmlSanitizer (HTML cleaning)
+      library: HtmlSanitizer
+  php:
+    - name: Laravel Validation (Laravel framework)
+      library: laravel/framework
+      recommended: true
+    - name: Symfony Validator (Symfony framework)
+      library: symfony/validator
+    - name: HTML Purifier (HTML sanitization)
+      library: ezyang/htmlpurifier
+  kotlin:
+    - name: Built-in validation (Native Kotlin)
+      library: kotlin-stdlib
+      recommended: true
+    - name: Konform (DSL validation)
+      library: io.konform:konform
+  swift:
+    - name: Manual validation (Native Swift)
+      library: swift-stdlib
+      recommended: true
+  dart:
+    - name: Manual validation (Native Dart)
+      library: dart-core
+      recommended: true
+    - name: Flutter Form (UI validation)
+      library: flutter
+    - name: formz (Reusable validation)
+      library: formz
+common_patterns:
+  - Email format validation
+  - Password strength (min 8 chars, uppercase, lowercase, number, special)
+  - Age range validation (1-120)
+  - String length limits (min/max)
+  - URL format validation
+  - Required field checks
+  - Type validation (int, string, boolean)
+best_practices:
+  do:
+    - Validate on both client and server
+    - Provide specific error messages
+    - Sanitize before storing
+    - Use whitelist, not blacklist
+    - Validate data types and ranges
+    - Trim whitespace from strings
+  dont:
+    - Trust client-side validation alone
+    - Expose internal validation logic
+    - Allow arbitrary HTML without sanitization
+    - Store unsanitized input
+    - Use blacklist filtering
+regex_patterns:
+  email: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+  password: "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$"
+  url: "^https?://[^\\s]+$"
+  phone_us: "^\\+?1?\\d{10}$"
+tags: [validation, sanitization, security, xss, input, forms]
 updated: 2026-01-09
----
-
-# Input Validation Patterns
-
-> Validate user input, prevent XSS/injection, sanitize HTML
-
 ---
 
 ## TypeScript
 
-### Zod (Recommended)
-```bash
-npm install zod
-```
-
+### Zod
 ```typescript
 import { z } from 'zod';
 
@@ -31,15 +115,11 @@ const userSchema = z.object({
     .regex(/[A-Z]/).regex(/[a-z]/).regex(/[0-9]/),
 });
 
-const user = userSchema.parse(data); // Throws on invalid
+const user = userSchema.parse(data);
 // Or: const result = userSchema.safeParse(data);
 ```
 
 ### class-validator
-```bash
-npm install class-validator class-transformer
-```
-
 ```typescript
 import { IsEmail, IsInt, Min, Max, Length } from 'class-validator';
 
@@ -57,11 +137,7 @@ class UserDto {
 const errors = await validate(userDto);
 ```
 
-### HTML Sanitization
-```bash
-npm install isomorphic-dompurify
-```
-
+### DOMPurify
 ```typescript
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -75,11 +151,7 @@ const clean = DOMPurify.sanitize(dirty, {
 
 ## Python
 
-### Pydantic (Recommended)
-```bash
-pip install pydantic
-```
-
+### Pydantic
 ```python
 from pydantic import BaseModel, EmailStr, Field, validator
 
@@ -95,14 +167,37 @@ class UserCreate(BaseModel):
             raise ValueError('Must contain uppercase')
         return v
 
-user = UserCreate(**data)  # Raises ValidationError
+user = UserCreate(**data)
 ```
 
-### bleach (HTML Sanitization)
-```bash
-pip install bleach
+### marshmallow
+```python
+from marshmallow import Schema, fields, validate
+
+class UserSchema(Schema):
+    email = fields.Email(required=True)
+    age = fields.Integer(required=True, validate=validate.Range(min=1, max=120))
+    name = fields.String(required=True, validate=validate.Length(min=1, max=100))
+
+schema = UserSchema()
+validated = schema.load(request_data)
 ```
 
+### Django Forms
+```python
+from django import forms
+
+class UserForm(forms.Form):
+    email = forms.EmailField()
+    age = forms.IntegerField(min_value=1, max_value=120)
+    name = forms.CharField(min_length=1, max_length=100)
+
+form = UserForm(request.POST)
+if form.is_valid():
+    save_user(form.cleaned_data)
+```
+
+### bleach
 ```python
 import bleach
 
@@ -119,13 +214,6 @@ clean = bleach.clean(
 ## Java
 
 ### Bean Validation
-```xml
-<dependency>
-    <groupId>javax.validation</groupId>
-    <artifactId>validation-api</artifactId>
-</dependency>
-```
-
 ```java
 import javax.validation.constraints.*;
 
@@ -146,7 +234,7 @@ public class UserDto {
 Set<ConstraintViolation<UserDto>> violations = validator.validate(user);
 ```
 
-### Spring Boot Auto-Validation
+### Spring Boot
 ```java
 @RestController
 public class UserController {
@@ -180,15 +268,10 @@ public class UserDto
     public string Password { get; set; }
 }
 
-var results = new List<ValidationResult>();
 Validator.TryValidateObject(user, new ValidationContext(user), results, true);
 ```
 
-### FluentValidation (Recommended)
-```bash
-dotnet add package FluentValidation
-```
-
+### FluentValidation
 ```csharp
 using FluentValidation;
 
@@ -212,7 +295,7 @@ var result = await validator.ValidateAsync(dto);
 
 ## PHP
 
-### Laravel Validation (Recommended)
+### Laravel
 ```php
 $validated = $request->validate([
     'email' => 'required|email',
@@ -228,7 +311,7 @@ $validated = $request->validate([
 ]);
 ```
 
-### Manual (Plain PHP)
+### Plain PHP
 ```php
 $errors = [];
 
@@ -253,7 +336,7 @@ if (empty($errors)) {
 
 ## Kotlin
 
-### Built-in Validation
+### Built-in
 ```kotlin
 data class UserCreate(
     val email: String,
@@ -274,11 +357,6 @@ data class UserCreate(
 ```
 
 ### Konform
-```kotlin
-// build.gradle.kts
-implementation("io.konform:konform:0.4.0")
-```
-
 ```kotlin
 import io.konform.validation.Validation
 
@@ -303,7 +381,7 @@ val validateUser = Validation<UserCreate> {
 
 ## Swift
 
-### Manual Validation
+### Manual
 ```swift
 struct UserCreate {
     let email: String
@@ -341,7 +419,7 @@ enum ValidationError: Error {
 
 ## Dart
 
-### Manual Validation
+### Manual
 ```dart
 class UserCreate {
   final String email;
@@ -385,29 +463,3 @@ TextFormField(
   },
 )
 ```
-
----
-
-## Common Regex Patterns
-
-```regex
-Email:     ^[^\s@]+@[^\s@]+\.[^\s@]+$
-Password:  ^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$
-URL:       ^https?://[^\s]+$
-Phone(US): ^\+?1?\d{10}$
-```
-
----
-
-## Quick Rules
-
-✅ Validate server-side (never trust client)
-✅ Sanitize HTML before display
-✅ Use whitelist (allowed tags/chars)
-✅ Trim whitespace
-✅ Check types, ranges, formats
-
-❌ Client-only validation
-❌ Blacklist filtering
-❌ Store unsanitized input
-❌ Expose validation logic
