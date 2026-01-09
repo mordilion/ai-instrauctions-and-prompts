@@ -2,15 +2,100 @@
 title: Error Handling Patterns
 category: Error Management
 difficulty: intermediate
-languages: [typescript, python, java, csharp, php, kotlin, swift, dart]
-tags: [errors, exceptions, try-catch, result-types]
+purpose: Handle failures, validation errors, API errors, and unexpected conditions consistently
+when_to_use:
+  - API error responses
+  - Validation failures
+  - External service failures
+  - Database errors
+  - Unexpected conditions
+  - User-facing error messages
+languages:
+  typescript:
+    - name: Native try-catch (Built-in)
+      library: javascript-core
+      recommended: true
+    - name: neverthrow (Result type)
+      library: neverthrow
+    - name: React Error Boundary (React)
+      library: react
+  python:
+    - name: Native try-except (Built-in)
+      library: python-core
+      recommended: true
+    - name: result (Result type)
+      library: result
+    - name: Context managers (Built-in)
+      library: python-core
+  java:
+    - name: Native try-catch (Built-in)
+      library: java-core
+      recommended: true
+    - name: Try-with-resources (Built-in)
+      library: java-core
+    - name: Vavr (Result/Either type)
+      library: io.vavr:vavr
+  csharp:
+    - name: Native try-catch (Built-in)
+      library: dotnet-core
+      recommended: true
+    - name: Using statement (Built-in)
+      library: dotnet-core
+    - name: LanguageExt (Result/Either type)
+      library: LanguageExt.Core
+  php:
+    - name: Native try-catch (Built-in)
+      library: php-core
+      recommended: true
+    - name: Laravel Exception Handler
+      library: laravel/framework
+  kotlin:
+    - name: Native try-catch (Built-in)
+      library: kotlin-stdlib
+      recommended: true
+    - name: Result type (Built-in)
+      library: kotlin-stdlib
+    - name: Arrow (Either type)
+      library: io.arrow-kt:arrow-core
+  swift:
+    - name: Native do-catch (Built-in)
+      library: swift-stdlib
+      recommended: true
+    - name: Result type (Built-in)
+      library: swift-stdlib
+  dart:
+    - name: Native try-catch (Built-in)
+      library: dart-core
+      recommended: true
+    - name: dartz (Either type)
+      library: dartz
+common_patterns:
+  - Custom error classes with status codes
+  - Error type discrimination (instanceof, is, etc.)
+  - Result/Either types for functional error handling
+  - Error boundaries for UI frameworks
+  - Context managers for resource cleanup
+  - Error wrapping and re-throwing
+best_practices:
+  do:
+    - Log errors with context (user ID, request ID, timestamp)
+    - Use typed errors (custom classes/enums)
+    - Fail fast - validate early, throw immediately
+    - Wrap third-party errors in your own types
+    - Provide actionable error messages
+    - Monitor error rates and set up alerts
+  dont:
+    - Catch exceptions without logging
+    - Return generic "Error occurred" messages
+    - Swallow errors silently
+    - Expose stack traces to users in production
+    - Log passwords or tokens in error messages
+    - Use exceptions for flow control
+related_functions:
+  - input-validation.md
+  - http-requests.md
+tags: [errors, exceptions, try-catch, result-types, error-boundaries]
 updated: 2026-01-09
----
-
-# Error Handling Patterns
-
-> Handle failures, validation errors, API errors, unexpected conditions
-
 ---
 
 ## TypeScript
@@ -51,7 +136,6 @@ class NotFoundError extends AppError {
   }
 }
 
-// Usage
 throw new NotFoundError('User');
 ```
 
@@ -127,7 +211,6 @@ class NotFoundError(AppError):
     def __init__(self, resource: str):
         super().__init__(f"{resource} not found", status_code=404)
 
-# Usage
 raise NotFoundError("User")
 ```
 
@@ -144,7 +227,6 @@ def handle_db_errors():
     except OperationalError:
         raise ServiceUnavailableError("Database unavailable")
 
-# Usage
 with handle_db_errors():
     db.session.add(user)
     db.session.commit()
@@ -336,7 +418,6 @@ class NotFoundException extends AppException
 
 ### Laravel Exception Handler
 ```php
-// app/Exceptions/Handler.php
 public function register()
 {
     $this->renderable(function (NotFoundException $e, $request) {
@@ -442,7 +523,6 @@ enum AppError: Error {
     }
 }
 
-// Usage
 throw AppError.notFound(resource: "User")
 ```
 
@@ -523,18 +603,3 @@ result.fold(
   (user) => displayUser(user),
 );
 ```
-
----
-
-## Quick Rules
-
-✅ Log errors with context
-✅ Use typed errors (custom classes)
-✅ Fail fast - validate early
-✅ Wrap third-party errors
-✅ Never expose sensitive data in errors
-
-❌ Catch without logging
-❌ Generic "Error occurred" messages
-❌ Swallow errors silently
-❌ Expose stack traces to users

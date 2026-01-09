@@ -2,270 +2,444 @@
 title: Database Query Patterns
 category: Data Access
 difficulty: intermediate
-languages: [typescript, python, java, csharp, php, kotlin, swift, dart]
-tags: [database, sql, orm, sql-injection, security]
+purpose: Safely query and manipulate data with proper ORM usage, parameterization, and SQL injection prevention
+when_to_use:
+  - CRUD operations
+  - Complex queries with joins
+  - Pagination
+  - Transactions
+  - Data migrations
+  - Raw SQL queries
+languages:
+  typescript:
+    - name: Prisma
+      library: "@prisma/client"
+      recommended: true
+    - name: TypeORM
+      library: typeorm
+    - name: Knex.js
+      library: knex
+    - name: pg (PostgreSQL)
+      library: pg
+  python:
+    - name: SQLAlchemy
+      library: sqlalchemy
+      recommended: true
+    - name: Django ORM
+      library: django
+    - name: asyncpg
+      library: asyncpg
+  java:
+    - name: Spring Data JPA
+      library: org.springframework.boot:spring-boot-starter-data-jpa
+      recommended: true
+    - name: Hibernate
+      library: org.hibernate:hibernate-core
+    - name: JDBC
+      library: java.sql (built-in)
+  csharp:
+    - name: Entity Framework Core
+      library: Microsoft.EntityFrameworkCore
+      recommended: true
+    - name: Dapper
+      library: Dapper
+    - name: ADO.NET
+      library: System.Data.SqlClient (built-in)
+  php:
+    - name: Laravel Eloquent
+      library: laravel/framework
+      recommended: true
+    - name: Doctrine
+      library: doctrine/orm
+    - name: PDO
+      library: PDO (built-in)
+  kotlin:
+    - name: Exposed
+      library: org.jetbrains.exposed:exposed-core
+      recommended: true
+    - name: Room (Android)
+      library: androidx.room:room-runtime
+  swift:
+    - name: CoreData
+      library: CoreData (built-in)
+      recommended: true
+  dart:
+    - name: Drift
+      library: drift
+      recommended: true
+    - name: sqflite
+      library: sqflite
+security_rules:
+  - Always use parameterized queries or ORM methods
+  - Never concatenate user input into SQL strings
+  - Escape special characters if raw SQL is required
+  - Use prepared statements for JDBC/PDO
+  - Validate input before querying
+  - Use least privilege database accounts
+best_practices:
+  do:
+    - Use ORM methods for type safety
+    - Paginate large result sets
+    - Use transactions for multi-step operations
+    - Index frequently queried columns
+    - Use connection pooling
+    - Log slow queries
+  dont:
+    - Use `SELECT *` in production
+    - Fetch entire tables without limits
+    - Store sensitive data in plain text
+    - Leave transactions open indefinitely
+    - Use string concatenation for queries
+related_functions:
+  - input-validation.md
+  - error-handling.md
+  - async-operations.md
+tags: [database, sql, orm, queries, transactions, sql-injection]
 updated: 2026-01-09
----
-
-# Database Query Patterns
-
-> Safe queries, prevent SQL injection, parameterized statements
-
 ---
 
 ## TypeScript
 
-### Prisma (Type-safe ORM)
+### Prisma - Basic CRUD
 ```typescript
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-// Query
-const user = await prisma.user.findUnique({
-  where: { id: userId },
-  include: { posts: true }
-});
-
-// Insert
-const newUser = await prisma.user.create({
+const user = await prisma.user.create({
   data: {
     email: 'user@example.com',
-    name: 'John Doe'
-  }
+    name: 'John Doe',
+  },
 });
 
-// Raw query (parameterized)
-const users = await prisma.$queryRaw`
-  SELECT * FROM users WHERE age > ${minAge} AND status = ${status}
-`;
-```
+const users = await prisma.user.findMany({
+  where: { active: true },
+  orderBy: { createdAt: 'desc' },
+  take: 10,
+  skip: 0,
+});
 
-### TypeORM
-```typescript
-import { Repository } from 'typeorm';
-
-const user = await userRepository.findOne({
+const user = await prisma.user.findUnique({
   where: { id: userId },
-  relations: ['posts']
+  include: { posts: true },
 });
 
-const users = await userRepository
-  .createQueryBuilder('user')
-  .where('user.age > :age', { age: minAge })
-  .andWhere('user.status = :status', { status })
-  .getMany();
+await prisma.user.update({
+  where: { id: userId },
+  data: { name: 'Jane Doe' },
+});
+
+await prisma.user.delete({
+  where: { id: userId },
+});
 ```
 
-### Knex.js (Query Builder)
+### Prisma - Transactions
+```typescript
+await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: { email, name } });
+  await tx.profile.create({ data: { userId: user.id, bio } });
+  return user;
+});
+```
+
+### TypeORM - Basic CRUD
+```typescript
+import { getRepository } from 'typeorm';
+
+const userRepo = getRepository(User);
+
+const user = await userRepo.save({ email, name });
+
+const users = await userRepo.find({
+  where: { active: true },
+  order: { createdAt: 'DESC' },
+  take: 10,
+  skip: 0,
+});
+
+const user = await userRepo.findOne({
+  where: { id: userId },
+  relations: ['posts'],
+});
+
+await userRepo.update(userId, { name: 'Jane Doe' });
+await userRepo.delete(userId);
+```
+
+### Knex.js - Query Builder
 ```typescript
 import knex from 'knex';
-const db = knex({ client: 'pg', connection: process.env.DATABASE_URL });
+const db = knex({ client: 'pg', connection: connectionString });
 
-const user = await db('users').where({ id: userId }).first();
+await db('users').insert({ email, name });
 
-const [id] = await db('users')
-  .insert({ email: 'user@example.com', name: 'John Doe' })
-  .returning('id');
+const users = await db('users')
+  .where({ active: true })
+  .orderBy('created_at', 'desc')
+  .limit(10)
+  .offset(0);
+
+await db('users').where({ id: userId }).update({ name: 'Jane Doe' });
+await db('users').where({ id: userId }).del();
 ```
 
-### Plain PostgreSQL (pg)
+### pg - Raw SQL (PostgreSQL)
 ```typescript
 import { Pool } from 'pg';
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString });
 
-// ✅ ALWAYS parameterized
-const query = 'SELECT * FROM users WHERE email = $1 AND status = $2';
-const result = await pool.query(query, [email, status]);
+const result = await pool.query(
+  'SELECT * FROM users WHERE email = $1',
+  [email]
+);
+const user = result.rows[0];
 
-// ❌ NEVER string concatenation
-const badQuery = `SELECT * FROM users WHERE email = '${email}'`; // SQL INJECTION!
+await pool.query(
+  'INSERT INTO users (email, name) VALUES ($1, $2)',
+  [email, name]
+);
 ```
 
 ---
 
 ## Python
 
-### SQLAlchemy ORM
+### SQLAlchemy - Basic CRUD
 ```python
 from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine(database_url)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+user = User(email=email, name=name)
+session.add(user)
+session.commit()
+
+users = session.query(User).filter(User.active == True).order_by(User.created_at.desc()).limit(10).all()
+
+user = session.query(User).filter(User.id == user_id).first()
+
+user.name = 'Jane Doe'
+session.commit()
+
+session.delete(user)
+session.commit()
+```
+
+### SQLAlchemy - Transactions
+```python
 from sqlalchemy.orm import Session
 
-engine = create_engine('postgresql://user:pass@localhost/db')
-
 with Session(engine) as session:
-    user = session.query(User).filter_by(id=user_id).first()
-    
-    # Or with select
-    stmt = select(User).where(User.id == user_id)
-    user = session.execute(stmt).scalar_one()
-
-# Insert
-with Session(engine) as session:
-    new_user = User(email='user@example.com', name='John Doe')
-    session.add(new_user)
-    session.commit()
-
-# Parameterized raw query
-from sqlalchemy import text
-stmt = text("SELECT * FROM users WHERE age > :age AND status = :status")
-users = session.execute(stmt, {"age": min_age, "status": status}).all()
+    with session.begin():
+        user = User(email=email, name=name)
+        session.add(user)
+        profile = Profile(user_id=user.id, bio=bio)
+        session.add(profile)
 ```
 
 ### Django ORM
 ```python
+from myapp.models import User
+
+user = User.objects.create(email=email, name=name)
+
+users = User.objects.filter(active=True).order_by('-created_at')[:10]
+
 user = User.objects.get(id=user_id)
-users = User.objects.filter(age__gt=min_age, status=status)
+user = User.objects.select_related('profile').get(id=user_id)
 
-# Insert
-user = User.objects.create(email='user@example.com', name='John Doe')
+User.objects.filter(id=user_id).update(name='Jane Doe')
 
-# Raw query (parameterized)
-users = User.objects.raw(
-    "SELECT * FROM users WHERE email = %s AND status = %s",
-    [email, status]
-)
+User.objects.filter(id=user_id).delete()
 ```
 
-### asyncpg (Async PostgreSQL)
+### asyncpg - Async PostgreSQL
 ```python
 import asyncpg
 
-conn = await asyncpg.connect('postgresql://user:pass@localhost/db')
+conn = await asyncpg.connect(database_url)
 
-users = await conn.fetch(
-    'SELECT * FROM users WHERE age > $1 AND status = $2',
-    min_age, status
-)
-
-user_id = await conn.fetchval(
-    'INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id',
+await conn.execute(
+    'INSERT INTO users (email, name) VALUES ($1, $2)',
     email, name
 )
+
+users = await conn.fetch(
+    'SELECT * FROM users WHERE active = $1 ORDER BY created_at DESC LIMIT 10',
+    True
+)
+
+await conn.close()
 ```
 
 ---
 
 ## Java
 
-### Spring Data JPA
+### Spring Data JPA - Repository
 ```java
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
-    List<User> findByAgeGreaterThan(int age);
+    List<User> findByActiveTrue();
     
-    @Query("SELECT u FROM User u WHERE u.status = :status")
-    List<User> findByStatus(@Param("status") String status);
-    
-    @Query(value = "SELECT * FROM users WHERE age > ?1 AND status = ?2", 
-           nativeQuery = true)
-    List<User> findByAgeAndStatus(int age, String status);
+    @Query("SELECT u FROM User u WHERE u.email = :email")
+    Optional<User> findByEmail(@Param("email") String email);
 }
-```
 
-### JPA/Hibernate
-```java
-@Repository
-public class UserRepository {
-    @PersistenceContext
-    private EntityManager em;
+@Service
+public class UserService {
+    @Autowired
+    private UserRepository userRepository;
     
-    public User findById(Long id) {
-        return em.find(User.class, id);
+    public User createUser(String email, String name) {
+        User user = new User(email, name);
+        return userRepository.save(user);
     }
     
-    public List<User> findByAge(int minAge) {
-        return em.createQuery(
-            "SELECT u FROM User u WHERE u.age > :minAge",
-            User.class
-        )
-        .setParameter("minAge", minAge)
-        .getResultList();
+    public List<User> getActiveUsers() {
+        return userRepository.findByActiveTrue();
     }
 }
 ```
 
-### JDBC (PreparedStatement)
+### Spring Data JPA - Transactions
 ```java
-// ✅ ALWAYS use PreparedStatement
-String sql = "SELECT * FROM users WHERE email = ? AND status = ?";
-try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+@Transactional
+public User createUserWithProfile(String email, String name, String bio) {
+    User user = new User(email, name);
+    userRepository.save(user);
+    
+    Profile profile = new Profile(user.getId(), bio);
+    profileRepository.save(profile);
+    
+    return user;
+}
+```
+
+### Hibernate - EntityManager
+```java
+EntityManagerFactory emf = Persistence.createEntityManagerFactory("my-pu");
+EntityManager em = emf.createEntityManager();
+
+em.getTransaction().begin();
+User user = new User(email, name);
+em.persist(user);
+em.getTransaction().commit();
+
+TypedQuery<User> query = em.createQuery(
+    "SELECT u FROM User u WHERE u.active = :active", User.class);
+query.setParameter("active", true);
+List<User> users = query.getResultList();
+
+em.close();
+```
+
+### JDBC - Raw SQL
+```java
+String sql = "SELECT * FROM users WHERE email = ?";
+try (PreparedStatement stmt = connection.prepareStatement(sql)) {
     stmt.setString(1, email);
-    stmt.setString(2, status);
-    
     ResultSet rs = stmt.executeQuery();
+    
     while (rs.next()) {
-        // Process results
+        String name = rs.getString("name");
+        System.out.println(name);
     }
 }
-
-// ❌ NEVER string concatenation
-String badQuery = "SELECT * FROM users WHERE email = '" + email + "'"; // SQL INJECTION!
 ```
 
 ---
 
 ## C#
 
-### Entity Framework Core
+### Entity Framework Core - DbContext
 ```csharp
-var user = await _context.Users
+public class AppDbContext : DbContext
+{
+    public DbSet<User> Users { get; set; }
+}
+
+await using var db = new AppDbContext();
+
+var user = new User { Email = email, Name = name };
+db.Users.Add(user);
+await db.SaveChangesAsync();
+
+var users = await db.Users
+    .Where(u => u.Active)
+    .OrderByDescending(u => u.CreatedAt)
+    .Take(10)
+    .ToListAsync();
+
+var user = await db.Users
     .Include(u => u.Posts)
     .FirstOrDefaultAsync(u => u.Id == userId);
 
-var users = await _context.Users
-    .Where(u => u.Age > minAge && u.Status == status)
-    .ToListAsync();
+user.Name = "Jane Doe";
+await db.SaveChangesAsync();
 
-// Insert
-var newUser = new User { Email = "user@example.com", Name = "John Doe" };
-_context.Users.Add(newUser);
-await _context.SaveChangesAsync();
-
-// Raw SQL (parameterized)
-var users = await _context.Users
-    .FromSqlRaw(
-        "SELECT * FROM Users WHERE Age > {0} AND Status = {1}",
-        minAge, status
-    )
-    .ToListAsync();
+db.Users.Remove(user);
+await db.SaveChangesAsync();
 ```
 
-### Dapper (Micro ORM)
+### EF Core - Transactions
 ```csharp
-using Dapper;
-
-using (var connection = new SqlConnection(connectionString))
+using var transaction = await db.Database.BeginTransactionAsync();
+try
 {
-    var user = await connection.QueryFirstOrDefaultAsync<User>(
-        "SELECT * FROM Users WHERE Email = @Email",
-        new { Email = email }
-    );
+    var user = new User { Email = email, Name = name };
+    db.Users.Add(user);
+    await db.SaveChangesAsync();
     
-    var users = await connection.QueryAsync<User>(
-        "SELECT * FROM Users WHERE Age > @MinAge AND Status = @Status",
-        new { MinAge = minAge, Status = status }
-    );
+    var profile = new Profile { UserId = user.Id, Bio = bio };
+    db.Profiles.Add(profile);
+    await db.SaveChangesAsync();
+    
+    await transaction.CommitAsync();
+}
+catch
+{
+    await transaction.RollbackAsync();
+    throw;
 }
 ```
 
-### ADO.NET (Plain)
+### Dapper - Micro ORM
 ```csharp
-using (var connection = new SqlConnection(connectionString))
-using (var command = new SqlCommand())
+using Dapper;
+
+var user = await connection.QueryFirstOrDefaultAsync<User>(
+    "SELECT * FROM users WHERE email = @Email",
+    new { Email = email }
+);
+
+var users = await connection.QueryAsync<User>(
+    "SELECT * FROM users WHERE active = @Active ORDER BY created_at DESC LIMIT 10",
+    new { Active = true }
+);
+
+await connection.ExecuteAsync(
+    "INSERT INTO users (email, name) VALUES (@Email, @Name)",
+    new { Email = email, Name = name }
+);
+```
+
+### ADO.NET - Raw SQL
+```csharp
+using var connection = new SqlConnection(connectionString);
+await connection.OpenAsync();
+
+using var command = new SqlCommand(
+    "SELECT * FROM users WHERE email = @Email", connection);
+command.Parameters.AddWithValue("@Email", email);
+
+using var reader = await command.ExecuteReaderAsync();
+while (await reader.ReadAsync())
 {
-    command.Connection = connection;
-    command.CommandText = "SELECT * FROM Users WHERE Email = @Email AND Status = @Status";
-    command.Parameters.AddWithValue("@Email", email);
-    command.Parameters.AddWithValue("@Status", status);
-    
-    await connection.OpenAsync();
-    using var reader = await command.ExecuteReaderAsync();
-    
-    while (await reader.ReadAsync())
-    {
-        // Process results
-    }
+    var name = reader.GetString(reader.GetOrdinal("name"));
 }
 ```
 
@@ -275,73 +449,80 @@ using (var command = new SqlCommand())
 
 ### Laravel Eloquent
 ```php
-$user = User::where('email', $email)->first();
-$users = User::where('age', '>', $minAge)
-    ->where('status', $status)
-    ->get();
+use App\Models\User;
 
-// Insert
 $user = User::create([
-    'email' => 'user@example.com',
-    'name' => 'John Doe',
+    'email' => $email,
+    'name' => $name,
 ]);
 
-// Raw query (parameterized)
-$users = DB::select(
-    'SELECT * FROM users WHERE age > ? AND status = ?',
-    [$minAge, $status]
-);
-
-// Query builder
-$users = DB::table('users')
-    ->where('age', '>', $minAge)
-    ->where('status', $status)
+$users = User::where('active', true)
+    ->orderBy('created_at', 'desc')
+    ->limit(10)
     ->get();
+
+$user = User::with('posts')->find($userId);
+
+User::where('id', $userId)->update(['name' => 'Jane Doe']);
+
+User::destroy($userId);
+```
+
+### Laravel - Transactions
+```php
+DB::transaction(function () use ($email, $name, $bio) {
+    $user = User::create(['email' => $email, 'name' => $name]);
+    
+    Profile::create([
+        'user_id' => $user->id,
+        'bio' => $bio,
+    ]);
+});
 ```
 
 ### Doctrine ORM
 ```php
-$user = $entityManager->find(User::class, $userId);
+use Doctrine\ORM\EntityManager;
 
-$users = $entityManager->createQuery(
-    'SELECT u FROM App\Entity\User u WHERE u.age > :age AND u.status = :status'
-)
-->setParameter('age', $minAge)
-->setParameter('status', $status)
-->getResult();
-
-// Insert
 $user = new User();
-$user->setEmail('user@example.com');
-$user->setName('John Doe');
+$user->setEmail($email);
+$user->setName($name);
 
 $entityManager->persist($user);
 $entityManager->flush();
+
+$users = $entityManager->getRepository(User::class)
+    ->findBy(['active' => true], ['createdAt' => 'DESC'], 10);
+
+$user = $entityManager->find(User::class, $userId);
+
+$user->setName('Jane Doe');
+$entityManager->flush();
+
+$entityManager->remove($user);
+$entityManager->flush();
 ```
 
-### PDO (Plain PHP)
+### PDO - Raw SQL
 ```php
-// ✅ ALWAYS prepared statements
-$stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email AND status = :status');
-$stmt->execute(['email' => $email, 'status' => $status]);
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$pdo = new PDO($dsn, $username, $password);
 
-// Insert
+$stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email');
+$stmt->execute(['email' => $email]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
 $stmt = $pdo->prepare('INSERT INTO users (email, name) VALUES (:email, :name)');
 $stmt->execute(['email' => $email, 'name' => $name]);
-$userId = $pdo->lastInsertId();
-
-// ❌ NEVER string concatenation
-$badQuery = "SELECT * FROM users WHERE email = '$email'"; // SQL INJECTION!
 ```
 
 ---
 
 ## Kotlin
 
-### Exposed (SQL DSL)
+### Exposed - DSL
 ```kotlin
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object Users : Table() {
     val id = integer("id").autoIncrement()
@@ -350,22 +531,23 @@ object Users : Table() {
     override val primaryKey = PrimaryKey(id)
 }
 
-val user = transaction {
-    Users.select { Users.id eq userId }.singleOrNull()
-}
-
-val users = transaction {
-    Users.select {
-        (Users.age greater minAge) and (Users.status eq status)
-    }.toList()
-}
-
-// Insert
-val userId = transaction {
+transaction {
     Users.insert {
-        it[email] = "user@example.com"
-        it[name] = "John Doe"
-    } get Users.id
+        it[email] = userEmail
+        it[name] = userName
+    }
+    
+    val users = Users.selectAll()
+        .where { Users.active eq true }
+        .orderBy(Users.createdAt to SortOrder.DESC)
+        .limit(10)
+        .toList()
+    
+    Users.update({ Users.id eq userId }) {
+        it[name] = "Jane Doe"
+    }
+    
+    Users.deleteWhere { Users.id eq userId }
 }
 ```
 
@@ -373,73 +555,70 @@ val userId = transaction {
 ```kotlin
 @Dao
 interface UserDao {
+    @Query("SELECT * FROM users WHERE active = 1 ORDER BY created_at DESC LIMIT 10")
+    suspend fun getActiveUsers(): List<User>
+    
     @Query("SELECT * FROM users WHERE id = :userId")
     suspend fun getUserById(userId: Int): User?
     
-    @Query("SELECT * FROM users WHERE age > :minAge AND status = :status")
-    suspend fun getUsersByAgeAndStatus(minAge: Int, status: String): List<User>
-    
     @Insert
     suspend fun insert(user: User): Long
+    
+    @Update
+    suspend fun update(user: User)
+    
+    @Delete
+    suspend fun delete(user: User)
 }
 
-// Usage
-val user = userDao.getUserById(123)
+val users = userDao.getActiveUsers()
+val userId = userDao.insert(user)
 ```
 
 ---
 
 ## Swift
 
-### CoreData (Apple Platforms)
+### CoreData
 ```swift
 import CoreData
 
-let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
-fetchRequest.predicate = NSPredicate(
-    format: "email == %@ AND status == %@",
-    email, status
-)
+let context = persistentContainer.viewContext
 
-do {
-    let users = try context.fetch(fetchRequest)
-} catch {
-    print("Fetch failed: \(error)")
+let user = User(context: context)
+user.email = email
+user.name = name
+
+try? context.save()
+
+let fetchRequest: NSFetchRequest<User> = User.fetchRequest()
+fetchRequest.predicate = NSPredicate(format: "active == %@", NSNumber(value: true))
+fetchRequest.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+fetchRequest.fetchLimit = 10
+
+let users = try? context.fetch(fetchRequest)
+
+if let user = users?.first {
+    user.name = "Jane Doe"
+    try? context.save()
 }
 
-// Insert
-let newUser = User(context: context)
-newUser.email = "user@example.com"
-newUser.name = "John Doe"
+context.delete(user)
 try? context.save()
 ```
 
-### SQLite.swift
+### CoreData - Transactions
 ```swift
-import SQLite
-
-let db = try Connection("path/to/db.sqlite3")
-let users = Table("users")
-let id = Expression<Int64>("id")
-let email = Expression<String>("email")
-let age = Expression<Int>("age")
-
-// Query (parameterized)
-for user in try db.prepare(users.filter(age > minAge && status == statusValue)) {
-    print("User: \(user[email])")
-}
-
-// Insert
-let insert = users.insert(
-    email <- "user@example.com",
-    name <- "John Doe"
-)
-let rowId = try db.run(insert)
-
-// Raw query (parameterized)
-let stmt = try db.prepare("SELECT * FROM users WHERE email = ? AND status = ?")
-for row in try stmt.bind(email, status) {
-    // Process row
+context.performAndWait {
+    let user = User(context: context)
+    user.email = email
+    user.name = name
+    
+    let profile = Profile(context: context)
+    profile.user = user
+    profile.bio = bio
+    
+    try? context.save()
 }
 ```
 
@@ -447,121 +626,71 @@ for row in try stmt.bind(email, status) {
 
 ## Dart
 
-### Drift (Type-safe SQLite)
+### Drift (formerly Moor)
 ```dart
 import 'package:drift/drift.dart';
 
 @DriftDatabase(tables: [Users])
-class AppDatabase extends _$AppDatabase {
-  Future<User?> getUserById(int id) {
-    return (select(users)..where((u) => u.id.equals(id))).getSingleOrNull();
-  }
-  
-  Future<List<User>> getUsersOlderThan(int minAge) {
-    return (select(users)
-      ..where((u) => u.age.isBiggerThanValue(minAge))
-      ..where((u) => u.status.equals('active')))
-    .get();
-  }
-  
+class MyDatabase extends _$MyDatabase {
+  MyDatabase() : super(_openConnection());
+
   Future<int> insertUser(UsersCompanion user) {
     return into(users).insert(user);
   }
+
+  Future<List<User>> getActiveUsers() {
+    return (select(users)
+          ..where((u) => u.active.equals(true))
+          ..orderBy([(u) => OrderingTerm.desc(u.createdAt)])
+          ..limit(10))
+        .get();
+  }
+
+  Future<User?> getUserById(int id) {
+    return (select(users)..where((u) => u.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  Future<int> updateUser(UsersCompanion user) {
+    return update(users).replace(user);
+  }
+
+  Future<int> deleteUser(int id) {
+    return (delete(users)..where((u) => u.id.equals(id))).go();
+  }
 }
 ```
 
-### sqflite (Plain SQLite)
+### Drift - Transactions
 ```dart
-import 'package:sqflite/sqflite.dart';
-
-final db = await openDatabase('users.db');
-
-// Query (parameterized)
-final List<Map<String, dynamic>> maps = await db.query(
-  'users',
-  where: 'email = ? AND status = ?',
-  whereArgs: [email, status],
-);
-
-final users = maps.map((map) => User.fromMap(map)).toList();
-
-// Insert
-final id = await db.insert(
-  'users',
-  {
-    'email': 'user@example.com',
-    'name': 'John Doe',
-  },
-  conflictAlgorithm: ConflictAlgorithm.replace,
-);
-
-// ❌ NEVER string concatenation
-final badQuery = "SELECT * FROM users WHERE email = '$email'"; // SQL INJECTION!
-```
-
----
-
-## Transaction Examples
-
-```typescript
-// TypeScript (Prisma)
-await prisma.$transaction(async (tx) => {
-  const user = await tx.user.create({ data: userData });
-  await tx.account.create({ data: { userId: user.id } });
+await database.transaction(() async {
+  final userId = await database.insertUser(user);
+  await database.insertProfile(Profile(userId: userId, bio: bio));
 });
 ```
 
-```python
-# Python (SQLAlchemy)
-with session.begin():
-    user = User(**user_data)
-    session.add(user)
-    account = Account(user_id=user.id)
-    session.add(account)
+### sqflite
+```dart
+import 'package:sqflite/sqflite.dart';
+
+final db = await openDatabase('my_db.db');
+
+await db.insert('users', {'email': email, 'name': name});
+
+final users = await db.query(
+  'users',
+  where: 'active = ?',
+  whereArgs: [1],
+  orderBy: 'created_at DESC',
+  limit: 10,
+);
+
+await db.update(
+  'users',
+  {'name': 'Jane Doe'},
+  where: 'id = ?',
+  whereArgs: [userId],
+);
+
+await db.delete('users', where: 'id = ?', whereArgs: [userId]);
 ```
-
-```java
-// Java (Spring)
-@Transactional
-public User createUserWithAccount(UserData data) {
-    User user = userRepository.save(new User(data));
-    accountRepository.save(new Account(user.getId()));
-    return user;
-}
-```
-
-```csharp
-// C# (EF Core)
-using var transaction = await _context.Database.BeginTransactionAsync();
-try {
-    var user = new User { ... };
-    _context.Users.Add(user);
-    await _context.SaveChangesAsync();
-    
-    var account = new Account { UserId = user.Id };
-    _context.Accounts.Add(account);
-    await _context.SaveChangesAsync();
-    
-    await transaction.CommitAsync();
-} catch {
-    await transaction.RollbackAsync();
-    throw;
-}
-```
-
----
-
-## Quick Rules
-
-✅ Use parameterized queries ALWAYS
-✅ Use ORM for type safety
-✅ Close connections properly
-✅ Use connection pooling
-✅ Use transactions for multi-step operations
-✅ Index frequently queried columns
-
-❌ Concatenate user input into queries
-❌ Use SELECT * in production
-❌ Query in loops (N+1 problem)
-❌ Leave connections open
-❌ Expose database schema in errors

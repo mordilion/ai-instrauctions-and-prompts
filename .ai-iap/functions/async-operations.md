@@ -1,363 +1,566 @@
 ---
 title: Async Operations Patterns
-category: Concurrency
+category: Concurrency & Performance
 difficulty: intermediate
-languages: [typescript, python, java, csharp, php, kotlin, swift, dart]
-tags: [async, await, promises, concurrency, parallel, timeout]
+purpose: Handle asynchronous code with proper awaiting, parallel execution, timeouts, retry logic, and error handling
+when_to_use:
+  - API calls
+  - Database queries
+  - File I/O
+  - Multiple parallel operations
+  - Long-running tasks
+  - Rate-limited operations
+  - Background processing
+languages:
+  typescript:
+    - name: Native async/await (Built-in)
+      library: javascript-core
+      recommended: true
+    - name: Promise.all / Promise.allSettled (Built-in)
+      library: javascript-core
+    - name: p-limit (Concurrency control)
+      library: p-limit
+    - name: p-retry (Retry logic)
+      library: p-retry
+  python:
+    - name: asyncio (Built-in)
+      library: python-core
+      recommended: true
+    - name: aiohttp (Async HTTP)
+      library: aiohttp
+    - name: tenacity (Retry logic)
+      library: tenacity
+  java:
+    - name: CompletableFuture (Built-in)
+      library: java-core
+      recommended: true
+    - name: Project Reactor
+      library: io.projectreactor:reactor-core
+    - name: RxJava
+      library: io.reactivex.rxjava3:rxjava
+  csharp:
+    - name: Task / async-await (Built-in)
+      library: dotnet-core
+      recommended: true
+    - name: Polly (Retry & resilience)
+      library: Polly
+  php:
+    - name: ReactPHP
+      library: react/promise
+    - name: Guzzle Promises
+      library: guzzlehttp/promises
+    - name: Amp
+      library: amphp/amp
+  kotlin:
+    - name: Coroutines (Built-in)
+      library: kotlinx-coroutines-core
+      recommended: true
+    - name: Flow (Reactive streams)
+      library: kotlinx-coroutines-core
+  swift:
+    - name: async/await (Built-in)
+      library: swift-stdlib
+      recommended: true
+    - name: Combine
+      library: Combine (built-in)
+  dart:
+    - name: Future / async-await (Built-in)
+      library: dart-core
+      recommended: true
+    - name: Stream (Reactive)
+      library: dart-core
+common_patterns:
+  - Sequential async operations (await one after another)
+  - Parallel async operations (Promise.all, asyncio.gather)
+  - Timeout handling (Promise.race, asyncio.wait_for)
+  - Retry logic with exponential backoff
+  - Debounce / Throttle for rate limiting
+  - Queue processing (task queues, worker pools)
+best_practices:
+  do:
+    - Always await or catch promises
+    - Use Promise.all for parallel operations
+    - Set timeouts for external calls
+    - Implement retry logic with exponential backoff
+    - Cancel long-running operations when component unmounts
+    - Use AbortController for fetch requests
+  dont:
+    - Block the event loop with CPU-intensive work
+    - Forget error handling in async functions
+    - Create "fire-and-forget" promises without catching
+    - Await inside loops unless sequential is required
+    - Use infinite retries without backoff
+related_functions:
+  - http-requests.md
+  - error-handling.md
+  - database-query.md
+tags: [async, promises, futures, coroutines, concurrency, parallel, timeout, retry]
 updated: 2026-01-09
----
-
-# Async Operations Patterns
-
-> API calls, database queries, file I/O, parallel execution, timeouts
-
 ---
 
 ## TypeScript
 
-### Native async/await
+### Basic async/await
 ```typescript
-async function fetchUser(id: string): Promise<User> {
-  const response = await fetch(`/api/users/${id}`);
+async function fetchUser(userId: string): Promise<User> {
+  const response = await fetch(`/api/users/${userId}`);
   if (!response.ok) throw new Error('User not found');
   return response.json();
 }
 
-// Sequential
-const user = await fetchUser(id);
-const profile = await fetchProfile(user.profileId);
-const posts = await fetchPosts(user.id);
-
-// Parallel execution
-const [users, posts, comments] = await Promise.all([
-  fetchUsers(),
-  fetchPosts(),
-  fetchComments()
-]);
-
-// With timeout
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), ms)
-    )
-  ]);
+try {
+  const user = await fetchUser('123');
+  console.log(user);
+} catch (error) {
+  console.error('Failed to fetch user:', error);
 }
-
-const user = await withTimeout(fetchUser(id), 5000);
 ```
 
-### p-queue (Concurrency Control)
+### Parallel Execution - Promise.all
 ```typescript
-import PQueue from 'p-queue';
-
-const queue = new PQueue({ concurrency: 2 });
-
-const results = await Promise.all([
-  queue.add(() => fetchUser('1')),
-  queue.add(() => fetchUser('2')),
-  queue.add(() => fetchUser('3'))
+const [user, posts, comments] = await Promise.all([
+  fetchUser(userId),
+  fetchPosts(userId),
+  fetchComments(userId),
 ]);
+```
+
+### Promise.allSettled (Continue on failure)
+```typescript
+const results = await Promise.allSettled([
+  fetchUser('1'),
+  fetchUser('2'),
+  fetchUser('3'),
+]);
+
+results.forEach((result, index) => {
+  if (result.status === 'fulfilled') {
+    console.log(`User ${index}:`, result.value);
+  } else {
+    console.error(`User ${index} failed:`, result.reason);
+  }
+});
+```
+
+### Timeout Handling - Promise.race
+```typescript
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Timeout')), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
+
+const user = await withTimeout(fetchUser('123'), 5000);
 ```
 
 ### Retry Logic
 ```typescript
-async function fetchWithRetry<T>(
+async function retry<T>(
   fn: () => Promise<T>,
-  retries = 3
+  retries = 3,
+  delay = 1000
 ): Promise<T> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === retries - 1) throw error;
-      await delay(Math.pow(2, i) * 1000); // Exponential backoff
-    }
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries === 0) throw error;
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return retry(fn, retries - 1, delay * 2);
   }
-  throw new Error('Max retries exceeded');
 }
+
+const user = await retry(() => fetchUser('123'), 3, 1000);
+```
+
+### Debounce
+```typescript
+function debounce<T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+const debouncedSearch = debounce(searchAPI, 300);
+```
+
+### Concurrent Queue (p-limit)
+```typescript
+import pLimit from 'p-limit';
+
+const limit = pLimit(3); // Max 3 concurrent operations
+
+const userIds = ['1', '2', '3', '4', '5'];
+const users = await Promise.all(
+  userIds.map(id => limit(() => fetchUser(id)))
+);
 ```
 
 ---
 
 ## Python
 
-### Native asyncio
+### Basic async/await
 ```python
 import asyncio
 
-async def fetch_user(user_id: str) -> User:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f'/api/users/{user_id}') as response:
-            if response.status != 200:
-                raise ValueError('User not found')
-            return await response.json()
+async def fetch_user(user_id: str) -> dict:
+    await asyncio.sleep(1)  # Simulate API call
+    return {"id": user_id, "name": "John"}
 
-# Sequential
-user = await fetch_user(user_id)
-profile = await fetch_profile(user.profile_id)
-posts = await fetch_posts(user.id)
+async def main():
+    user = await fetch_user("123")
+    print(user)
 
-# Parallel execution
-users, posts, comments = await asyncio.gather(
-    fetch_users(),
-    fetch_posts(),
-    fetch_comments()
-)
-
-# With timeout
-try:
-    return await asyncio.wait_for(fetch_user(user_id), timeout=5.0)
-except asyncio.TimeoutError:
-    raise TimeoutError('Operation exceeded 5s')
+asyncio.run(main())
 ```
 
-### Retry with tenacity
+### Parallel Execution - asyncio.gather
+```python
+user, posts, comments = await asyncio.gather(
+    fetch_user(user_id),
+    fetch_posts(user_id),
+    fetch_comments(user_id),
+)
+```
+
+### Return Exceptions (Continue on failure)
+```python
+results = await asyncio.gather(
+    fetch_user("1"),
+    fetch_user("2"),
+    fetch_user("3"),
+    return_exceptions=True,
+)
+
+for i, result in enumerate(results):
+    if isinstance(result, Exception):
+        print(f"User {i} failed: {result}")
+    else:
+        print(f"User {i}: {result}")
+```
+
+### Timeout Handling
+```python
+try:
+    user = await asyncio.wait_for(fetch_user("123"), timeout=5.0)
+except asyncio.TimeoutError:
+    print("Request timed out")
+```
+
+### Retry Logic (tenacity)
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=10)
-)
-async def fetch_with_retry(url: str) -> dict:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            response.raise_for_status()
-            return await response.json()
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
+async def fetch_user_with_retry(user_id: str):
+    return await fetch_user(user_id)
+
+user = await fetch_user_with_retry("123")
+```
+
+### Task Cancellation
+```python
+task = asyncio.create_task(fetch_user("123"))
+
+await asyncio.sleep(1)
+task.cancel()
+
+try:
+    await task
+except asyncio.CancelledError:
+    print("Task was cancelled")
+```
+
+### Semaphore (Concurrency Limit)
+```python
+semaphore = asyncio.Semaphore(3)
+
+async def fetch_with_limit(user_id: str):
+    async with semaphore:
+        return await fetch_user(user_id)
+
+user_ids = ["1", "2", "3", "4", "5"]
+users = await asyncio.gather(*[fetch_with_limit(id) for id in user_ids])
 ```
 
 ---
 
 ## Java
 
-### CompletableFuture
+### CompletableFuture - Basic
 ```java
-CompletableFuture<User> fetchUser(String id) {
-    return CompletableFuture.supplyAsync(() -> {
-        Response response = httpClient.get("/api/users/" + id);
-        if (!response.isSuccessful()) {
-            throw new NotFoundException("User not found");
-        }
-        return response.body(User.class);
-    });
-}
+CompletableFuture<User> future = CompletableFuture.supplyAsync(() -> {
+    return fetchUser("123");
+});
 
-// Sequential
-CompletableFuture<Dashboard> fetchDashboard(String userId) {
-    return fetchUser(userId)
-        .thenCompose(user -> fetchProfile(user.getProfileId())
-            .thenApply(profile -> new Dashboard(user, profile)));
-}
+User user = future.get();
+```
 
-// Parallel execution
-CompletableFuture<List<User>> users = fetchUsers();
-CompletableFuture<List<Post>> posts = fetchPosts();
-CompletableFuture<List<Comment>> comments = fetchComments();
-
-CompletableFuture.allOf(users, posts, comments)
-    .thenApply(v -> new Dashboard(
-        users.join(),
-        posts.join(),
-        comments.join()
-    ));
-
-// With timeout
-user.orTimeout(5, TimeUnit.SECONDS)
+### Exception Handling
+```java
+CompletableFuture<User> future = CompletableFuture
+    .supplyAsync(() -> fetchUser("123"))
     .exceptionally(ex -> {
-        logger.error("Timeout", ex);
-        return getDefaultUser();
+        logger.error("Failed to fetch user", ex);
+        return defaultUser;
     });
 ```
 
-### Reactor (Spring WebFlux)
+### Chaining Async Operations
 ```java
-import reactor.core.publisher.Mono;
+CompletableFuture<String> result = CompletableFuture
+    .supplyAsync(() -> fetchUser("123"))
+    .thenApply(user -> user.getName())
+    .thenApply(name -> name.toUpperCase());
+```
 
-Mono<User> fetchUser(String id) {
-    return webClient.get()
-        .uri("/api/users/{id}", id)
-        .retrieve()
-        .bodyToMono(User.class)
-        .timeout(Duration.ofSeconds(5))
-        .retry(3);
+### Parallel Execution - allOf
+```java
+CompletableFuture<User> userFuture = CompletableFuture.supplyAsync(() -> fetchUser(userId));
+CompletableFuture<List<Post>> postsFuture = CompletableFuture.supplyAsync(() -> fetchPosts(userId));
+CompletableFuture<List<Comment>> commentsFuture = CompletableFuture.supplyAsync(() -> fetchComments(userId));
+
+CompletableFuture.allOf(userFuture, postsFuture, commentsFuture).join();
+
+User user = userFuture.get();
+List<Post> posts = postsFuture.get();
+List<Comment> comments = commentsFuture.get();
+```
+
+### Timeout Handling
+```java
+try {
+    User user = future.get(5, TimeUnit.SECONDS);
+} catch (TimeoutException e) {
+    logger.error("Request timed out");
 }
+```
 
-// Parallel execution
-Mono.zip(fetchUser("1"), fetchProfile("1"))
-    .map(tuple -> new UserProfile(tuple.getT1(), tuple.getT2()));
+### Reactor - Mono/Flux
+```java
+Mono<User> userMono = Mono.fromCallable(() -> fetchUser("123"))
+    .timeout(Duration.ofSeconds(5))
+    .retry(3)
+    .onErrorReturn(defaultUser);
+
+User user = userMono.block();
 ```
 
 ---
 
 ## C#
 
-### Native async/await
+### Basic async/await
 ```csharp
-async Task<User> FetchUserAsync(string id)
+public async Task<User> FetchUserAsync(string userId)
 {
-    var response = await _httpClient.GetAsync($"/api/users/{id}");
+    var response = await _httpClient.GetAsync($"/api/users/{userId}");
     response.EnsureSuccessStatusCode();
-    return await response.Content.ReadAsAsync<User>();
+    return await response.Content.ReadFromJsonAsync<User>();
 }
 
-// Sequential
-var user = await FetchUserAsync(userId);
-var profile = await FetchProfileAsync(user.ProfileId);
-var posts = await FetchPostsAsync(user.Id);
-
-// Parallel execution
-var (users, posts, comments) = await (
-    FetchUsersAsync(),
-    FetchPostsAsync(),
-    FetchCommentsAsync()
-);
-
-// Or with Task.WhenAll
-var tasks = new[] {
-    FetchUsersAsync(),
-    FetchPostsAsync(),
-    FetchCommentsAsync()
-};
-await Task.WhenAll(tasks);
-
-// With timeout
-using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 try
 {
-    var user = await FetchUserAsync(id, cts.Token);
-} catch (OperationCanceledException)
+    var user = await FetchUserAsync("123");
+    Console.WriteLine(user);
+}
+catch (Exception ex)
 {
-    throw new TimeoutException("Request exceeded 5 seconds");
+    Console.Error.WriteLine($"Failed to fetch user: {ex.Message}");
 }
 ```
 
-### Polly (Retry & Resilience)
+### Parallel Execution - Task.WhenAll
+```csharp
+var userTask = FetchUserAsync(userId);
+var postsTask = FetchPostsAsync(userId);
+var commentsTask = FetchCommentsAsync(userId);
+
+await Task.WhenAll(userTask, postsTask, commentsTask);
+
+var user = await userTask;
+var posts = await postsTask;
+var comments = await commentsTask;
+```
+
+### Timeout Handling
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+try
+{
+    var user = await FetchUserAsync("123", cts.Token);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Request timed out");
+}
+```
+
+### Retry Logic (Polly)
 ```csharp
 using Polly;
 
 var retryPolicy = Policy
     .Handle<HttpRequestException>()
-    .WaitAndRetryAsync(
-        3,
-        retryAttempt => TimeSpan.FromSeconds(Math.pow(2, retryAttempt))
-    );
+    .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
 
-var user = await retryPolicy.ExecuteAsync(() => FetchUserAsync(id));
+var user = await retryPolicy.ExecuteAsync(async () => 
+    await FetchUserAsync("123")
+);
+```
+
+### Parallel with Limit
+```csharp
+var semaphore = new SemaphoreSlim(3);
+
+var tasks = userIds.Select(async id =>
+{
+    await semaphore.WaitAsync();
+    try
+    {
+        return await FetchUserAsync(id);
+    }
+    finally
+    {
+        semaphore.Release();
+    }
+});
+
+var users = await Task.WhenAll(tasks);
 ```
 
 ---
 
 ## PHP
 
-### Guzzle Promises
+### ReactPHP - Promises
 ```php
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise;
-
-$client = new Client();
-
-// Parallel requests
-$promises = [
-    'users' => $client->getAsync('/api/users'),
-    'posts' => $client->getAsync('/api/posts'),
-    'comments' => $client->getAsync('/api/comments'),
-];
-
-// Wait for all
-$results = Promise\Utils::unwrap($promises);
-$users = json_decode($results['users']->getBody(), true);
-
-// With timeout
-$response = $client->request('GET', '/api/users/' . $id, [
-    'timeout' => 5.0,
-    'connect_timeout' => 2.0
-]);
-```
-
-### ReactPHP (Event Loop)
-```php
-use React\EventLoop\Loop;
 use React\Promise\Promise;
 
-Loop::addTimer(0.5, function () {
-    echo "Timer fired\n";
-});
-
 $promise = new Promise(function ($resolve, $reject) {
-    // Async operation
-    $resolve($result);
+    $user = fetchUser('123');
+    if ($user) {
+        $resolve($user);
+    } else {
+        $reject(new Exception('User not found'));
+    }
 });
 
 $promise->then(
-    function ($value) {
-        echo "Success: $value\n";
+    function ($user) {
+        echo "User: " . $user['name'];
     },
     function ($error) {
-        echo "Error: $error\n";
+        echo "Error: " . $error->getMessage();
     }
 );
+```
+
+### Guzzle Promises - Parallel
+```php
+use GuzzleHttp\Promise;
+
+$promises = [
+    'user' => $client->getAsync('/api/users/123'),
+    'posts' => $client->getAsync('/api/posts?userId=123'),
+];
+
+$results = Promise\Utils::unwrap($promises);
+
+$user = json_decode($results['user']->getBody(), true);
+$posts = json_decode($results['posts']->getBody(), true);
+```
+
+### Amp - Async/Await
+```php
+use Amp\Loop;
+
+Loop::run(function () {
+    $user = yield fetchUser('123');
+    echo "User: " . $user['name'];
+});
 ```
 
 ---
 
 ## Kotlin
 
-### Coroutines
+### Coroutines - Basic
 ```kotlin
 import kotlinx.coroutines.*
 
-suspend fun fetchUser(id: String): User {
-    return withContext(Dispatchers.IO) {
-        val response = httpClient.get("/api/users/$id")
-        if (!response.status.isSuccess()) {
-            throw NotFoundException("User not found")
-        }
-        response.body()
+suspend fun fetchUser(userId: String): User {
+    delay(1000) // Simulate API call
+    return User(userId, "John")
+}
+
+fun main() = runBlocking {
+    val user = fetchUser("123")
+    println(user)
+}
+```
+
+### Parallel Execution - async/await
+```kotlin
+val user = async { fetchUser(userId) }
+val posts = async { fetchPosts(userId) }
+val comments = async { fetchComments(userId) }
+
+val userData = user.await()
+val postsData = posts.await()
+val commentsData = comments.await()
+```
+
+### Timeout Handling
+```kotlin
+try {
+    val user = withTimeout(5000) {
+        fetchUser("123")
     }
+} catch (e: TimeoutCancellationException) {
+    println("Request timed out")
 }
+```
 
-// Sequential
-val user = fetchUser(userId)
-val profile = fetchProfile(user.profileId)
-val posts = fetchPosts(user.id)
-
-// Parallel execution
-val (users, posts, comments) = coroutineScope {
-    val usersDeferred = async { fetchUsers() }
-    val postsDeferred = async { fetchPosts() }
-    val commentsDeferred = async { fetchComments() }
-    
-    Triple(
-        usersDeferred.await(),
-        postsDeferred.await(),
-        commentsDeferred.await()
-    )
-}
-
-// With timeout
-withTimeout(5000) {
-    fetchUser(id)
-}
-
-// Retry logic
+### Retry Logic
+```kotlin
 suspend fun <T> retry(
     times: Int = 3,
-    initialDelay: Long = 100,
-    factor: Double = 2.0,
+    delay: Long = 1000,
     block: suspend () -> T
 ): T {
-    var currentDelay = initialDelay
     repeat(times - 1) {
         try {
             return block()
         } catch (e: Exception) {
-            delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong()
+            delay(delay * (it + 1))
         }
     }
     return block()
+}
+
+val user = retry(3) { fetchUser("123") }
+```
+
+### Flow - Reactive Streams
+```kotlin
+import kotlinx.coroutines.flow.*
+
+val userFlow = flow {
+    for (id in 1..5) {
+        emit(fetchUser(id.toString()))
+    }
+}
+
+userFlow.collect { user ->
+    println(user)
 }
 ```
 
@@ -365,204 +568,148 @@ suspend fun <T> retry(
 
 ## Swift
 
-### Native async/await (iOS 15+)
+### Basic async/await
 ```swift
-func fetchUser(id: String) async throws -> User {
-    let url = URL(string: "/api/users/\(id)")!
-    let (data, response) = try await URLSession.shared.data(from: url)
-    
-    guard let httpResponse = response as? HTTPURLResponse,
-          httpResponse.statusCode == 200 else {
-        throw AppError.notFound(resource: "User")
-    }
-    
+func fetchUser(userId: String) async throws -> User {
+    let url = URL(string: "https://api.example.com/users/\(userId)")!
+    let (data, _) = try await URLSession.shared.data(from: url)
     return try JSONDecoder().decode(User.self, from: data)
 }
 
-// Sequential
-let user = try await fetchUser(id: userId)
-let profile = try await fetchProfile(id: user.profileId)
-let posts = try await fetchPosts(userId: userId)
-
-// Parallel execution
-async let users = fetchUsers()
-async let posts = fetchPosts()
-async let comments = fetchComments()
-
-let dashboard = try await Dashboard(
-    users: users,
-    posts: posts,
-    comments: comments
-)
-
-// With timeout
-try await withTimeout(seconds: 5) {
-    try await fetchUser(id: id)
+Task {
+    do {
+        let user = try await fetchUser(userId: "123")
+        print(user)
+    } catch {
+        print("Failed to fetch user: \(error)")
+    }
 }
 ```
 
-### Combine (Reactive)
+### Parallel Execution - async let
+```swift
+async let user = fetchUser(userId: userId)
+async let posts = fetchPosts(userId: userId)
+async let comments = fetchComments(userId: userId)
+
+let (userData, postsData, commentsData) = try await (user, posts, comments)
+```
+
+### Timeout Handling
+```swift
+func withTimeout<T>(_ operation: @escaping () async throws -> T, timeout: TimeInterval) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+            throw TimeoutError()
+        }
+        
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
+    }
+}
+```
+
+### Task Cancellation
+```swift
+let task = Task {
+    try await fetchUser(userId: "123")
+}
+
+task.cancel()
+```
+
+### Combine - Publisher
 ```swift
 import Combine
 
-var cancellables = Set<AnyCancellable>()
-
-URLSession.shared.dataTaskPublisher(for: url)
+let cancellable = URLSession.shared.dataTaskPublisher(for: url)
     .map(\.data)
     .decode(type: User.self, decoder: JSONDecoder())
-    .receive(on: DispatchQueue.main)
+    .retry(3)
+    .timeout(.seconds(5), scheduler: DispatchQueue.main)
     .sink(
         receiveCompletion: { completion in
-            if case .failure(let error) = completion {
-                print("Error: \(error)")
-            }
+            print("Completed: \(completion)")
         },
         receiveValue: { user in
             print("User: \(user)")
         }
     )
-    .store(in: &cancellables)
-
-// Parallel execution
-Publishers.Zip(usersPublisher, postsPublisher)
-    .sink { users, posts in
-        print("Got \(users.count) users and \(posts.count) posts")
-    }
-    .store(in: &cancellables)
 ```
 
 ---
 
 ## Dart
 
-### Native async/await
+### Basic async/await
 ```dart
-Future<User> fetchUser(String id) async {
-  final response = await http.get(Uri.parse('/api/users/$id'));
-  
-  if (response.statusCode != 200) {
-    throw NotFoundException('User not found');
-  }
-  
+Future<User> fetchUser(String userId) async {
+  final response = await http.get(Uri.parse('https://api.example.com/users/$userId'));
+  if (response.statusCode != 200) throw Exception('User not found');
   return User.fromJson(jsonDecode(response.body));
 }
 
-// Sequential
-final user = await fetchUser(userId);
-final profile = await fetchProfile(user.profileId);
-final posts = await fetchPosts(user.id);
+try {
+  final user = await fetchUser('123');
+  print(user);
+} catch (error) {
+  print('Failed to fetch user: $error');
+}
+```
 
-// Parallel execution
+### Parallel Execution - Future.wait
+```dart
 final results = await Future.wait([
-  fetchUsers(),
-  fetchPosts(),
-  fetchComments(),
+  fetchUser(userId),
+  fetchPosts(userId),
+  fetchComments(userId),
 ]);
 
-final users = results[0] as List<User>;
-final posts = results[1] as List<Post>;
-final comments = results[2] as List<Comment>;
+final user = results[0];
+final posts = results[1];
+final comments = results[2];
+```
 
-// With timeout
+### Timeout Handling
+```dart
 try {
-  final user = await fetchUser(id).timeout(
-    Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('Request exceeded 5s'),
-  );
-} catch (e) {
-  logger.error('Failed: $e');
-  rethrow;
+  final user = await fetchUser('123').timeout(Duration(seconds: 5));
+} on TimeoutException {
+  print('Request timed out');
+}
+```
+
+### Stream - Reactive
+```dart
+Stream<User> fetchUsersStream() async* {
+  for (var id in ['1', '2', '3']) {
+    yield await fetchUser(id);
+  }
 }
 
-// Retry logic
-Future<T> retry<T>(
-  Future<T> Function() fn, {
-  int maxAttempts = 3,
-  Duration delay = const Duration(seconds: 1),
-}) async {
-  int attempt = 0;
-  while (true) {
+await for (final user in fetchUsersStream()) {
+  print(user);
+}
+```
+
+### Retry Logic
+```dart
+Future<T> retry<T>(Future<T> Function() fn, {int retries = 3, Duration delay = const Duration(seconds: 1)}) async {
+  for (var i = 0; i < retries; i++) {
     try {
       return await fn();
     } catch (e) {
-      attempt++;
-      if (attempt >= maxAttempts) rethrow;
-      await Future.delayed(delay * attempt);
+      if (i == retries - 1) rethrow;
+      await Future.delayed(delay * (i + 1));
     }
   }
-}
-```
-
-### Streams
-```dart
-Stream<User> watchUsers() async* {
-  await for (final user in database.watchUsers()) {
-    yield user;
-  }
+  throw Exception('Retry failed');
 }
 
-// Transform stream
-stream
-  .where((user) => user.age > 18)
-  .map((user) => user.name)
-  .listen((name) => print(name));
+final user = await retry(() => fetchUser('123'), retries: 3);
 ```
-
----
-
-## Common Patterns
-
-### Debounce
-```typescript
-function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  ms: number
-): (...args: Parameters<T>) => Promise<ReturnType<T>> {
-  let timeoutId: NodeJS.Timeout;
-  return (...args) => {
-    return new Promise((resolve) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => resolve(fn(...args)), ms);
-    });
-  };
-}
-```
-
-### Queue
-```typescript
-class AsyncQueue {
-  private running = 0;
-  
-  constructor(private concurrency = 1) {}
-  
-  async add<T>(fn: () => Promise<T>): Promise<T> {
-    while (this.running >= this.concurrency) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    this.running++;
-    try {
-      return await fn();
-    } finally {
-      this.running--;
-    }
-  }
-}
-```
-
----
-
-## Quick Rules
-
-✅ Handle errors in async operations
-✅ Use timeout to prevent hanging
-✅ Run independent operations in parallel
-✅ Cancel operations when not needed
-✅ Use structured concurrency
-✅ Log async operation failures
-
-❌ Block the main/UI thread
-❌ Forget to await promises/futures
-❌ Run sequential when parallel works
-❌ Ignore cancellation tokens
-❌ Create unbounded concurrent operations

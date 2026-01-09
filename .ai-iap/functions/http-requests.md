@@ -1,290 +1,345 @@
 ---
 title: HTTP Request Patterns
-category: Network Communication
-difficulty: intermediate
-languages: [typescript, python, java, csharp, php, kotlin, swift, dart]
-tags: [http, api, rest, retry, timeout]
+category: API Integration
+difficulty: beginner
+purpose: Make HTTP requests to external APIs with proper error handling, timeouts, retry logic, and authentication
+when_to_use:
+  - REST API calls
+  - GraphQL queries
+  - Webhooks
+  - Third-party service integration
+  - File uploads/downloads
+  - Authentication flows
+languages:
+  typescript:
+    - name: fetch (Built-in)
+      library: javascript-core
+      recommended: true
+    - name: axios
+      library: axios
+  python:
+    - name: httpx (Async)
+      library: httpx
+      recommended: true
+    - name: requests (Sync)
+      library: requests
+  java:
+    - name: HttpClient (Built-in)
+      library: java.net.http (java 11+)
+      recommended: true
+    - name: Spring WebClient
+      library: org.springframework.boot:spring-boot-starter-webflux
+  csharp:
+    - name: HttpClient (Built-in)
+      library: System.Net.Http
+      recommended: true
+    - name: Refit
+      library: Refit
+  php:
+    - name: Guzzle
+      library: guzzlehttp/guzzle
+      recommended: true
+    - name: Laravel HTTP
+      library: laravel/framework
+  kotlin:
+    - name: Retrofit
+      library: com.squareup.retrofit2:retrofit
+      recommended: true
+    - name: Ktor Client
+      library: io.ktor:ktor-client-core
+  swift:
+    - name: URLSession (Built-in)
+      library: Foundation
+      recommended: true
+    - name: Alamofire
+      library: Alamofire
+  dart:
+    - name: http (Official)
+      library: http
+      recommended: true
+    - name: dio
+      library: dio
+http_methods:
+  GET: Retrieve data
+  POST: Create new resource
+  PUT: Update entire resource
+  PATCH: Partially update resource
+  DELETE: Remove resource
+  HEAD: Check resource existence
+  OPTIONS: Check allowed methods
+common_headers:
+  Content-Type: "application/json"
+  Authorization: "Bearer <token>"
+  Accept: "application/json"
+  User-Agent: "MyApp/1.0"
+  X-API-Key: "<api-key>"
+status_codes:
+  - "200 OK: Success"
+  - "201 Created: Resource created"
+  - "204 No Content: Success with no body"
+  - "400 Bad Request: Invalid input"
+  - "401 Unauthorized: Missing/invalid auth"
+  - "403 Forbidden: No permission"
+  - "404 Not Found: Resource doesn't exist"
+  - "429 Too Many Requests: Rate limited"
+  - "500 Internal Server Error: Server error"
+  - "502 Bad Gateway: Upstream error"
+  - "503 Service Unavailable: Server overloaded"
+best_practices:
+  do:
+    - Set timeouts (5-30s depending on operation)
+    - Implement retry logic with exponential backoff
+    - Use AbortController for request cancellation
+    - Validate responses before parsing
+    - Log request/response for debugging
+    - Use environment variables for API URLs
+  dont:
+    - Hardcode API keys in code
+    - Ignore HTTP status codes
+    - Make requests without timeout
+    - Log sensitive data (tokens, passwords)
+    - Retry on 4xx errors (client errors)
+    - Use synchronous requests in UI thread
+related_functions:
+  - async-operations.md
+  - error-handling.md
+  - input-validation.md
+tags: [http, api, rest, fetch, axios, requests, retry, timeout]
 updated: 2026-01-09
----
-
-# HTTP Request Patterns
-
-> API calls, microservice communication, retry logic, timeout handling
-
 ---
 
 ## TypeScript
 
-### fetch (Native)
+### fetch - GET Request
 ```typescript
-async function fetchUser(id: string): Promise<User> {
-  const response = await fetch(`/api/users/${id}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    signal: AbortSignal.timeout(5000)
-  });
-  
-  if (!response.ok) {
-    throw new HttpError(response.status, await response.text());
-  }
-  
-  return response.json();
+const response = await fetch('https://api.example.com/users/123');
+if (!response.ok) {
+  throw new Error(`HTTP error! status: ${response.status}`);
 }
-
-// POST request
-const response = await fetch('/api/users', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(userData)
-});
+const user = await response.json();
 ```
 
-### axios
+### fetch - POST Request
+```typescript
+const response = await fetch('https://api.example.com/users', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  },
+  body: JSON.stringify({ name: 'John', email: 'john@example.com' }),
+});
+
+const user = await response.json();
+```
+
+### fetch - With Timeout
+```typescript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+try {
+  const response = await fetch(url, { signal: controller.signal });
+  const data = await response.json();
+  return data;
+} catch (error) {
+  if (error.name === 'AbortError') {
+    throw new Error('Request timed out');
+  }
+  throw error;
+} finally {
+  clearTimeout(timeoutId);
+}
+```
+
+### axios - GET Request
 ```typescript
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: 'https://api.example.com',
+const response = await axios.get('https://api.example.com/users/123', {
+  headers: { Authorization: `Bearer ${token}` },
   timeout: 5000,
-  headers: { 'Content-Type': 'application/json' }
 });
 
-// Request interceptor
-api.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response.data,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await refreshToken();
-      return api.request(error.config);
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Usage
-const user = await api.get(`/users/${id}`);
-const newUser = await api.post('/users', userData);
+const user = response.data;
 ```
 
-### Retry Logic
+### axios - POST Request
 ```typescript
-async function fetchWithRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries = 3
-): Promise<T> {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === maxRetries - 1 || !isRetryableError(error)) {
-        throw error;
-      }
-      await delay(Math.pow(2, i) * 1000);
-    }
-  }
-}
+const response = await axios.post('https://api.example.com/users', {
+  name: 'John',
+  email: 'john@example.com',
+}, {
+  headers: { Authorization: `Bearer ${token}` },
+});
 
-function isRetryableError(error: any): boolean {
-  return error.code === 'ETIMEDOUT' ||
-         error.response?.status >= 500;
-}
+const user = response.data;
+```
+
+### axios - Retry Logic
+```typescript
+import axios from 'axios';
+import axiosRetry from 'axios-retry';
+
+axiosRetry(axios, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+           error.response?.status === 429;
+  },
+});
+
+const response = await axios.get(url);
 ```
 
 ---
 
 ## Python
 
-### httpx (Async)
+### httpx - Async GET Request
 ```python
 import httpx
 
-async def fetch_user(user_id: str) -> dict:
-    async with httpx.AsyncClient(timeout=5.0) as client:
-        response = await client.get(
-            f'/api/users/{user_id}',
-            headers={
-                'Authorization': f'Bearer {token}',
-                'Content-Type': 'application/json'
-            }
-        )
-        response.raise_for_status()
-        return response.json()
-
-# POST request
 async with httpx.AsyncClient() as client:
-    response = await client.post(
-        '/api/users',
-        json=data,
-        headers={'Authorization': f'Bearer {token}'}
-    )
+    response = await client.get('https://api.example.com/users/123')
+    response.raise_for_status()
+    user = response.json()
 ```
 
-### requests (Sync)
+### httpx - POST Request
+```python
+async with httpx.AsyncClient() as client:
+    response = await client.post(
+        'https://api.example.com/users',
+        json={'name': 'John', 'email': 'john@example.com'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    user = response.json()
+```
+
+### httpx - With Timeout
+```python
+async with httpx.AsyncClient(timeout=5.0) as client:
+    response = await client.get('https://api.example.com/users/123')
+    user = response.json()
+```
+
+### httpx - Retry Logic
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
+async def fetch_user(user_id: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f'https://api.example.com/users/{user_id}')
+        response.raise_for_status()
+        return response.json()
+```
+
+### requests - Sync GET Request
 ```python
 import requests
 
-def fetch_user_sync(user_id: str) -> dict:
-    response = requests.get(
-        f'/api/users/{user_id}',
-        headers={'Authorization': f'Bearer {token}'},
-        timeout=5
-    )
-    response.raise_for_status()
-    return response.json()
+response = requests.get('https://api.example.com/users/123', timeout=5)
+response.raise_for_status()
+user = response.json()
+```
 
-# Session with retry
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-session = requests.Session()
-retry_strategy = Retry(
-    total=3,
-    backoff_factor=1,
-    status_forcelist=[429, 500, 502, 503, 504]
+### requests - POST Request
+```python
+response = requests.post(
+    'https://api.example.com/users',
+    json={'name': 'John', 'email': 'john@example.com'},
+    headers={'Authorization': f'Bearer {token}'},
+    timeout=5,
 )
-adapter = HTTPAdapter(max_retries=retry_strategy)
-session.mount("http://", adapter)
-session.mount("https://", adapter)
+user = response.json()
 ```
 
 ---
 
 ## Java
 
-### HttpClient (Java 11+)
+### HttpClient - GET Request
 ```java
 import java.net.http.*;
+import java.net.*;
 
-HttpClient client = HttpClient.newBuilder()
-    .connectTimeout(Duration.ofSeconds(5))
-    .build();
-
+HttpClient client = HttpClient.newHttpClient();
 HttpRequest request = HttpRequest.newBuilder()
-    .uri(URI.create("/api/users/" + userId))
+    .uri(URI.create("https://api.example.com/users/123"))
     .header("Authorization", "Bearer " + token)
+    .timeout(Duration.ofSeconds(5))
     .GET()
     .build();
 
-HttpResponse<String> response = client.send(
-    request,
-    HttpResponse.BodyHandlers.ofString()
-);
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-if (response.statusCode() != 200) {
-    throw new HttpException(response.statusCode(), response.body());
+if (response.statusCode() == 200) {
+    String body = response.body();
 }
-
-User user = objectMapper.readValue(response.body(), User.class);
-
-// POST request
-String requestBody = objectMapper.writeValueAsString(userData);
-
-HttpRequest postRequest = HttpRequest.newBuilder()
-    .uri(URI.create("/api/users"))
-    .header("Content-Type", "application/json")
-    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-    .build();
 ```
 
-### WebClient (Spring WebFlux)
+### HttpClient - POST Request
+```java
+String json = "{\"name\":\"John\",\"email\":\"john@example.com\"}";
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.example.com/users"))
+    .header("Content-Type", "application/json")
+    .header("Authorization", "Bearer " + token)
+    .POST(HttpRequest.BodyPublishers.ofString(json))
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+### Spring WebClient - Reactive
 ```java
 import org.springframework.web.reactive.function.client.WebClient;
 
-@Service
-public class UserService {
-    private final WebClient webClient;
-    
-    public Mono<User> fetchUser(String id) {
-        return webClient.get()
-            .uri("/api/users/{id}", id)
-            .retrieve()
-            .bodyToMono(User.class)
-            .timeout(Duration.ofSeconds(5))
-            .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)));
-    }
-    
-    public Mono<User> createUser(UserCreateDto dto) {
-        return webClient.post()
-            .uri("/api/users")
-            .bodyValue(dto)
-            .retrieve()
-            .bodyToMono(User.class);
-    }
-}
+WebClient client = WebClient.create("https://api.example.com");
+
+User user = client.get()
+    .uri("/users/{id}", userId)
+    .header("Authorization", "Bearer " + token)
+    .retrieve()
+    .bodyToMono(User.class)
+    .timeout(Duration.ofSeconds(5))
+    .retry(3)
+    .block();
 ```
 
 ---
 
 ## C#
 
-### HttpClient
+### HttpClient - GET Request
 ```csharp
-private readonly HttpClient _httpClient;
+using var client = new HttpClient();
+client.Timeout = TimeSpan.FromSeconds(5);
+client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-public async Task<User> FetchUserAsync(string id)
-{
-    var request = new HttpRequestMessage(
-        HttpMethod.Get,
-        $"/api/users/{id}"
-    );
-    request.Headers.Authorization = new AuthenticationHeaderValue(
-        "Bearer",
-        token
-    );
-    
-    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-    var response = await _httpClient.SendAsync(request, cts.Token);
-    
-    response.EnsureSuccessStatusCode();
-    
-    return await response.Content.ReadAsAsync<User>();
-}
+var response = await client.GetAsync("https://api.example.com/users/123");
+response.EnsureSuccessStatusCode();
 
-// POST request
-public async Task<User> CreateUserAsync(UserCreateDto dto)
-{
-    var content = new StringContent(
-        JsonSerializer.Serialize(dto),
-        Encoding.UTF8,
-        "application/json"
-    );
-    
-    var response = await _httpClient.PostAsync("/api/users", content);
-    response.EnsureSuccessStatusCode();
-    
-    return await response.Content.ReadAsAsync<User>();
-}
+var user = await response.Content.ReadFromJsonAsync<User>();
 ```
 
-### Polly Retry
+### HttpClient - POST Request
 ```csharp
-using Polly;
+using var client = new HttpClient();
+client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-var retryPolicy = HttpPolicyExtensions
-    .HandleTransientHttpError()
-    .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-    .WaitAndRetryAsync(
-        3,
-        retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-    );
+var newUser = new { Name = "John", Email = "john@example.com" };
+var response = await client.PostAsJsonAsync("https://api.example.com/users", newUser);
+response.EnsureSuccessStatusCode();
 
-services.AddHttpClient("api")
-    .AddPolicyHandler(retryPolicy);
+var user = await response.Content.ReadFromJsonAsync<User>();
 ```
 
-### Refit (Typed Client)
+### Refit - Type-Safe API Client
 ```csharp
 using Refit;
 
@@ -294,319 +349,262 @@ public interface IUserApi
     Task<User> GetUserAsync(string id);
     
     [Post("/users")]
-    Task<User> CreateUserAsync([Body] UserCreateDto dto);
+    Task<User> CreateUserAsync([Body] CreateUserRequest request);
 }
 
-// Usage
-var user = await _userApi.GetUserAsync("123");
+var api = RestService.For<IUserApi>("https://api.example.com");
+var user = await api.GetUserAsync("123");
 ```
 
 ---
 
 ## PHP
 
-### Guzzle
+### Guzzle - GET Request
 ```php
 use GuzzleHttp\Client;
 
-$client = new Client([
-    'base_uri' => 'https://api.example.com',
-    'timeout' => 5.0,
-    'headers' => [
-        'Authorization' => 'Bearer ' . $token,
-        'Content-Type' => 'application/json'
-    ]
+$client = new Client(['base_uri' => 'https://api.example.com']);
+
+$response = $client->request('GET', '/users/123', [
+    'headers' => ['Authorization' => "Bearer $token"],
+    'timeout' => 5,
 ]);
 
-// GET request
-try {
-    $response = $client->get('/api/users/' . $userId);
-    $user = json_decode($response->getBody(), true);
-} catch (RequestException $e) {
-    if ($e->hasResponse()) {
-        $statusCode = $e->getResponse()->getStatusCode();
-        throw new HttpException($statusCode, $e->getMessage());
-    }
-}
-
-// POST request
-$response = $client->post('/api/users', [
-    'json' => [
-        'email' => 'user@example.com',
-        'name' => 'John Doe'
-    ]
-]);
-
-// Retry middleware
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
-
-$stack = HandlerStack::create();
-$stack->push(Middleware::retry(
-    function ($retries, $request, $response, $exception) {
-        if ($retries >= 3) return false;
-        if ($response && $response->getStatusCode() >= 500) return true;
-        return $exception instanceof ConnectException;
-    },
-    function ($retries) {
-        return 1000 * pow(2, $retries);
-    }
-));
-
-$client = new Client(['handler' => $stack]);
+$user = json_decode($response->getBody(), true);
 ```
 
-### Laravel HTTP Client
+### Guzzle - POST Request
+```php
+$response = $client->request('POST', '/users', [
+    'json' => [
+        'name' => 'John',
+        'email' => 'john@example.com',
+    ],
+    'headers' => ['Authorization' => "Bearer $token"],
+]);
+
+$user = json_decode($response->getBody(), true);
+```
+
+### Laravel HTTP - Fluent API
 ```php
 use Illuminate\Support\Facades\Http;
 
 $response = Http::withToken($token)
     ->timeout(5)
     ->retry(3, 1000)
-    ->get('/api/users/' . $userId);
-
-$user = $response->json();
-
-// POST request
-$response = Http::post('/api/users', [
-    'email' => 'user@example.com',
-    'name' => 'John Doe'
-]);
+    ->get('https://api.example.com/users/123');
 
 if ($response->successful()) {
     $user = $response->json();
 }
 ```
 
+### Laravel HTTP - POST Request
+```php
+$response = Http::withToken($token)
+    ->post('https://api.example.com/users', [
+        'name' => 'John',
+        'email' => 'john@example.com',
+    ]);
+
+$user = $response->json();
+```
+
 ---
 
 ## Kotlin
 
-### Retrofit
+### Retrofit - Interface Definition
 ```kotlin
+import retrofit2.http.*
+
 interface UserApi {
     @GET("users/{id}")
-    suspend fun getUser(@Path("id") id: String): User
+    suspend fun getUser(@Path("id") userId: String): User
     
     @POST("users")
-    suspend fun createUser(@Body user: UserCreateDto): User
+    suspend fun createUser(@Body request: CreateUserRequest): User
 }
+```
 
-val okHttpClient = OkHttpClient.Builder()
-    .connectTimeout(5, TimeUnit.SECONDS)
-    .addInterceptor { chain ->
-        val request = chain.request().newBuilder()
-            .addHeader("Authorization", "Bearer $token")
-            .build()
-        chain.proceed(request)
-    }
-    .build()
-
+### Retrofit - Usage
+```kotlin
 val retrofit = Retrofit.Builder()
     .baseUrl("https://api.example.com")
-    .client(okHttpClient)
     .addConverterFactory(GsonConverterFactory.create())
     .build()
 
 val api = retrofit.create(UserApi::class.java)
 
-// Usage
-suspend fun fetchUser(id: String): User {
-    return withContext(Dispatchers.IO) {
-        api.getUser(id)
-    }
+try {
+    val user = api.getUser("123")
+    println(user)
+} catch (e: Exception) {
+    println("Error: ${e.message}")
 }
 ```
 
-### Ktor Client
+### Ktor Client - GET Request
 ```kotlin
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 
-val client = HttpClient {
-    install(HttpTimeout) {
+val client = HttpClient()
+
+val response: HttpResponse = client.get("https://api.example.com/users/123") {
+    header("Authorization", "Bearer $token")
+    timeout {
         requestTimeoutMillis = 5000
     }
-    install(HttpRequestRetry) {
-        retryOnServerErrors(maxRetries = 3)
-        exponentialDelay()
-    }
 }
 
-suspend fun fetchUser(id: String): User {
-    return client.get("/api/users/$id") {
-        header("Authorization", "Bearer $token")
-    }.body()
-}
+val user = response.bodyAsText()
+client.close()
 ```
 
 ---
 
 ## Swift
 
-### URLSession (Native)
+### URLSession - GET Request
 ```swift
-func fetchUser(id: String) async throws -> User {
-    var request = URLRequest(url: URL(string: "/api/users/\(id)")!)
-    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-    request.timeoutInterval = 5
-    
-    let (data, response) = try await URLSession.shared.data(for: request)
-    
-    guard let httpResponse = response as? HTTPURLResponse,
-          (200...299).contains(httpResponse.statusCode) else {
-        throw HttpError.invalidResponse
-    }
-    
-    return try JSONDecoder().decode(User.self, from: data)
+let url = URL(string: "https://api.example.com/users/123")!
+var request = URLRequest(url: url)
+request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+request.timeoutInterval = 5
+
+let (data, response) = try await URLSession.shared.data(for: request)
+
+guard let httpResponse = response as? HTTPURLResponse,
+      httpResponse.statusCode == 200 else {
+    throw URLError(.badServerResponse)
 }
 
-// POST request
-func createUser(dto: UserCreateDto) async throws -> User {
-    var request = URLRequest(url: URL(string: "/api/users")!)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try JSONEncoder().encode(dto)
-    
-    let (data, _) = try await URLSession.shared.data(for: request)
-    return try JSONDecoder().decode(User.self, from: data)
-}
+let user = try JSONDecoder().decode(User.self, from: data)
 ```
 
-### Alamofire
+### URLSession - POST Request
+```swift
+var request = URLRequest(url: url)
+request.httpMethod = "POST"
+request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+let body = ["name": "John", "email": "john@example.com"]
+request.httpBody = try JSONEncoder().encode(body)
+
+let (data, _) = try await URLSession.shared.data(for: request)
+let user = try JSONDecoder().decode(User.self, from: data)
+```
+
+### Alamofire - GET Request
 ```swift
 import Alamofire
 
-AF.request("/api/users/\(id)", headers: [
-    "Authorization": "Bearer \(token)"
-])
-.validate()
-.responseDecodable(of: User.self) { response in
-    switch response.result {
-    case .success(let user):
-        print(user)
-    case .failure(let error):
-        print("Error: \(error)")
+AF.request("https://api.example.com/users/123",
+           method: .get,
+           headers: ["Authorization": "Bearer \(token)"])
+    .validate()
+    .responseDecodable(of: User.self) { response in
+        switch response.result {
+        case .success(let user):
+            print(user)
+        case .failure(let error):
+            print("Error: \(error)")
+        }
     }
-}
+```
 
-// Retry configuration
-let interceptor = RetryPolicy(retryLimit: 3)
-AF.request(url, interceptor: interceptor)
+### Alamofire - POST Request
+```swift
+let parameters: [String: Any] = [
+    "name": "John",
+    "email": "john@example.com"
+]
+
+AF.request("https://api.example.com/users",
+           method: .post,
+           parameters: parameters,
+           encoding: JSONEncoding.default,
+           headers: ["Authorization": "Bearer \(token)"])
+    .responseDecodable(of: User.self) { response in
+        print(response.value)
+    }
 ```
 
 ---
 
 ## Dart
 
-### http Package
+### http - GET Request
 ```dart
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-Future<User> fetchUser(String id) async {
-  final response = await http.get(
-    Uri.parse('/api/users/$id'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  ).timeout(Duration(seconds: 5));
-  
-  if (response.statusCode != 200) {
-    throw HttpException(response.statusCode, response.body);
-  }
-  
-  return User.fromJson(jsonDecode(response.body));
-}
+final response = await http.get(
+  Uri.parse('https://api.example.com/users/123'),
+  headers: {'Authorization': 'Bearer $token'},
+).timeout(Duration(seconds: 5));
 
-// POST request
-Future<User> createUser(UserCreateDto dto) async {
-  final response = await http.post(
-    Uri.parse('/api/users'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode(dto.toJson()),
-  );
-  
-  if (response.statusCode != 201) {
-    throw HttpException(response.statusCode, response.body);
-  }
-  
-  return User.fromJson(jsonDecode(response.body));
+if (response.statusCode == 200) {
+  final user = jsonDecode(response.body);
+  print(user);
 }
 ```
 
-### dio
+### http - POST Request
+```dart
+final response = await http.post(
+  Uri.parse('https://api.example.com/users'),
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  },
+  body: jsonEncode({
+    'name': 'John',
+    'email': 'john@example.com',
+  }),
+);
+
+final user = jsonDecode(response.body);
+```
+
+### dio - GET Request
 ```dart
 import 'package:dio/dio.dart';
 
-final dio = Dio(BaseOptions(
-  baseUrl: 'https://api.example.com',
-  connectTimeout: Duration(seconds: 5),
-  headers: {'Authorization': 'Bearer $token'},
-));
+final dio = Dio();
+dio.options.baseUrl = 'https://api.example.com';
+dio.options.connectTimeout = Duration(seconds: 5);
+dio.options.headers['Authorization'] = 'Bearer $token';
 
-// Interceptor for retry
-dio.interceptors.add(RetryInterceptor(
-  dio: dio,
-  retries: 3,
-  retryDelays: [
-    Duration(seconds: 1),
-    Duration(seconds: 2),
-    Duration(seconds: 4),
-  ],
-));
-
-// GET request
-Future<User> fetchUser(String id) async {
-  try {
-    final response = await dio.get('/users/$id');
-    return User.fromJson(response.data);
-  } on DioError catch (e) {
-    if (e.response?.statusCode == 404) {
-      throw NotFoundException('User not found');
-    }
-    rethrow;
-  }
-}
-
-// POST request
-Future<User> createUser(UserCreateDto dto) async {
-  final response = await dio.post('/users', data: dto.toJson());
-  return User.fromJson(response.data);
+try {
+  final response = await dio.get('/users/123');
+  final user = response.data;
+  print(user);
+} on DioException catch (e) {
+  print('Error: ${e.message}');
 }
 ```
 
----
+### dio - Retry Interceptor
+```dart
+import 'package:dio/dio.dart';
 
-## Status Codes
+dio.interceptors.add(
+  RetryInterceptor(
+    dio: dio,
+    retries: 3,
+    retryDelays: [
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+      Duration(seconds: 4),
+    ],
+  ),
+);
 
-| Code | Meaning | Action |
-|------|---------|--------|
-| 200 | Success | Process response |
-| 201 | Created | Process new resource |
-| 400 | Bad Request | Fix request, don't retry |
-| 401 | Unauthorized | Refresh token, retry |
-| 403 | Forbidden | Don't retry |
-| 404 | Not Found | Don't retry |
-| 429 | Rate Limited | Retry after delay |
-| 500 | Server Error | Retry with backoff |
-| 502/503 | Service Unavailable | Retry with backoff |
-| 504 | Gateway Timeout | Retry with backoff |
-
----
-
-## Quick Rules
-
-✅ Set timeouts (connect + read)
-✅ Retry transient errors (500s, network)
-✅ Use exponential backoff
-✅ Handle rate limiting (429)
-✅ Validate SSL certificates
-✅ Use connection pooling
-✅ Cancel requests when not needed
-
-❌ Ignore timeouts (infinite wait)
-❌ Retry non-idempotent requests blindly
-❌ Expose auth tokens in logs
-❌ Create new clients per request
-❌ Retry immediately without backoff
+final response = await dio.get('/users/123');
+```
