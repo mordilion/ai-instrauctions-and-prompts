@@ -8,6 +8,7 @@
 
 **BEFORE** implementing **ANY** of these patterns, **CHECK THIS INDEX**:
 
+- ✅ **DO** check `.ai-iap-custom/functions/INDEX.md` first (if it exists) for company-specific patterns
 - ❌ **DON'T** generate error handling code from scratch
 - ❌ **DON'T** guess async/await implementations
 - ❌ **DON'T** create validation logic without checking here first

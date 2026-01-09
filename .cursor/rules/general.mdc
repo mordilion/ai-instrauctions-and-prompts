@@ -47,12 +47,13 @@ alwaysApply: true
 
 **🚨 CRITICAL RULE - Check Functions BEFORE Generating Code**
 
-> **BEFORE** implementing error handling, async operations, input validation, database queries, or HTTP requests:
+> **BEFORE** implementing error handling, async operations, input validation, database queries, HTTP requests, or other covered function patterns:
 >
-> 1. **CHECK** `.ai-iap/functions/INDEX.md` for available patterns
-> 2. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
-> 3. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
-> 4. **COPY** the exact code pattern (no installation commands)
+> 1. **CHECK** `.ai-iap-custom/functions/INDEX.md` **if it exists**
+> 2. **THEN CHECK** `.ai-iap/functions/INDEX.md`
+> 3. **USE** the exact pattern from the function file (e.g., `error-handling.md`)
+> 4. **CHOOSE** the appropriate framework version (Plain, Prisma, Laravel, etc.)
+> 5. **COPY** the exact code pattern (no installation commands)
 >
 > **DO NOT** waste tokens generating code from scratch when patterns exist.
 > **DO NOT** guess implementations - use proven, secure patterns.
