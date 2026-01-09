@@ -22,6 +22,14 @@ languages:
       library: "@angular/forms"
     - name: AdonisJS Validator
       library: "@adonisjs/validator"
+    - name: Express request validation (Zod)
+      library: express
+    - name: Fastify request validation (Zod)
+      library: fastify
+    - name: Koa request validation (Zod)
+      library: koa
+    - name: Hapi payload validation (Zod)
+      library: "@hapi/hapi"
     - name: DOMPurify (HTML sanitization)
       library: isomorphic-dompurify
   python:
@@ -54,6 +62,8 @@ languages:
       library: FluentValidation
     - name: HtmlSanitizer (HTML cleaning)
       library: HtmlSanitizer
+    - name: Blazor EditForm validation
+      library: Microsoft.AspNetCore.Components.Forms
   php:
     - name: Laravel Validation (Laravel framework)
       library: laravel/framework
@@ -62,6 +72,10 @@ languages:
       library: symfony/validator
     - name: WordPress sanitization
       library: wordpress
+    - name: Slim request validation
+      library: slim/slim
+    - name: Laminas InputFilter
+      library: laminas/laminas-inputfilter
     - name: HTML Purifier (HTML sanitization)
       library: ezyang/htmlpurifier
   kotlin:
@@ -191,6 +205,59 @@ const userSchema = schema.create({
 });
 
 const payload = await request.validate({ schema: userSchema });
+```
+
+### Express request validation (Zod)
+```typescript
+import { z } from 'zod';
+import type { Request, Response } from 'express';
+
+const schema = z.object({ email: z.string().email() });
+
+export function handler(req: Request, res: Response) {
+  const payload = schema.parse(req.body);
+  res.json(payload);
+}
+```
+
+### Fastify request validation (Zod)
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({ email: z.string().email() });
+
+app.post('/users', async (request, reply) => {
+  const payload = schema.parse(request.body);
+  reply.send(payload);
+});
+```
+
+### Koa request validation (Zod)
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({ email: z.string().email() });
+
+router.post('/users', async (ctx) => {
+  const payload = schema.parse(ctx.request.body);
+  ctx.body = payload;
+});
+```
+
+### Hapi payload validation (Zod)
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({ email: z.string().email() });
+
+server.route({
+  method: 'POST',
+  path: '/users',
+  handler: async (request, h) => {
+    const payload = schema.parse(request.payload);
+    return h.response(payload).code(200);
+  },
+});
 ```
 
 ---
@@ -356,6 +423,20 @@ public class UserValidator : AbstractValidator<UserDto>
 var result = await validator.ValidateAsync(dto);
 ```
 
+### Blazor EditForm validation
+```csharp
+<EditForm Model="@model" OnValidSubmit="@OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <InputText @bind-Value="model.Email" />
+</EditForm>
+
+@code {
+    private UserDto model = new();
+    private Task OnSubmit() => Task.CompletedTask;
+}
+```
+
 ---
 
 ## PHP
@@ -403,6 +484,31 @@ $cleanHtml = $purifier->purify($dirtyHtml);
 
 $email = sanitize_email($_POST['email'] ?? '');
 $name = sanitize_text_field($_POST['name'] ?? '');
+```
+
+### Slim request validation
+```php
+<?php
+
+$body = (array)($request->getParsedBody() ?? []);
+if (!filter_var($body['email'] ?? '', FILTER_VALIDATE_EMAIL)) {
+  return $response->withStatus(400);
+}
+```
+
+### Laminas InputFilter
+```php
+<?php
+
+use Laminas\InputFilter\InputFilter;
+use Laminas\Validator\EmailAddress;
+
+$filter = new InputFilter();
+$filter->add([
+  'name' => 'email',
+  'required' => true,
+  'validators' => [new EmailAddress()],
+]);
 ```
 
 ### Plain PHP

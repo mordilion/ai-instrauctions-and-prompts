@@ -18,6 +18,14 @@ languages:
       library: pino
     - name: winston
       library: winston
+    - name: Express request logging
+      library: express
+    - name: Fastify request logging
+      library: fastify
+    - name: Koa request logging
+      library: koa
+    - name: Hapi request logging
+      library: "@hapi/hapi"
     - name: NestJS Logger
       library: "@nestjs/common"
     - name: Next.js (server logs)
@@ -154,6 +162,36 @@ const logger = winston.createLogger({
 });
 
 logger.info('user.create.success', { event: 'user.create.success', userId, requestId });
+```
+
+### Express request logging
+```typescript
+app.use((req, _res, next) => {
+  req.log?.info?.({ event: 'http.request', method: req.method, path: req.path });
+  next();
+});
+```
+
+### Fastify request logging
+```typescript
+app.addHook('onRequest', async (request) => {
+  request.log.info({ event: 'http.request', method: request.method, url: request.url });
+});
+```
+
+### Koa request logging
+```typescript
+app.use(async (ctx, next) => {
+  console.log('http.request', { method: ctx.method, path: ctx.path });
+  await next();
+});
+```
+
+### Hapi request logging
+```typescript
+server.events.on('response', (request) => {
+  console.log('http.request', { method: request.method, path: request.path, status: request.response?.statusCode });
+});
 ```
 
 ### NestJS Logger
@@ -484,3 +522,9 @@ void logEvent(String event, Map<String, Object?> fields) {
 }
 ```
 
+### Flutter debugPrint
+```dart
+import 'package:flutter/foundation.dart';
+
+debugPrint('user.create.success userId=$userId requestId=$requestId');
+```

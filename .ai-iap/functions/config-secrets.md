@@ -51,6 +51,8 @@ languages:
       library: symfony/dotenv
     - name: Laravel config/env
       library: laravel/framework
+    - name: WordPress wp-config.php
+      library: wordpress
   kotlin:
     - name: System.getenv (Built-in)
       library: kotlin-stdlib
@@ -295,6 +297,16 @@ $apiUrl = config('app.api_url');
 $databaseUrl = env('DATABASE_URL');
 ```
 
+### WordPress wp-config.php
+```php
+<?php
+
+define('DB_NAME', 'my_db');
+define('DB_USER', 'my_user');
+define('DB_PASSWORD', 'my_password');
+define('DB_HOST', 'localhost');
+```
+
 ---
 
 ## Kotlin
@@ -333,6 +345,13 @@ func requiredEnv(_ key: String) throws -> String {
 let apiUrl = try requiredEnv("API_URL")
 ```
 
+### Vapor Environment
+```swift
+import Vapor
+
+let apiUrl = Environment.get("API_URL")
+```
+
 ---
 
 ## Dart
@@ -350,3 +369,7 @@ await dotenv.load();
 final apiUrl = dotenv.env['API_URL'];
 ```
 
+### Flutter --dart-define (compile-time)
+```dart
+const apiUrl = String.fromEnvironment('API_URL');
+```

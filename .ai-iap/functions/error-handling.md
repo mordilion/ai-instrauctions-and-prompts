@@ -23,6 +23,10 @@ languages:
       library: express
     - name: Fastify error handler
       library: fastify
+    - name: Koa error middleware
+      library: koa
+    - name: Hapi onPreResponse
+      library: "@hapi/hapi"
     - name: NestJS Exception Filter
       library: "@nestjs/common"
     - name: Next.js Route Handler (errors)
@@ -33,6 +37,8 @@ languages:
       library: "@angular/core"
     - name: Vue app.config.errorHandler
       library: vue
+    - name: Preact Error Boundary
+      library: preact
     - name: Browser global error handler (SPA)
       library: javascript-core
   python:
@@ -69,6 +75,12 @@ languages:
       library: LanguageExt.Core
     - name: ASP.NET Core exception handler middleware
       library: Microsoft.AspNetCore.App
+    - name: Blazor ErrorBoundary
+      library: Microsoft.AspNetCore.Components.Web
+    - name: .NET MAUI global exception handlers
+      library: Microsoft.Maui
+    - name: MediatR pipeline behavior
+      library: MediatR
   php:
     - name: Native try-catch (Built-in)
       library: php-core
@@ -79,6 +91,10 @@ languages:
       library: symfony/http-kernel
     - name: Slim ErrorMiddleware
       library: slim/slim
+    - name: Laminas Mezzio error handler
+      library: mezzio/mezzio
+    - name: WordPress wp_die / wp_send_json_error
+      library: wordpress
   kotlin:
     - name: Native try-catch (Built-in)
       library: kotlin-stdlib
@@ -216,6 +232,20 @@ class ErrorBoundary extends React.Component {
 }
 ```
 
+### Preact Error Boundary
+```typescript
+import { Component } from 'preact';
+
+export class ErrorBoundary extends Component {
+  componentDidCatch(error: unknown) {
+    console.error('preact.error', { error });
+  }
+  render() {
+    return this.props.children as any;
+  }
+}
+```
+
 ### Express error middleware
 ```typescript
 import type { NextFunction, Request, Response } from 'express';
@@ -231,6 +261,32 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
 app.setErrorHandler((err, request, reply) => {
   request.log.error({ err }, 'request failed');
   reply.code(500).send({ error: 'internal_error' });
+});
+```
+
+### Koa error middleware
+```typescript
+import type { Context, Next } from 'koa';
+
+export async function errorMiddleware(ctx: Context, next: Next) {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = 500;
+    ctx.body = { error: 'internal_error' };
+    ctx.app.emit('error', err, ctx);
+  }
+}
+```
+
+### Hapi onPreResponse
+```typescript
+server.ext('onPreResponse', (request, h) => {
+  const response = request.response as any;
+  if (!response?.isBoom) return h.continue;
+
+  const statusCode = response.output.statusCode ?? 500;
+  return h.response({ error: 'internal_error' }).code(statusCode);
 });
 ```
 
@@ -554,6 +610,46 @@ app.UseExceptionHandler(errorApp =>
 });
 ```
 
+### Blazor ErrorBoundary
+```csharp
+<ErrorBoundary>
+    <ChildContent>
+        <MyComponent />
+    </ChildContent>
+    <ErrorContent>
+        <p>Something went wrong.</p>
+    </ErrorContent>
+</ErrorBoundary>
+```
+
+### .NET MAUI global exception handlers
+```csharp
+AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+{
+    // log crash
+};
+
+TaskScheduler.UnobservedTaskException += (_, e) =>
+{
+    // log unobserved exceptions
+    e.SetObserved();
+};
+```
+
+### MediatR pipeline behavior
+```csharp
+using MediatR;
+
+public sealed class ExceptionBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+{
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
+    {
+        try { return await next(); }
+        catch { throw; }
+    }
+}
+```
+
 ---
 
 ## PHP
@@ -631,6 +727,25 @@ $errorMiddleware = $app->addErrorMiddleware(true, true, true);
 $errorMiddleware->setDefaultErrorHandler(function ($request, Throwable $exception) {
     return new \Slim\Psr7\Response(500);
 });
+```
+
+### Laminas Mezzio error handler
+```php
+<?php
+
+use Mezzio\Middleware\ErrorResponseGenerator;
+use Mezzio\Middleware\ErrorResponseGeneratorInterface;
+
+$container->set(ErrorResponseGeneratorInterface::class, new ErrorResponseGenerator());
+```
+
+### WordPress wp_die / wp_send_json_error
+```php
+<?php
+
+if (empty($_POST['email'])) {
+  wp_send_json_error(['error' => 'validation_failed'], 400);
+}
 ```
 
 ---

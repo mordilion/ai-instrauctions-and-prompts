@@ -17,6 +17,14 @@ languages:
       recommended: true
     - name: axios
       library: axios
+    - name: Express handler (fetch/axios)
+      library: express
+    - name: Fastify route (fetch/axios)
+      library: fastify
+    - name: Koa middleware (fetch/axios)
+      library: koa
+    - name: Hapi route (fetch/axios)
+      library: "@hapi/hapi"
     - name: NestJS HttpService
       library: "@nestjs/axios"
     - name: Angular HttpClient
@@ -29,6 +37,12 @@ languages:
       recommended: true
     - name: requests (Sync)
       library: requests
+    - name: Django view (requests)
+      library: django
+    - name: FastAPI endpoint (httpx)
+      library: fastapi
+    - name: Flask route (requests)
+      library: flask
   java:
     - name: HttpClient (Built-in)
       library: java.net.http (java 11+)
@@ -41,12 +55,18 @@ languages:
       recommended: true
     - name: Refit
       library: Refit
+    - name: Blazor HttpClient (DI)
+      library: Microsoft.AspNetCore.Components
   php:
     - name: Guzzle
       library: guzzlehttp/guzzle
       recommended: true
     - name: Laravel HTTP
       library: laravel/framework
+    - name: Symfony HttpClient
+      library: symfony/http-client
+    - name: WordPress HTTP API
+      library: wordpress
   kotlin:
     - name: Retrofit
       library: com.squareup.retrofit2:retrofit
@@ -59,6 +79,8 @@ languages:
       recommended: true
     - name: Alamofire
       library: Alamofire
+    - name: Vapor Client
+      library: vapor/vapor
   dart:
     - name: http (Official)
       library: http
@@ -199,6 +221,45 @@ axiosRetry(axios, {
 const response = await axios.get(url);
 ```
 
+### Express handler (fetch/axios)
+```typescript
+import type { Request, Response } from 'express';
+
+export async function getUser(req: Request, res: Response) {
+  const upstream = await fetch(`https://api.example.com/users/${req.params.id}`);
+  res.status(upstream.status).json(await upstream.json());
+}
+```
+
+### Fastify route (fetch/axios)
+```typescript
+app.get('/users/:id', async (request, reply) => {
+  const upstream = await fetch(`https://api.example.com/users/${request.params.id}`);
+  reply.code(upstream.status).send(await upstream.json());
+});
+```
+
+### Koa middleware (fetch/axios)
+```typescript
+router.get('/users/:id', async (ctx) => {
+  const upstream = await fetch(`https://api.example.com/users/${ctx.params.id}`);
+  ctx.status = upstream.status;
+  ctx.body = await upstream.json();
+});
+```
+
+### Hapi route (fetch/axios)
+```typescript
+server.route({
+  method: 'GET',
+  path: '/users/{id}',
+  handler: async (request, h) => {
+    const upstream = await fetch(`https://api.example.com/users/${request.params.id}`);
+    return h.response(await upstream.json()).code(upstream.status);
+  },
+});
+```
+
 ### NestJS HttpService
 ```typescript
 import { HttpService } from '@nestjs/axios';
@@ -303,6 +364,43 @@ response = requests.post(
 user = response.json()
 ```
 
+### Django view (requests)
+```python
+from django.http import JsonResponse
+import requests
+
+def users(request):
+    upstream = requests.get("https://api.example.com/users", timeout=5)
+    return JsonResponse(upstream.json(), safe=False, status=upstream.status_code)
+```
+
+### FastAPI endpoint (httpx)
+```python
+from fastapi import FastAPI
+import httpx
+
+app = FastAPI()
+
+@app.get("/users")
+async def users():
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        upstream = await client.get("https://api.example.com/users")
+        return upstream.json()
+```
+
+### Flask route (requests)
+```python
+from flask import Flask, jsonify
+import requests
+
+app = Flask(__name__)
+
+@app.get("/users")
+def users():
+    upstream = requests.get("https://api.example.com/users", timeout=5)
+    return jsonify(upstream.json()), upstream.status_code
+```
+
 ---
 
 ## Java
@@ -402,6 +500,20 @@ var api = RestService.For<IUserApi>("https://api.example.com");
 var user = await api.GetUserAsync("123");
 ```
 
+### Blazor HttpClient (DI)
+```csharp
+@inject HttpClient Http
+
+@code {
+    private User? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await Http.GetFromJsonAsync<User>("/api/users/123");
+    }
+}
+```
+
 ---
 
 ## PHP
@@ -456,6 +568,33 @@ $response = Http::withToken($token)
     ]);
 
 $user = $response->json();
+```
+
+### Symfony HttpClient
+```php
+<?php
+
+use Symfony\Component\HttpClient\HttpClient;
+
+$client = HttpClient::create();
+$response = $client->request('GET', 'https://api.example.com/users/123', [
+  'headers' => ['Authorization' => "Bearer {$token}"],
+]);
+
+$user = $response->toArray();
+```
+
+### WordPress HTTP API
+```php
+<?php
+
+$response = wp_remote_get('https://api.example.com/users/123', [
+  'headers' => ['Authorization' => "Bearer {$token}"],
+  'timeout' => 5,
+]);
+
+$body = wp_remote_retrieve_body($response);
+$user = json_decode($body, true);
 ```
 
 ---
@@ -579,6 +718,16 @@ AF.request("https://api.example.com/users",
     .responseDecodable(of: User.self) { response in
         print(response.value)
     }
+```
+
+### Vapor Client
+```swift
+import Vapor
+
+func fetchUser(_ req: Request) async throws -> User {
+  let response = try await req.client.get("https://api.example.com/users/123")
+  return try response.content.decode(User.self)
+}
 ```
 
 ---

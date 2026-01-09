@@ -61,6 +61,8 @@ languages:
       library: PDO (built-in)
     - name: WordPress $wpdb
       library: wordpress
+    - name: Laminas Db Adapter
+      library: laminas/laminas-db
   kotlin:
     - name: Exposed
       library: org.jetbrains.exposed:exposed-core
@@ -557,6 +559,16 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare('INSERT INTO users (email, name) VALUES (:email, :name)');
 $stmt->execute(['email' => $email, 'name' => $name]);
+```
+
+### Laminas Db Adapter
+```php
+<?php
+
+use Laminas\Db\Adapter\Adapter;
+
+$db = new Adapter(['driver' => 'Pdo_Pgsql', 'dsn' => $dsn, 'username' => $username, 'password' => $password]);
+$result = $db->query('SELECT * FROM users WHERE email = ?', [$email]);
 ```
 
 ### WordPress $wpdb
