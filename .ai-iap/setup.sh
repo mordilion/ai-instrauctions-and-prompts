@@ -840,23 +840,35 @@ read_instruction_file() {
     local is_framework="${3:-false}"
     local is_structure="${4:-false}"
     local is_process="${5:-false}"
-    
+
+    local candidates=()
+
     if [[ "$is_process" == "true" ]]; then
-        local filepath="$SCRIPT_DIR/processes/$lang/$file.md"
+        # Processes are stored under processes/{ondemand|permanent}/<lang>/<file>.md
+        candidates+=("$CUSTOM_PROCESSES_DIR/ondemand/$lang/$file.md")
+        candidates+=("$CUSTOM_PROCESSES_DIR/permanent/$lang/$file.md")
+        candidates+=("$SCRIPT_DIR/processes/ondemand/$lang/$file.md")
+        candidates+=("$SCRIPT_DIR/processes/permanent/$lang/$file.md")
     elif [[ "$is_structure" == "true" ]]; then
-        local filepath="$SCRIPT_DIR/rules/$lang/frameworks/structures/$file.md"
+        candidates+=("$CUSTOM_RULES_DIR/$lang/frameworks/structures/$file.md")
+        candidates+=("$SCRIPT_DIR/rules/$lang/frameworks/structures/$file.md")
     elif [[ "$is_framework" == "true" ]]; then
-        local filepath="$SCRIPT_DIR/rules/$lang/frameworks/$file.md"
+        candidates+=("$CUSTOM_RULES_DIR/$lang/frameworks/$file.md")
+        candidates+=("$SCRIPT_DIR/rules/$lang/frameworks/$file.md")
     else
-        local filepath="$SCRIPT_DIR/rules/$lang/$file.md"
+        candidates+=("$CUSTOM_RULES_DIR/$lang/$file.md")
+        candidates+=("$SCRIPT_DIR/rules/$lang/$file.md")
     fi
-    
-    if [[ -f "$filepath" ]]; then
-        cat "$filepath"
-    else
-        print_warning "File not found: $filepath"
-        return 1
-    fi
+
+    for filepath in "${candidates[@]}"; do
+        if [[ -f "$filepath" ]]; then
+            cat "$filepath"
+            return 0
+        fi
+    done
+
+    print_warning "File not found: ${candidates[*]}"
+    return 1
 }
 
 generate_cursor_frontmatter() {

@@ -17,6 +17,18 @@
 - Provide code without excessive explanation. Offer to explain if helpful.
 - Never apologize for following the rules
 
+---
+
+## 🚨 MANDATORY: Functions Lookup (Reduce AI Guessing)
+
+> **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks):
+>
+> 1. **CHECK** `.ai-iap-custom/functions/INDEX.md` (if it exists)
+> 2. **THEN CHECK** `.ai-iap/functions/INDEX.md`
+> 3. **OPEN** the relevant function file and **COPY** the exact code pattern
+>
+> **NEVER** add installation commands to function files and **NEVER** generate these patterns from scratch if a function exists.
+
 **Rule Priority** (highest to lowest):
 1. Structure rules (folder organization, when selected)
 2. Framework-specific rules (React, Laravel, etc.)

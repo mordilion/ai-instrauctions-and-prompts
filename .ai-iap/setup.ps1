@@ -26,6 +26,7 @@ $Script:ConfigFile = Join-Path $Script:ScriptDir "config.json"
 $Script:CustomConfigFile = Join-Path $Script:ProjectRoot ".ai-iap-custom\config.json"
 $Script:CustomRulesDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\rules"
 $Script:CustomProcessesDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\processes"
+$Script:CustomFunctionsDir = Join-Path $Script:ProjectRoot ".ai-iap-custom\functions"
 $Script:MergedConfigFile = Join-Path $env:TEMP "ai-iap-merged-config-$PID.json"
 $Script:WorkingConfig = $Script:ConfigFile
 
@@ -658,23 +659,36 @@ function Read-InstructionFile {
         [bool]$IsProcess = $false
     )
     
+    $candidates = @()
+
     if ($IsProcess) {
-        $filePath = Join-Path $Script:ScriptDir "processes\$Lang\$File.md"
-    } elseif ($IsStructure) {
-        $filePath = Join-Path $Script:ScriptDir "rules\$Lang\frameworks\structures\$File.md"
-    } elseif ($IsFramework) {
-        $filePath = Join-Path $Script:ScriptDir "rules\$Lang\frameworks\$File.md"
-    } else {
-        $filePath = Join-Path $Script:ScriptDir "rules\$Lang\$File.md"
+        # Processes are stored under processes\{ondemand|permanent}\<lang>\<file>.md
+        $candidates += (Join-Path $Script:CustomProcessesDir "ondemand\$Lang\$File.md")
+        $candidates += (Join-Path $Script:CustomProcessesDir "permanent\$Lang\$File.md")
+        $candidates += (Join-Path $Script:ScriptDir "processes\ondemand\$Lang\$File.md")
+        $candidates += (Join-Path $Script:ScriptDir "processes\permanent\$Lang\$File.md")
     }
-    
-    if (Test-Path $filePath) {
-        return Get-Content $filePath -Raw -Encoding UTF8
+    elseif ($IsStructure) {
+        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\frameworks\structures\$File.md")
+        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\structures\$File.md")
+    }
+    elseif ($IsFramework) {
+        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\frameworks\$File.md")
+        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\$File.md")
     }
     else {
-        Write-WarningMessage "File not found: $filePath"
-        return $null
+        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\$File.md")
+        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\$File.md")
     }
+
+    foreach ($path in $candidates) {
+        if (Test-Path $path) {
+            return Get-Content $path -Raw -Encoding UTF8
+        }
+    }
+
+    Write-WarningMessage ("File not found: " + ($candidates -join ", "))
+    return $null
 }
 
 function New-CursorFrontmatter {
