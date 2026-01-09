@@ -314,7 +314,7 @@ function Select-Tools {
     Write-Host ""
     
     $selectedTools = Get-ValidatedSelection `
-        -Prompt "Enter choices (e.g., 1 3 or 'a' for all)" `
+        -Prompt "Enter choices (e.g., 1 3 or 'a' for all):" `
         -Options $toolKeys `
         -MaxValue $toolKeys.Count `
         -AllowEmpty $false
@@ -354,7 +354,7 @@ function Select-Languages {
     Write-Host ""
     
     $selectedLanguages = Get-ValidatedSelection `
-        -Prompt "Enter choices (e.g., 1 2 4 or 'a' for all)" `
+        -Prompt "Enter choices (e.g., 1 2 4 or 'a' for all):" `
         -Options $langKeys `
         -MaxValue $langKeys.Count `
         -AllowEmpty $false
@@ -428,8 +428,7 @@ function Select-Documentation {
         # Check applicability
         $applicableTo = $Config.languages.general.documentation.$key.applicableTo
         if ($applicableTo -contains "backend" -or $applicableTo -contains "fullstack") {
-            $suffix += " (backend/fullstack)" | Write-Host -ForegroundColor DarkGray -NoNewline
-            $suffix = ""
+            $suffix += " (backend/fullstack)"
         }
         
         Write-Host "  $($i + 1). $($docNames[$i])$suffix"
@@ -448,7 +447,7 @@ function Select-Documentation {
         Write-Host "Suggestion for backend/fullstack project: a (all)" -ForegroundColor DarkGray
     }
     
-    $input = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)"
+    $input = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):"
     
     $selectedDocumentation = @()
     
@@ -532,7 +531,7 @@ function Select-Frameworks {
         Write-Host ""
         
         $langFrameworks = Get-ValidatedSelection `
-            -Prompt "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip)" `
+            -Prompt "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip):" `
             -Options $frameworkKeys `
             -MaxValue $frameworkKeys.Count `
             -AllowEmpty $false `
@@ -606,7 +605,7 @@ function Select-Processes {
         Write-Host ""
         
         $langProcesses = Get-ValidatedSelection `
-            -Prompt "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)" `
+            -Prompt "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):" `
             -Options $processKeys `
             -MaxValue $processKeys.Count `
             -AllowEmpty $false `
@@ -679,7 +678,7 @@ function Select-Structures {
             Write-Host "  s. Skip (use default patterns only)"
             Write-Host ""
             
-            $choice = Read-Host "Enter choice (1-$($structures.Count) or 's' to skip)"
+            $choice = Read-Host "Enter choice (1-$($structures.Count) or 's' to skip):"
             
             if ($choice -ne 's' -and $choice -ne 'S') {
                 $idx = [int]$choice - 1
@@ -1465,7 +1464,7 @@ function Main {
     $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages
     
     Write-Host ""
-    Write-Host "Configuration Summary:" -ForegroundColor White
+    Write-Host "Configuration Summary:"
     Write-Host "  Tools: $($selectedTools -join ', ')"
     Write-Host "  Languages: $($selectedLanguages -join ', ')"
     if ($selectedDocumentation.Count -gt 0) {
@@ -1489,7 +1488,7 @@ function Main {
     }
     Write-Host ""
     
-    $confirm = Read-Host "Proceed with generation? (Y/n)"
+    $confirm = Read-Host "Proceed with generation? (Y/n):"
     if ($confirm -eq 'n' -or $confirm -eq 'N') {
         Write-InfoMessage "Aborted."
         exit 0
@@ -1506,7 +1505,7 @@ function Main {
     Add-ToGitignore
     
     Write-Host ""
-    Write-Host "Setup complete!" -ForegroundColor Green
+    Write-SuccessMessage "Setup complete!"
     Write-Host ""
     
     # Cleanup temp merged config

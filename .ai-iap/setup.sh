@@ -38,17 +38,17 @@ readonly NC='\033[0m' # No Color
 # ============================================================================
 
 print_header() {
-    echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║         AI Instructions and Prompts Setup v${VERSION}            ║"
-    echo "╚═══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    echo ""
+    echo -e "${CYAN}==================================================================${NC}"
+    echo -e "${CYAN}        AI Instructions and Prompts Setup v${VERSION}             ${NC}"
+    echo -e "${CYAN}==================================================================${NC}"
+    echo ""
 }
 
-print_success() { echo -e "${GREEN}✓${NC} $1"; }
-print_error() { echo -e "${RED}✗${NC} $1" >&2; }
-print_warning() { echo -e "${YELLOW}!${NC} $1"; }
-print_info() { echo -e "${BLUE}→${NC} $1"; }
+print_success() { echo -e "${GREEN}[OK]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+print_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
 
 die() {
     print_error "$1"
@@ -105,7 +105,7 @@ validate_selection() {
             print_error "No selection made."
             local skip_msg=""
             [[ "$allow_skip" == "true" ]] && skip_msg=", 's' to skip,"
-            echo -e "${YELLOW}Please enter at least one number$skip_msg or 'a' for all.${NC}"
+    echo "Please enter at least one number$skip_msg or 'a' for all."
             echo ""
             continue
         fi
@@ -118,7 +118,7 @@ validate_selection() {
                 print_error "Invalid input: '$num'"
                 local skip_msg=""
                 [[ "$allow_skip" == "true" ]] && skip_msg=", 's' to skip,"
-                echo -e "${YELLOW}Please enter numbers only (e.g., 1 2 3)$skip_msg or 'a' for all.${NC}"
+                echo "Please enter numbers only (e.g., 1 2 3)$skip_msg or 'a' for all."
                 echo ""
                 is_valid=false
                 break
@@ -128,7 +128,7 @@ validate_selection() {
             if [[ $num -lt 1 || $num -gt $max_value ]]; then
                 echo ""
                 print_error "Invalid choice: $num"
-                echo -e "${YELLOW}Please enter a number between 1 and $max_value.${NC}"
+                echo "Please enter a number between 1 and $max_value."
                 echo ""
                 is_valid=false
                 break
@@ -143,7 +143,7 @@ validate_selection() {
         elif [[ "$is_valid" == "true" && ${#result_ref[@]} -eq 0 ]]; then
             echo ""
             print_error "No valid items selected."
-            echo -e "${YELLOW}Please enter at least one valid number.${NC}"
+            echo "Please enter at least one valid number."
             echo ""
         fi
     done
@@ -267,7 +267,7 @@ cleanup() {
 trap cleanup EXIT
 
 get_tools() {
-    jq -r '.tools | keys[]' "$WORKING_CONFIG"
+    jq -r '.tools | keys_unsorted[]' "$WORKING_CONFIG"
 }
 
 get_tool_name() {
@@ -275,7 +275,7 @@ get_tool_name() {
 }
 
 get_languages() {
-    jq -r '.languages | keys[]' "$WORKING_CONFIG"
+    jq -r '.languages | keys_unsorted[]' "$WORKING_CONFIG"
 }
 
 get_language_name() {
@@ -303,19 +303,19 @@ get_language_description() {
 }
 
 get_language_frameworks() {
-    jq -r ".languages[\"$1\"].frameworks // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].frameworks // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_language_custom_frameworks() {
-    jq -r ".languages[\"$1\"].customFrameworks // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].customFrameworks // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_language_processes() {
-    jq -r ".languages[\"$1\"].processes // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].processes // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_language_custom_processes() {
-    jq -r ".languages[\"$1\"].customProcesses // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].customProcesses // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_framework_name() {
@@ -355,7 +355,7 @@ get_framework_category() {
 }
 
 get_framework_structures() {
-    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages[\"$1\"].frameworks[\"$2\"].structures // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_structure_name() {
@@ -371,7 +371,7 @@ get_structure_file() {
 }
 
 get_documentation_keys() {
-    jq -r ".languages.general.documentation // empty | keys[]" "$WORKING_CONFIG" 2>/dev/null || true
+    jq -r ".languages.general.documentation // empty | keys_unsorted[]" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
 get_documentation_name() {
@@ -407,7 +407,7 @@ select_tools_simple() {
         tools+=("$(get_tool_name "$key")")
     done < <(get_tools)
     
-    echo -e "${BOLD}Select AI tools to configure:${NC}"
+    echo "Select AI tools to configure:"
     echo ""
     
     for ((i=0; i<${#tool_keys[@]}; i++)); do
@@ -420,7 +420,7 @@ select_tools_simple() {
         echo "  $((i+1)). ${tools[$i]}$suffix"
     done
     echo ""
-    echo -e "  ${DIM}* = recommended${NC}"
+    echo "  * = recommended"
     echo "  a. All tools"
     echo ""
     
@@ -435,7 +435,7 @@ select_tools_simple() {
         elif [[ -z "$input" ]]; then
             echo ""
             print_error "No tools selected."
-            echo -e "${YELLOW}Please enter at least one tool number (e.g., 1) or 'a' for all.${NC}"
+            echo "Please enter at least one tool number (e.g., 1) or 'a' for all."
             echo ""
             continue
         fi
@@ -447,7 +447,7 @@ select_tools_simple() {
             if ! [[ "$num" =~ ^[0-9]+$ ]]; then
                 echo ""
                 print_error "Invalid input: '$num'"
-                echo -e "${YELLOW}Please enter numbers only (e.g., 1 2 3) or 'a' for all.${NC}"
+                echo "Please enter numbers only (e.g., 1 2 3) or 'a' for all."
                 echo ""
                 is_valid=false
                 break
@@ -457,7 +457,7 @@ select_tools_simple() {
             if [[ $idx -lt 0 || $idx -ge ${#tool_keys[@]} ]]; then
                 echo ""
                 print_error "Invalid choice: $num"
-                echo -e "${YELLOW}Please enter a number between 1 and ${#tool_keys[@]}.${NC}"
+                echo "Please enter a number between 1 and ${#tool_keys[@]}."
                 echo ""
                 is_valid=false
                 break
@@ -471,7 +471,7 @@ select_tools_simple() {
         elif [[ "$is_valid" == "true" ]]; then
             echo ""
             print_error "No valid tools selected."
-            echo -e "${YELLOW}Please enter at least one valid number.${NC}"
+            echo "Please enter at least one valid number."
             echo ""
         fi
     done
@@ -494,8 +494,8 @@ select_languages_simple() {
     done < <(get_languages)
     
     echo ""
-    echo -e "${BOLD}Select language instructions to include:${NC}"
-    echo -e "${DIM}(General rules are always included automatically)${NC}"
+    echo "Select language instructions to include:"
+    echo "(General rules are always included automatically)"
     echo ""
     
     for ((i=0; i<${#lang_keys[@]}; i++)); do
@@ -577,8 +577,8 @@ select_documentation() {
     done
     
     echo ""
-    echo -e "${BOLD}Select documentation standards to include:${NC}"
-    echo -e "${DIM}(Choose based on your project type)${NC}"
+    echo "Select documentation standards to include:"
+    echo "(Choose based on your project type)"
     echo ""
     
     for ((i=0; i<${#doc_keys[@]}; i++)); do
@@ -596,23 +596,23 @@ select_documentation() {
         
         # Add applicability hint
         if [[ "$applicable_to" == "backend" ]] || [[ "$applicable_to" == "fullstack" ]]; then
-            suffix="$suffix ${DIM}(backend/fullstack)${NC}"
+            suffix="$suffix (backend/fullstack)"
         fi
         
-        echo -e "  $((i+1)). ${doc_names[$i]}$suffix"
-        echo -e "      ${DIM}${doc_descs[$i]}${NC}"
+        echo "  $((i+1)). ${doc_names[$i]}$suffix"
+        echo "      ${doc_descs[$i]}"
     done
     echo ""
-    echo -e "  ${DIM}⭐ = recommended${NC}"
+    echo "  ⭐ = recommended"
     echo "  a. All documentation"
     echo "  s. Skip (no documentation standards)"
     echo ""
     
     # Provide smart default suggestion
     if [[ "$has_frontend_only" == "true" && "$has_backend" == "false" ]]; then
-        echo -e "${DIM}Suggestion for frontend-only project: 1 2 (code + project)${NC}"
+        echo "Suggestion for frontend-only project: 1 2 (code + project)"
     elif [[ "$has_backend" == "true" ]]; then
-        echo -e "${DIM}Suggestion for backend/fullstack project: a (all)${NC}"
+        echo "Suggestion for backend/fullstack project: a (all)"
     fi
     
     read -rp "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip): " input
@@ -664,8 +664,8 @@ select_frameworks() {
         [[ ${#fw_keys[@]} -eq 0 ]] && continue
         
         echo ""
-        echo -e "${BOLD}Select frameworks for $lang_name:${NC}"
-        echo -e "${DIM}(You can combine multiple - e.g., Web Framework + ORM)${NC}"
+        echo -e "Select frameworks for $lang_name:"
+        echo "(You can combine multiple - e.g., Web Framework + ORM)"
         echo ""
         
         # Get unique categories and sort them
@@ -681,7 +681,7 @@ select_frameworks() {
         
         # Display frameworks grouped by category
         for cat in "${categories[@]}"; do
-            echo -e "  ${CYAN}[$cat]${NC}"
+            echo "  [$cat]"
             for ((i=0; i<${#fw_keys[@]}; i++)); do
                 if [[ "${fw_cats[$i]}" == "$cat" ]]; then
                     local suffix=""
@@ -691,7 +691,7 @@ select_frameworks() {
             done
         done
         echo ""
-        echo -e "  ${DIM}* = recommended${NC}"
+        echo "  * = recommended"
         echo "  s. Skip (no frameworks)"
         echo "  a. All frameworks"
         echo ""
@@ -761,12 +761,12 @@ select_processes() {
         [[ ${#proc_keys[@]} -eq 0 ]] && continue
         
         echo ""
-        echo -e "${BOLD}Select processes for $lang_name:${NC}"
-        echo -e "${DIM}(Workflow guides for establishing infrastructure)${NC}"
+        echo -e "Select processes for $lang_name:"
+        echo "(Workflow guides for establishing infrastructure)"
         echo ""
-        echo -e "${YELLOW}Process Types:${NC}"
-        echo -e "${CYAN}  [permanent] - Loaded into AI permanently (recurring tasks)${NC}"
-        echo -e "${DIM}  [on-demand] - Copy prompt when needed (one-time setups)${NC}"
+        echo "Process Types:"
+        echo "  [permanent] - Loaded into AI permanently (recurring tasks)"
+        echo "  [on-demand] - Copy prompt when needed (one-time setups)"
         echo ""
         
         for ((i=0; i<${#proc_keys[@]}; i++)); do
@@ -830,7 +830,7 @@ select_structures() {
             [[ ${#struct_keys[@]} -eq 0 ]] && continue
             
             echo ""
-            echo -e "${BOLD}Select structure for $fw_name:${NC}"
+            echo -e "Select structure for $fw_name:"
             echo ""
             
             for ((i=0; i<${#struct_keys[@]}; i++)); do
@@ -839,7 +839,7 @@ select_structures() {
                 echo "  $((i+1)). ${struct_names[$i]}$suffix - ${struct_descs[$i]}"
             done
             echo ""
-            echo -e "  ${DIM}* = recommended${NC}"
+            echo "  * = recommended"
             echo "  s. Skip (use default patterns only)"
             echo ""
             
@@ -1555,7 +1555,7 @@ main() {
     select_processes
     
     echo ""
-    echo -e "${BOLD}Configuration Summary:${NC}"
+    echo "Configuration Summary:"
     echo "  Tools: ${SELECTED_TOOLS[*]}"
     echo "  Languages: ${SELECTED_LANGUAGES[*]}"
     if [[ ${#SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
@@ -1590,7 +1590,7 @@ main() {
     prompt_gitignore
     
     echo ""
-    echo -e "${GREEN}${BOLD}Setup complete!${NC}"
+    print_success "Setup complete!"
     echo ""
 }
 
