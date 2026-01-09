@@ -12,6 +12,7 @@ ensuring safe updates from the main repository.
 - [Configuration](#configuration)
 - [Adding Custom Rules](#adding-custom-rules)
 - [Adding Custom Processes](#adding-custom-processes)
+- [Adding Custom Functions](#adding-custom-functions)
 - [Adding Custom Frameworks](#adding-custom-frameworks)
 - [Overriding Core Files](#overriding-core-files)
 - [Update Strategies](#update-strategies)
@@ -27,6 +28,7 @@ The `.ai-iap-custom/` directory allows you to:
 - ✅ **Extend** core configurations with company-specific standards
 - ✅ **Override** core rules with team preferences
 - ✅ **Add** custom processes for internal tools/platforms
+- ✅ **Add** custom functions for company-specific code patterns
 - ✅ **Pull updates** from main repo without merge conflicts
 - ✅ **Share** customizations across your team (optional)
 
@@ -54,11 +56,15 @@ The `.ai-iap-custom/` directory allows you to:
 │   │   └── code-style.md               # Overrides core code-style.md
 │   └── python/
 │       └── ml-standards.md
-└── processes/                          # Custom processes
-    ├── typescript/
-    │   └── deploy-internal.md
-    └── python/
-        └── deploy-sagemaker.md
+├── processes/                          # Custom processes
+│   ├── typescript/
+│   │   └── deploy-internal.md
+│   └── python/
+│       └── deploy-sagemaker.md
+└── functions/                          # Custom function patterns (NEW)
+    ├── custom-auth-flow.md             # Company-specific auth pattern
+    ├── custom-logging.md               # Internal logging service
+    └── custom-cache.md                 # Company cache implementation
 ```
 
 ---
@@ -91,6 +97,24 @@ The `.ai-iap-custom/` directory allows you to:
           "recommended": true
         }
       }
+    }
+  },
+  "customFunctions": {
+    "custom-auth-flow": {
+      "title": "Company SSO Authentication Flow",
+      "file": "custom-auth-flow",
+      "category": "Authentication",
+      "languages": ["typescript", "python", "java", "csharp"],
+      "description": "Authenticate with company SSO service",
+      "tags": ["auth", "sso", "company-specific"]
+    },
+    "custom-logging": {
+      "title": "Company Logging Service",
+      "file": "custom-logging",
+      "category": "Observability",
+      "languages": ["typescript", "python"],
+      "description": "Send logs to company DataDog instance",
+      "tags": ["logging", "observability"]
     }
   }
 }
@@ -255,6 +279,248 @@ kubectl apply -f deployment.yaml
 ### Step 3: Run Setup
 
 During setup, select your custom process when prompted.
+
+---
+
+## Adding Custom Functions
+
+Custom functions add **company-specific implementation patterns** that your team uses frequently. These are short (5-20 line) code patterns for common tasks.
+
+### When to Add Custom Functions
+
+✅ **Good use cases**:
+- Company-specific authentication flows
+- Internal logging service integration
+- Company cache/Redis patterns
+- Internal API client patterns
+- Company-specific error reporting (Sentry, Datadog, etc.)
+- Internal message queue patterns (RabbitMQ, Kafka, etc.)
+
+❌ **Don't create custom functions for**:
+- One-off implementations (use processes instead)
+- Language-specific syntax (belongs in rules)
+- Complete features (use processes instead)
+
+### Step 1: Create Function File
+
+`.ai-iap-custom/functions/custom-auth-flow.md`:
+
+```markdown
+---
+title: Company SSO Authentication Flow
+category: Authentication
+difficulty: intermediate
+languages:
+  - typescript
+  - python
+  - java
+  - csharp
+tags:
+  - auth
+  - sso
+  - company-specific
+updated: 2026-01-09
+---
+
+# Company SSO Authentication Flow
+
+> **Purpose**: Authenticate users with company SSO service
+>
+> **When to use**: All internal applications requiring user authentication
+
+---
+
+## TypeScript / JavaScript
+
+### 📦 Dependencies
+
+| Approach | Library | Installation | Use Case |
+|----------|---------|--------------|----------|
+| **Company Auth SDK** ⭐ | `@company/auth-sdk` | `npm install @company/auth-sdk` | Official company SDK |
+| **Manual OAuth** | `oauth2` | `npm install oauth2` | Custom OAuth flow |
+
+### Company Auth SDK (Recommended)
+
+\`\`\`typescript
+// Install: npm install @company/auth-sdk
+import { CompanyAuth } from '@company/auth-sdk';
+
+const auth = new CompanyAuth({
+  clientId: process.env.COMPANY_CLIENT_ID,
+  clientSecret: process.env.COMPANY_CLIENT_SECRET,
+  redirectUri: 'https://app.example.com/callback'
+});
+
+// Login flow
+async function login(email: string) {
+  const authUrl = auth.getAuthorizationUrl({
+    scope: ['profile', 'email'],
+    state: generateState()
+  });
+  
+  return { redirectUrl: authUrl };
+}
+
+// Callback handler
+async function handleCallback(code: string) {
+  const tokens = await auth.exchangeCodeForTokens(code);
+  const user = await auth.getUserInfo(tokens.accessToken);
+  
+  return { user, tokens };
+}
+\`\`\`
+
+---
+
+## Python
+
+### 📦 Dependencies
+
+| Approach | Library | Installation | Use Case |
+|----------|---------|--------------|----------|
+| **Company Auth SDK** ⭐ | `company-auth-sdk` | `pip install company-auth-sdk` | Official company SDK |
+
+### Company Auth SDK (Recommended)
+
+\`\`\`python
+# Install: pip install company-auth-sdk
+from company_auth import CompanyAuth
+
+auth = CompanyAuth(
+    client_id=os.getenv('COMPANY_CLIENT_ID'),
+    client_secret=os.getenv('COMPANY_CLIENT_SECRET'),
+    redirect_uri='https://app.example.com/callback'
+)
+
+# Login flow
+def login(email: str):
+    auth_url = auth.get_authorization_url(
+        scope=['profile', 'email'],
+        state=generate_state()
+    )
+    return {'redirect_url': auth_url}
+
+# Callback handler
+async def handle_callback(code: str):
+    tokens = await auth.exchange_code_for_tokens(code)
+    user = await auth.get_user_info(tokens['access_token'])
+    return {'user': user, 'tokens': tokens}
+\`\`\`
+
+---
+
+## Best Practices
+
+✅ **DO**:
+- Store tokens securely (httpOnly cookies)
+- Validate state parameter (CSRF protection)
+- Refresh tokens before expiry
+- Log authentication events
+
+❌ **DON'T**:
+- Store tokens in localStorage (XSS risk)
+- Expose client secret in frontend
+- Skip token validation
+```
+
+### Step 2: Register in config.json
+
+Add to `.ai-iap-custom/config.json`:
+
+```json
+{
+  "customFunctions": {
+    "custom-auth-flow": {
+      "title": "Company SSO Authentication Flow",
+      "file": "custom-auth-flow",
+      "category": "Authentication",
+      "languages": ["typescript", "python", "java", "csharp"],
+      "description": "Authenticate with company SSO service",
+      "tags": ["auth", "sso", "company-specific"]
+    },
+    "custom-logging": {
+      "title": "Company Logging Service",
+      "file": "custom-logging",
+      "category": "Observability",
+      "languages": ["typescript", "python"],
+      "description": "Send logs to company DataDog instance",
+      "tags": ["logging", "observability"]
+    }
+  }
+}
+```
+
+### Step 3: Update Custom INDEX
+
+Create `.ai-iap-custom/functions/INDEX.md`:
+
+```markdown
+# Custom Functions Index
+
+Company-specific implementation patterns.
+
+## Available Custom Functions
+
+| Function | Description | Languages | File |
+|----------|-------------|-----------|------|
+| **Company SSO Auth** | Company SSO authentication flow | TypeScript, Python, Java, C# | [custom-auth-flow.md](custom-auth-flow.md) |
+| **Company Logging** | DataDog logging integration | TypeScript, Python | [custom-logging.md](custom-logging.md) |
+| **Company Cache** | Redis cache patterns | All 8 | [custom-cache.md](custom-cache.md) |
+
+## How to Use
+
+1. Check this INDEX for company-specific patterns
+2. Use core functions (`.ai-iap/functions/`) for generic patterns
+3. Open relevant custom function file
+4. Copy implementation with company credentials handling
+```
+
+### Step 4: Run Setup
+
+The setup script will automatically merge your custom functions with core functions.
+
+### Function File Structure
+
+All function files (core and custom) should follow this structure:
+
+```markdown
+---
+title: [Pattern Name]
+category: [Category]
+difficulty: [beginner|intermediate|advanced]
+languages: [list of languages]
+tags: [relevant, tags]
+updated: YYYY-MM-DD
+---
+
+# [Pattern Name]
+
+> **Purpose**: Brief description
+> **When to use**: Use case description
+
+---
+
+## [Language 1]
+
+### 📦 Dependencies
+
+| Approach | Library | Installation | Use Case |
+|----------|---------|--------------|----------|
+| **Approach 1** ⭐ | `library` | `install command` | When to use |
+
+### Code Implementation
+
+\`\`\`language
+// 5-20 lines of code
+\`\`\`
+
+---
+
+## Best Practices
+
+✅ **DO**: [list]
+❌ **DON'T**: [list]
+```
 
 ---
 
@@ -541,6 +807,100 @@ function MyComponent() {
     }
   }
 }
+```
+
+---
+
+### Example 4: Custom Function - Company Cache Pattern
+
+**File**: `.ai-iap-custom/functions/custom-cache.md`
+
+```markdown
+---
+title: Company Redis Cache Pattern
+category: Performance
+difficulty: intermediate
+languages: [typescript, python, java, csharp]
+tags: [cache, redis, performance, company-specific]
+updated: 2026-01-09
+---
+
+# Company Redis Cache Pattern
+
+> **Purpose**: Cache data using company Redis cluster
+>
+> **When to use**: Frequently accessed data, API responses, session storage
+
+---
+
+## TypeScript
+
+### 📦 Dependencies
+
+| Approach | Library | Installation | Use Case |
+|----------|---------|--------------|----------|
+| **Company Redis SDK** ⭐ | `@company/redis` | `npm install @company/redis` | Company Redis cluster |
+
+\`\`\`typescript
+import { CompanyRedis } from '@company/redis';
+
+const redis = CompanyRedis.connect({
+  cluster: process.env.REDIS_CLUSTER // company-prod, company-staging
+});
+
+// Cache with TTL
+async function cacheUser(userId: string, userData: User) {
+  await redis.setex(
+    `user:${userId}`,
+    3600, // 1 hour TTL
+    JSON.stringify(userData)
+  );
+}
+
+// Get from cache
+async function getUser(userId: string): Promise<User | null> {
+  const cached = await redis.get(`user:${userId}`);
+  return cached ? JSON.parse(cached) : null;
+}
+
+// Cache-aside pattern
+async function getUserWithCache(userId: string): Promise<User> {
+  const cached = await getUser(userId);
+  if (cached) return cached;
+  
+  const user = await database.getUser(userId);
+  await cacheUser(userId, user);
+  return user;
+}
+\`\`\`
+```
+
+**Config**: `.ai-iap-custom/config.json`
+
+```json
+{
+  "customFunctions": {
+    "custom-cache": {
+      "title": "Company Redis Cache Pattern",
+      "file": "custom-cache",
+      "category": "Performance",
+      "languages": ["typescript", "python", "java", "csharp"],
+      "description": "Cache using company Redis cluster",
+      "tags": ["cache", "redis", "performance"]
+    }
+  }
+}
+```
+
+**Custom INDEX**: `.ai-iap-custom/functions/INDEX.md`
+
+```markdown
+# Custom Functions Index
+
+| Function | Description | Languages | File |
+|----------|-------------|-----------|------|
+| **Company Cache** | Redis cache patterns | TypeScript, Python, Java, C# | [custom-cache.md](custom-cache.md) |
+| **Company Auth** | SSO authentication | TypeScript, Python | [custom-auth-flow.md](custom-auth-flow.md) |
 ```
 
 ---
