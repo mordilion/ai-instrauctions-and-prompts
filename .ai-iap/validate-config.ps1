@@ -60,7 +60,7 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
     }
     
     # Check tool type consistency
-    # Exception: Claude needs both outputDir (.claude/skills) and outputFile (CLAUDE.md)
+    # Exception: Claude needs both outputDir (.claude/rules) and outputFile (CLAUDE.md)
     if ($tool.outputDir -and $tool.outputFile -and $toolKey -ne "claude") {
         Write-Issue "ERROR" "Tool '$toolKey': Has both 'outputDir' and 'outputFile' (should have only one)"
     }
@@ -80,20 +80,19 @@ foreach ($toolKey in $config.tools.PSObject.Properties.Name) {
     
     # Claude-specific checks (unified CLI & Code)
     if ($toolKey -eq "claude") {
-        if (-not $tool.skillFilename) {
-            Write-Issue "WARNING" "Tool 'claude': Missing 'skillFilename' property (should be 'SKILL.md')"
-        }
         if (-not $tool.supportsSubfolders) {
             Write-Issue "WARNING" "Tool 'claude': Should have 'supportsSubfolders: true'"
         }
-        if ($tool.supportsGlobs) {
-            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsGlobs: false' (uses directory-based skills)"
+        if (-not $tool.supportsGlobs) {
+            Write-Issue "WARNING" "Tool 'claude': Should have 'supportsGlobs: true' (uses .claude/rules/**/*.md)"
         }
         if (-not $tool.outputFile) {
             Write-Issue "WARNING" "Tool 'claude': Missing 'outputFile' property (should be 'CLAUDE.md')"
         }
         if (-not $tool.outputDir) {
-            Write-Issue "WARNING" "Tool 'claude': Missing 'outputDir' property (should be '.claude/skills')"
+            Write-Issue "WARNING" "Tool 'claude': Missing 'outputDir' property (should be '.claude/rules')"
+        } elseif ($tool.outputDir -ne ".claude/rules") {
+            Write-Issue "WARNING" "Tool 'claude': outputDir should be '.claude/rules'"
         }
     }
 }

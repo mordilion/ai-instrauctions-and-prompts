@@ -17,7 +17,7 @@
                                  "fileExtension":  ".md",
                                  "useFrontmatter":  true,
                                  "concatenate":  false,
-                                 "supportsGlobs":  false,
+                                 "supportsGlobs":  true,
                                  "supportsSubfolders":  true,
                                  "recommended":  true
                              },

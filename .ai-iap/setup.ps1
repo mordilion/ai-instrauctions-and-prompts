@@ -88,6 +88,7 @@ function Get-Configuration {
         
         # Load from working config (might be merged)
         $config = Get-Content $Script:WorkingConfig -Raw | ConvertFrom-Json
+        Normalize-Config -Config $config
         return $config
     } catch {
         Write-ErrorMessage "Failed to parse config file: $Script:ConfigFile"
@@ -105,6 +106,53 @@ function Get-Configuration {
         Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor DarkGray
         Write-Host ""
         exit 1
+    }
+}
+
+function Normalize-Config {
+    param([PSCustomObject]$Config)
+
+    # Normalize merged config so custom additions become first-class:
+    # - customFiles -> files (append unique)
+    # - customFrameworks -> frameworks
+    # - customProcesses -> processes
+    foreach ($langKey in $Config.languages.PSObject.Properties.Name) {
+        $lang = $Config.languages.$langKey
+
+        # Merge customFiles into files
+        if ($lang.PSObject.Properties.Name -contains "customFiles") {
+            if (-not ($lang.PSObject.Properties.Name -contains "files")) {
+                $lang | Add-Member -NotePropertyName "files" -NotePropertyValue @()
+            }
+
+            foreach ($f in @($lang.customFiles)) {
+                if ($null -ne $f -and ($lang.files -notcontains $f)) {
+                    $lang.files += $f
+                }
+            }
+        }
+
+        # Merge customFrameworks into frameworks
+        if ($lang.PSObject.Properties.Name -contains "customFrameworks") {
+            if (-not ($lang.PSObject.Properties.Name -contains "frameworks")) {
+                $lang | Add-Member -NotePropertyName "frameworks" -NotePropertyValue ([PSCustomObject]@{})
+            }
+
+            foreach ($fwProp in $lang.customFrameworks.PSObject.Properties) {
+                $lang.frameworks | Add-Member -NotePropertyName $fwProp.Name -NotePropertyValue $fwProp.Value -Force
+            }
+        }
+
+        # Merge customProcesses into processes
+        if ($lang.PSObject.Properties.Name -contains "customProcesses") {
+            if (-not ($lang.PSObject.Properties.Name -contains "processes")) {
+                $lang | Add-Member -NotePropertyName "processes" -NotePropertyValue ([PSCustomObject]@{})
+            }
+
+            foreach ($procProp in $lang.customProcesses.PSObject.Properties) {
+                $lang.processes | Add-Member -NotePropertyName $procProp.Name -NotePropertyValue $procProp.Value -Force
+            }
+        }
     }
 }
 
@@ -663,6 +711,8 @@ function Read-InstructionFile {
 
     if ($IsProcess) {
         # Processes are stored under processes\{ondemand|permanent}\<lang>\<file>.md
+        # Custom processes also support legacy layout: .ai-iap-custom/processes/<lang>/<file>.md
+        $candidates += (Join-Path $Script:CustomProcessesDir "$Lang\$File.md")
         $candidates += (Join-Path $Script:CustomProcessesDir "ondemand\$Lang\$File.md")
         $candidates += (Join-Path $Script:CustomProcessesDir "permanent\$Lang\$File.md")
         $candidates += (Join-Path $Script:ScriptDir "processes\ondemand\$Lang\$File.md")
@@ -727,6 +777,7 @@ function New-CursorConfig {
     param(
         [PSCustomObject]$Config,
         [string[]]$SelectedLanguages,
+        [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses
@@ -933,6 +984,7 @@ function New-ClaudeConfig {
     param(
         [PSCustomObject]$Config,
         [string[]]$SelectedLanguages,
+        [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses
@@ -1187,6 +1239,7 @@ function New-ConcatenatedConfig {
         [string]$ToolName,
         [string]$OutputFile,
         [string[]]$SelectedLanguages,
+        [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses

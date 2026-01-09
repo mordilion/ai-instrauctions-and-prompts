@@ -19,7 +19,8 @@ readonly CUSTOM_CONFIG_FILE="$PROJECT_ROOT/.ai-iap-custom/config.json"
 readonly CUSTOM_RULES_DIR="$PROJECT_ROOT/.ai-iap-custom/rules"
 readonly CUSTOM_PROCESSES_DIR="$PROJECT_ROOT/.ai-iap-custom/processes"
 readonly MERGED_CONFIG_FILE="/tmp/ai-iap-merged-config-$$.json"
-WORKING_CONFIG="$WORKING_CONFIG"
+readonly NORMALIZED_CONFIG_FILE="/tmp/ai-iap-normalized-config-$$.json"
+WORKING_CONFIG="$CONFIG_FILE"
 readonly VERSION="1.0.0"
 
 # Colors
@@ -185,6 +186,7 @@ load_config() {
     
     # Check for custom config and merge if exists
     merge_custom_config
+    normalize_config
 }
 
 merge_custom_config() {
@@ -232,10 +234,33 @@ merge_custom_config() {
     WORKING_CONFIG="$MERGED_CONFIG_FILE"
 }
 
+normalize_config() {
+    # Normalize merged config so custom additions become first-class:
+    # - customFiles -> files (append unique)
+    # - customFrameworks -> frameworks
+    # - customProcesses -> processes
+    jq '
+        .languages |= with_entries(
+            .value as $lang |
+            .value = (
+                $lang
+                | .files = ((.files // []) + (.customFiles // []) | unique)
+                | .frameworks = ((.frameworks // {}) + (.customFrameworks // {}))
+                | .processes = ((.processes // {}) + (.customProcesses // {}))
+            )
+        )
+    ' "$WORKING_CONFIG" > "$NORMALIZED_CONFIG_FILE"
+
+    WORKING_CONFIG="$NORMALIZED_CONFIG_FILE"
+}
+
 cleanup() {
     # Clean up temporary merged config file
     if [[ -f "$MERGED_CONFIG_FILE" ]]; then
         rm -f "$MERGED_CONFIG_FILE"
+    fi
+    if [[ -f "$NORMALIZED_CONFIG_FILE" ]]; then
+        rm -f "$NORMALIZED_CONFIG_FILE"
     fi
 }
 
@@ -845,6 +870,8 @@ read_instruction_file() {
 
     if [[ "$is_process" == "true" ]]; then
         # Processes are stored under processes/{ondemand|permanent}/<lang>/<file>.md
+        # Custom processes also support legacy layout: .ai-iap-custom/processes/<lang>/<file>.md
+        candidates+=("$CUSTOM_PROCESSES_DIR/$lang/$file.md")
         candidates+=("$CUSTOM_PROCESSES_DIR/ondemand/$lang/$file.md")
         candidates+=("$CUSTOM_PROCESSES_DIR/permanent/$lang/$file.md")
         candidates+=("$SCRIPT_DIR/processes/ondemand/$lang/$file.md")
