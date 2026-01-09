@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - NEVER expose JWT secrets
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - JWT AUTHENTICATION (FASTAPI)
 ========================================
 
@@ -271,14 +280,22 @@ BEST PRACTICES
 - Use FastAPI for automatic docs
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure JWT (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure JWT (Phase 1)
 CONTINUE: Create auth endpoints (Phase 2)
 ALTERNATIVE: Use Flask (Phase 3)
 OPTIONAL: Add OAuth (Phase 4)
-REMEMBER: passlib, python-jose, secure secrets
+FINISH: Update all documentation files
+REMEMBER: passlib, python-jose, secure secrets, document for catch-up
 ```
 
 ---

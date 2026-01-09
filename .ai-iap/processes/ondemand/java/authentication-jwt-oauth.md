@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - NEVER expose JWT secrets
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - JWT AUTHENTICATION
 ========================================
 
@@ -324,14 +333,22 @@ BEST PRACTICES
 - Implement account lockout
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure JWT (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure JWT (Phase 1)
 CONTINUE: Configure Spring Security (Phase 2)
 CONTINUE: Create auth endpoints (Phase 3)
 OPTIONAL: Add OAuth (Phase 4)
-REMEMBER: BCrypt, stateless, secure secrets
+FINISH: Update all documentation files
+REMEMBER: BCrypt, stateless, secure secrets, document for catch-up
 ```
 
 ---

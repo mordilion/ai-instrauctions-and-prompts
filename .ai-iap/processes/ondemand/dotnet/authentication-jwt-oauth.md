@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - NEVER expose JWT secrets
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - JWT AUTHENTICATION
 ========================================
 
@@ -277,14 +286,22 @@ BEST PRACTICES
 - Add email confirmation
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure JWT (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure JWT (Phase 1)
 CONTINUE: Create auth endpoints (Phase 2)
 OPTIONAL: Add OAuth (Phase 3)
 CONTINUE: Add security features (Phase 4)
-REMEMBER: Use Identity, secure secrets, HTTPS
+FINISH: Update all documentation files
+REMEMBER: Use Identity, secure secrets, HTTPS, document for catch-up
 ```
 
 ---

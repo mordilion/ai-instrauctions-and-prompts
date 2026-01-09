@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - NEVER expose JWT secrets
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - JWT AUTHENTICATION
 ========================================
 
@@ -333,14 +342,22 @@ BEST PRACTICES
 - Consider Imperial for OAuth
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure JWT (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure JWT (Phase 1)
 CONTINUE: Create user model and endpoints (Phase 2)
 OPTIONAL: Add OAuth (Phase 3)
 CONTINUE: Add security measures (Phase 4)
-REMEMBER: Bcrypt, Fluent, secure secrets
+FINISH: Update all documentation files
+REMEMBER: Bcrypt, Fluent, secure secrets, document for catch-up
 ```
 
 ---

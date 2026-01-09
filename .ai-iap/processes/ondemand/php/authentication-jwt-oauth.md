@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - NEVER expose JWT secrets
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - JWT AUTHENTICATION
 ========================================
 
@@ -295,14 +304,22 @@ BEST PRACTICES
 - Use Laravel Sanctum for Laravel projects
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, AUTH-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure JWT (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure JWT (Phase 1)
 CONTINUE: Create auth endpoints (Phase 2)
 ALTERNATIVE: Use Laravel (Phase 3)
 OPTIONAL: Add OAuth (Phase 4)
-REMEMBER: password_hash, PDO prepared statements
+FINISH: Update all documentation files
+REMEMBER: password_hash, PDO prepared statements, document for catch-up
 ```
 
 ---
