@@ -11,7 +11,19 @@
 1. **Find your pattern** in the table below
 2. **Check language support** for your project
 3. **Open the function file** for complete implementation
-4. **Copy the pattern** - don't let AI guess, use proven implementations
+4. **Choose your approach** - Plain language, Framework ORM, or specific library
+5. **Check dependencies** - Each function file lists required packages and installation commands
+6. **Copy the exact pattern** - don't let AI guess, use proven implementations
+
+### 📦 What's Inside Each Function File
+
+Each function file includes:
+- **YAML frontmatter** with metadata (languages, tags, difficulty)
+- **Multiple implementation approaches** per language (Plain, Framework 1, Framework 2, etc.)
+- **Dependency tables** with installation commands for each approach
+- **Real-world code examples** (5-20 lines each)
+- **Best practices** and common pitfalls
+- **Security checklists** where applicable
 
 ---
 
@@ -39,6 +51,30 @@ All functions cover these 8 languages:
 - **Kotlin**
 - **Swift**
 - **Dart** (Flutter)
+
+---
+
+## Framework & Library Versions
+
+Each function file provides **multiple implementations** for the same pattern using different libraries/frameworks:
+
+### Database Queries Example
+- **TypeScript**: Plain pg, Prisma, TypeORM, Knex.js
+- **Python**: Plain psycopg2, SQLAlchemy, Django ORM, asyncpg
+- **PHP**: Plain PDO, Laravel Eloquent, Doctrine ORM
+- **Java**: Plain JDBC, Spring Data JPA, Hibernate, jOOQ
+- **C#**: Plain ADO.NET, Entity Framework Core, Dapper
+- **Kotlin**: Plain JDBC, Exposed, Room (Android), Spring Data
+- **Swift**: CoreData, SQLite.swift, GRDB
+- **Dart**: Plain sqflite, Drift (Moor), Floor
+
+### Error Handling Example
+- **TypeScript**: Native try-catch, neverthrow (Result type), React Error Boundaries
+- **Python**: Native try-except, result library
+- **Kotlin**: Native try-catch, Built-in Result, Arrow (Either)
+- **Swift**: Native do-catch, Built-in Result type
+
+**Benefit**: Choose the approach that fits your project (plain for flexibility, framework for productivity)
 
 ---
 
