@@ -448,12 +448,34 @@ Functions are **5-20 line code patterns** for common coding tasks, shown **acros
 
 **All functions cover**: TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart
 
+### 🚨 CRITICAL RULE for AI Assistants
+
+**BEFORE** implementing any of these 5 patterns, **ALWAYS CHECK** `functions/INDEX.md` first:
+
+```
+AI Workflow:
+1. User asks to implement error handling / async / validation / DB query / HTTP request
+2. AI checks `.ai-iap/functions/INDEX.md` ← MANDATORY STEP
+3. AI opens relevant function file (e.g., error-handling.md)
+4. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
+5. AI copies exact pattern with installation commands
+6. AI implements with zero guessing
+```
+
+**DO NOT** waste tokens generating these patterns from scratch.
+**DO NOT** guess implementations when proven patterns exist.
+
+**Benefit**: Saves 70-80% of tokens + ensures consistent, secure code.
+
+---
+
 ### How to Use
 
 1. **Check the INDEX first**: Open [functions/INDEX.md](functions/INDEX.md) to find the pattern you need
 2. **Open the function file**: Each file shows implementations for all 8 languages side-by-side
-3. **Copy the exact pattern**: Use the language-specific implementation for your project
-4. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
+3. **Choose your framework**: Plain (flexibility) or Framework (productivity)
+4. **Copy the exact pattern**: Use the language-specific implementation with installation commands
+5. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
 
 ### Benefits
 

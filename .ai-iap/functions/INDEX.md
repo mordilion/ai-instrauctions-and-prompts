@@ -6,6 +6,26 @@
 
 ---
 
+## 🚨 FOR AI ASSISTANTS: READ THIS FIRST
+
+**BEFORE** implementing **ANY** of these patterns, **CHECK THIS INDEX**:
+
+- ❌ **DON'T** generate error handling code from scratch
+- ❌ **DON'T** guess async/await implementations
+- ❌ **DON'T** create validation logic without checking here first
+- ❌ **DON'T** write database queries without using provided patterns
+- ❌ **DON'T** implement HTTP clients without checking available options
+
+- ✅ **DO** check this INDEX before implementing the 5 core patterns
+- ✅ **DO** use exact patterns from function files
+- ✅ **DO** choose appropriate framework version (Plain vs Framework)
+- ✅ **DO** copy installation commands and implementations
+- ✅ **DO** save 70-80% of tokens by using proven patterns
+
+**This is MANDATORY to reduce token waste and ensure consistent, secure code.**
+
+---
+
 ## How to Use This Index
 
 1. **Find your pattern** in the table below
