@@ -14,7 +14,7 @@
 - ❌ **DON'T** write database queries without using provided patterns
 - ❌ **DON'T** implement HTTP clients without checking available options
 
-- ✅ **DO** check this INDEX before implementing the 5 core patterns
+- ✅ **DO** check this INDEX before implementing any covered function pattern
 - ✅ **DO** open the function file and read YAML metadata for framework options
 - ✅ **DO** use exact code patterns from function files
 - ✅ **DO** choose appropriate framework version (Native, ORM, Library, etc.)
@@ -33,6 +33,9 @@
 | **Input Validation** | Data validation, sanitization, type checking | All 8 | When accepting user input, API requests, form data | [input-validation.md](input-validation.md) |
 | **Database Queries** | Safe queries, parameterization, connection management | All 8 | When querying databases, preventing SQL injection | [database-query.md](database-query.md) |
 | **HTTP Requests** | API calls, retry logic, timeout handling | All 8 | When consuming external APIs, microservice communication | [http-requests.md](http-requests.md) |
+| **Logging** | Structured logs, correlation IDs, redaction | All 8 | When adding observability and debugging production issues | [logging.md](logging.md) |
+| **Caching** | TTL caches, invalidation, distributed caching | All 8 | When reducing load and speeding up hot reads | [caching.md](caching.md) |
+| **Config & Secrets** | Env/config loading, fail-fast validation, redaction | All 8 | When loading runtime configuration safely | [config-secrets.md](config-secrets.md) |
 
 ---
 
@@ -120,5 +123,5 @@ See **CUSTOMIZATION.md** for instructions on adding your own function patterns.
 ---
 
 **Last Updated**: 2026-01-09
-**Total Functions**: 5
+**Total Functions**: 8
 **Languages Covered**: 8

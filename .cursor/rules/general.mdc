@@ -34,7 +34,7 @@ alwaysApply: true
 - `functions/` - Cross-language implementation patterns (5-20 lines each, reduces AI guessing)
   - INDEX.md - Quick reference for all functions
   - One file per pattern, all 8 languages in same file for comparison
-  - Examples: error-handling, async-operations, input-validation, database-query, http-requests
+  - Examples: error-handling, async-operations, input-validation, database-query, http-requests, logging, caching, config-secrets
 - `setup.sh` / `setup.ps1` - Interactive setup scripts
 - `config.json` - Metadata for all languages, frameworks, structures, and processes
 
@@ -114,7 +114,7 @@ alwaysApply: true
    > **DO NOT GUESS** or generate code from scratch if a function pattern exists.
    > **DO NOT WASTE TOKENS** generating what already exists in `/functions/`.
    
-   - **When to use**: ALWAYS check before implementing the 5 core patterns above
+   - **When to use**: ALWAYS check before implementing any covered function pattern
    - **How to use**: 
      1. Check `INDEX.md` for pattern availability
      2. Open relevant function file (e.g., `error-handling.md`)
