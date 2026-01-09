@@ -125,6 +125,7 @@ alwaysApply: true
    
 6. **File Scope & Pattern Lookup**
    - **ALWAYS** analyse and work on all files in `.ai-iap` and `.ai-iap-custom`
-   - **ALWAYS** check all files for dependencies
+   - **ALWAYS** check the project’s existing dependencies before choosing a framework/library variant
+   - **NEVER** add installation commands to function files (functions are code-only after YAML frontmatter)
    - **ALWAYS** check `.ai-iap/functions/INDEX.md` **BEFORE** implementing patterns
    - **NEVER** generate these patterns from scratch - use the provided implementations

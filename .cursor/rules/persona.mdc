@@ -42,6 +42,7 @@ alwaysApply: true
 **Functions Authoring Rule** (CRITICAL):
 - When creating a new function file under `.ai-iap/functions/`, **ALWAYS** start from `.ai-iap/functions/_TEMPLATE.md`.
 - Keep the YAML frontmatter structure consistent and keep the content after the header as **code examples only**.
+- Update `.ai-iap/functions/INDEX.md` when adding new function files.
 
 **Rule & Process Writing Standards**:
 - Use explicit directives: `> **ALWAYS**`, `> **NEVER**`, `> **BEFORE starting**`
