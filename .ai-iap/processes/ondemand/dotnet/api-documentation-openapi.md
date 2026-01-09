@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use XML comments for descriptions
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -187,14 +196,22 @@ BEST PRACTICES
 - Host Swagger UI only in development
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Install Swashbuckle (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Install Swashbuckle (Phase 1)
 CONTINUE: Add XML comments (Phase 2)
 CONTINUE: Add authentication (Phase 3)
 CONTINUE: Add CI generation (Phase 4)
-REMEMBER: XML comments, validate in CI
+FINISH: Update all documentation files
+REMEMBER: XML comments, validate in CI, document for catch-up
 ```
 
 ---

@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use Swift types for automatic schema generation
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -204,14 +213,22 @@ BEST PRACTICES
 - Version your API
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Add VaporOpenAPI (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Add VaporOpenAPI (Phase 1)
 CONTINUE: Document routes (Phase 2)
 CONTINUE: Add schema descriptions (Phase 3)
 CONTINUE: Configure authentication (Phase 4)
-REMEMBER: Swift types, automatic schema generation
+FINISH: Update all documentation files
+REMEMBER: Swift types, automatic schema generation, document for catch-up
 ```
 
 ---

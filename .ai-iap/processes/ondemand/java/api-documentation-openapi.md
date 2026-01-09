@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use Javadoc comments for descriptions
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -187,14 +196,22 @@ BEST PRACTICES
 - Validate spec in CI
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Add springdoc dependency (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Add springdoc dependency (Phase 1)
 CONTINUE: Add annotations (Phase 2)
 CONTINUE: Configure OpenAPI (Phase 3)
 CONTINUE: Add CI generation (Phase 4)
-REMEMBER: Annotations, validate in CI
+FINISH: Update all documentation files
+REMEMBER: Annotations, validate in CI, document for catch-up
 ```
 
 ---

@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use code-first approach (generate from code)
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -219,14 +228,22 @@ BEST PRACTICES
 - Export spec for client generation
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Set up tsoa or NestJS Swagger (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Set up tsoa or NestJS Swagger (Phase 1)
 CONTINUE: Add Swagger UI (Phase 2)
 CONTINUE: Enhance with annotations (Phase 3)
 CONTINUE: Add CI validation (Phase 4)
-REMEMBER: Code-first, validate in CI, keep in sync
+FINISH: Update all documentation files
+REMEMBER: Code-first, validate in CI, keep in sync, document for catch-up
 ```
 
 ---

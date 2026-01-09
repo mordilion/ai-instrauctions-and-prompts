@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use type hints and Pydantic models
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -198,14 +207,22 @@ BEST PRACTICES
 - Keep models in sync
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Set up FastAPI (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Set up FastAPI (Phase 1)
 CONTINUE: Document with type hints (Phase 2)
 CONTINUE: Enhance descriptions (Phase 3)
 CONTINUE: Add authentication (Phase 4)
-REMEMBER: Type hints, Pydantic models, automatic
+FINISH: Update all documentation files
+REMEMBER: Type hints, Pydantic models, automatic, document for catch-up
 ```
 
 ---

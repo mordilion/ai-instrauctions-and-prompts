@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Use KDoc comments for descriptions
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC SETUP
 ========================================
 
@@ -208,14 +217,22 @@ BEST PRACTICES
 - Validate spec
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, API-DOCS-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Install dependencies (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Install dependencies (Phase 1)
 CONTINUE: Document endpoints (Phase 2)
 CONTINUE: Add schema annotations (Phase 3)
 CONTINUE: Configure authentication (Phase 4)
-REMEMBER: Framework-specific, validate in CI
+FINISH: Update all documentation files
+REMEMBER: Framework-specific, validate in CI, document for catch-up
 ```
 
 ---
