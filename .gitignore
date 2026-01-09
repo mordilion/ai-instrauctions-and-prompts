@@ -98,3 +98,5 @@ yarn-error.log*
 !.ai-iap-custom/*.example.*
 !.ai-iap-custom/**/*.example.*
 !.ai-iap-custom/README.md
+!.ai-iap-custom/INDEX.md
+!.ai-iap-custom/functions/INDEX.md
