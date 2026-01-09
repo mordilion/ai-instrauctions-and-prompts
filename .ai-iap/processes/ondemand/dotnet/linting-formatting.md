@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Enforce in CI pipeline
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - BASIC LINTING
 ========================================
 
@@ -141,14 +150,22 @@ BEST PRACTICES
 - Use StyleCop for additional rules
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Enable analyzers (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Enable analyzers (Phase 1)
 CONTINUE: Create .editorconfig (Phase 2)
 CONTINUE: Add CI checks (Phase 3)
 OPTIONAL: Configure IDE (Phase 4)
-REMEMBER: Warnings as errors, enforce in CI
+FINISH: Update all documentation files
+REMEMBER: Warnings as errors, enforce in CI, document for catch-up
 ```
 
 ---

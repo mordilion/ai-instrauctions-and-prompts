@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Enforce in CI pipeline
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - ESLINT
 ========================================
 
@@ -182,14 +191,22 @@ BEST PRACTICES
 - Exclude dist and node_modules
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure ESLint (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure ESLint (Phase 1)
 CONTINUE: Configure Prettier (Phase 2)
 CONTINUE: Add CI checks (Phase 3)
 OPTIONAL: Add pre-commit hooks (Phase 4)
-REMEMBER: Strict rules, enforce in CI
+FINISH: Update all documentation files
+REMEMBER: Strict rules, enforce in CI, document for catch-up
 ```
 
 ---

@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Enforce in CI pipeline
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - RUFF SETUP
 ========================================
 
@@ -168,14 +177,22 @@ BEST PRACTICES
 - Exclude tests from strict typing
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Configure Ruff (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Configure Ruff (Phase 1)
 CONTINUE: Add mypy (Phase 2)
 CONTINUE: Add CI checks (Phase 3)
 OPTIONAL: Add pre-commit hooks (Phase 4)
-REMEMBER: Use Ruff, enforce types, CI checks
+FINISH: Update all documentation files
+REMEMBER: Use Ruff, enforce types, CI checks, document for catch-up
 ```
 
 ---

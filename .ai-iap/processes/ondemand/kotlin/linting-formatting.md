@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Enforce in CI pipeline
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - KTLINT
 ========================================
 
@@ -138,14 +147,22 @@ BEST PRACTICES
 - Run checks in CI
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Add ktlint (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Add ktlint (Phase 1)
 CONTINUE: Add detekt (Phase 2)
 CONTINUE: Add CI checks (Phase 3)
 OPTIONAL: Configure IDE (Phase 4)
-REMEMBER: Fail on violations, enforce in CI
+FINISH: Update all documentation files
+REMEMBER: Fail on violations, enforce in CI, document for catch-up
 ```
 
 ---

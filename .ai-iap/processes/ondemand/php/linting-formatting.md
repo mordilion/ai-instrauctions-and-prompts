@@ -23,6 +23,15 @@ CRITICAL REQUIREMENTS:
 - Enforce in CI pipeline
 
 ========================================
+CATCH-UP: READ EXISTING DOCUMENTATION
+========================================
+
+BEFORE starting, check for existing documentation:
+1. Read PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md if they exist
+
+Use this to continue from where work stopped. If no docs: Start fresh.
+
+========================================
 PHASE 1 - PHP CS FIXER
 ========================================
 
@@ -144,14 +153,22 @@ BEST PRACTICES
 - Exclude vendor directory
 
 ========================================
+DOCUMENTATION
+========================================
+
+Create/update: PROJECT-MEMORY.md, LOGIC-ANOMALIES.md, LINTING-SETUP.md
+
+========================================
 EXECUTION
 ========================================
 
-START: Add PHP CS Fixer (Phase 1)
+START: Read existing docs (CATCH-UP section)
+CONTINUE: Add PHP CS Fixer (Phase 1)
 CONTINUE: Add PHPStan (Phase 2)
 CONTINUE: Add CI checks (Phase 3)
 OPTIONAL: Add pre-commit hooks (Phase 4)
-REMEMBER: PSR-12, level 8, enforce in CI
+FINISH: Update all documentation files
+REMEMBER: PSR-12, level 8, enforce in CI, document for catch-up
 ```
 
 ---
