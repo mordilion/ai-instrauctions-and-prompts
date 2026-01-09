@@ -2,7 +2,6 @@
 
 ## General Rules
 
-- **Java 17+**
 - **Google Java Style** or **Sun conventions**
 - **Immutability** preferred
 - **Lombok** for boilerplate
@@ -24,7 +23,7 @@ public static final int MAX_ATTEMPTS = 3;
 ## Type Declarations
 
 ```java
-// Use var when type is obvious (Java 10+)
+// Use var when type is obvious (modern Java)
 var users = List.of(user1, user2);
 var count = 10;
 
@@ -51,17 +50,17 @@ public User getUser(Long id) {
 ## Best Practices
 
 ```java
-// Use records (Java 14+)
+// Use records (modern Java)
 public record UserDto(Long id, String name) {}
 
-// Use switch expressions (Java 14+)
+// Use switch expressions (modern Java)
 var result = switch (status) {
     case PENDING -> handlePending();
     case APPROVED -> handleApproved();
     default -> handleDefault();
 };
 
-// Text blocks (Java 15+)
+// Text blocks (modern Java)
 String json = """
     {
       "name": "John",
@@ -69,7 +68,7 @@ String json = """
     }
     """;
 
-// Pattern matching (Java 16+)
+// Pattern matching (modern Java)
 if (obj instanceof User user) {
     System.out.println(user.getName());
 }

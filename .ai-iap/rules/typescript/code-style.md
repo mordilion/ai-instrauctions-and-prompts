@@ -2,7 +2,6 @@
 
 ## General Rules
 
-- **TypeScript 5.0+**
 - **Strict mode** enabled
 - **ESLint + Prettier** for formatting
 - **No `any`** - use `unknown` if needed

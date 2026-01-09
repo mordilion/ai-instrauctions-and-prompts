@@ -39,7 +39,7 @@ For TypeScript with npm:
 
 ```dockerfile
 # Build stage
-FROM node:20-alpine AS build
+FROM node:alpine AS build
 WORKDIR /app
 
 # Copy package files
@@ -51,7 +51,7 @@ COPY . .
 RUN npm run build
 
 # Runtime stage
-FROM node:20-alpine
+FROM node:alpine
 WORKDIR /app
 
 # Copy package files and install production deps only
@@ -72,7 +72,7 @@ CMD ["node", "dist/index.js"]
 For Next.js:
 
 ```dockerfile
-FROM node:20-alpine AS build
+FROM node:alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
@@ -81,7 +81,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -146,7 +146,7 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 Use pnpm for faster installs:
 ```dockerfile
-FROM node:20-alpine AS build
+FROM node:alpine AS build
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY pnpm-lock.yaml ./
 RUN pnpm fetch

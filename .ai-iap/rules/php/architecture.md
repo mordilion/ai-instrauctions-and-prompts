@@ -75,7 +75,7 @@ try {
 
 ## Best Practices
 
-### Use Enums (PHP 8.1+)
+### Use Enums (Modern PHP)
 ```php
 enum UserRole: string {
     case Admin = 'admin';

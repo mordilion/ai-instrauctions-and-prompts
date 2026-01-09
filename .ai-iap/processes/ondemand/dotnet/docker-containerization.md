@@ -39,7 +39,7 @@ Create Dockerfile:
 
 ```dockerfile
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk AS build
 WORKDIR /src
 
 COPY ["MyApp/MyApp.csproj", "MyApp/"]
@@ -51,7 +51,7 @@ RUN dotnet build "MyApp.csproj" -c Release -o /app/build
 RUN dotnet publish "MyApp.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet
 WORKDIR /app
 COPY --from=build /app/publish .
 

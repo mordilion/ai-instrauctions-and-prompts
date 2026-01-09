@@ -104,7 +104,7 @@ public record UserDto(Long id, String name, String email) {}
 - [ ] @Valid on request bodies? (Automatic validation)
 - [ ] Business logic in service? (NOT in controller)
 - [ ] Exceptions wrapped? (NO JPA exceptions in API layer)
-- [ ] Records used for DTOs? (Java 17+ recommended)
+- [ ] Records used for DTOs? (modern Java recommended)
 - [ ] ResponseEntity for non-200 status codes?
 
 ## Testing

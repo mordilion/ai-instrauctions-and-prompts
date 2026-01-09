@@ -39,7 +39,7 @@ For Swift (Vapor):
 
 ```dockerfile
 # Build stage
-FROM swift:5.9-focal AS build
+FROM swift:focal AS build
 WORKDIR /build
 
 # Copy manifests
@@ -76,7 +76,7 @@ CMD ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "8080"]
 For Hummingbird:
 
 ```dockerfile
-FROM swift:5.9-focal AS build
+FROM swift:focal AS build
 WORKDIR /build
 
 COPY ./Package.* ./
@@ -143,7 +143,7 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 Use Amazon Linux for AWS deployments:
 ```dockerfile
-FROM swift:5.9-amazonlinux2 AS build
+FROM swift:amazonlinux2 AS build
 # Runtime
 FROM amazonlinux:2
 ```

@@ -121,7 +121,7 @@ try (var reader = new BufferedReader(new FileReader(file))) {
 }
 ```
 
-### Sealed Classes (Java 17+)
+### Sealed Classes (Modern Java)
 ```java
 public sealed interface Result<T> permits Success, Failure {}
 record Success<T>(T data) implements Result<T> {}

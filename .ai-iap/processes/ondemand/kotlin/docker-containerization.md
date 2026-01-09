@@ -39,7 +39,7 @@ For Gradle with Kotlin:
 
 ```dockerfile
 # Build stage
-FROM gradle:8-jdk17 AS build
+FROM gradle:jdk AS build
 WORKDIR /app
 
 COPY build.gradle.kts settings.gradle.kts ./
@@ -50,7 +50,7 @@ COPY src ./src
 RUN gradle shadowJar --no-daemon
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:jre-alpine
 WORKDIR /app
 
 COPY --from=build /app/build/libs/*-all.jar app.jar
@@ -63,7 +63,7 @@ For Ktor:
 
 ```dockerfile
 # Build stage
-FROM gradle:8-jdk17 AS build
+FROM gradle:jdk AS build
 WORKDIR /app
 
 COPY build.gradle.kts settings.gradle.kts ./
@@ -73,7 +73,7 @@ COPY src ./src
 RUN gradle installDist --no-daemon
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:jre-alpine
 WORKDIR /app
 
 COPY --from=build /app/build/install/app .

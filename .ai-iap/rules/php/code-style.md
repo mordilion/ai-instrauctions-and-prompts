@@ -2,7 +2,6 @@
 
 ## General Rules
 
-- **PHP 8.1+**
 - **PSR-12** coding standard
 - **Strict types** enabled
 - **Type hints** everywhere
@@ -36,14 +35,14 @@ function findUser(int $id): ?User {
     return $repository->findOrNull($id);
 }
 
-// Union types (PHP 8.0+)
+// Union types (modern PHP)
 function processValue(int|string $value): void {}
 ```
 
 ## Classes
 
 ```php
-// Use readonly properties (PHP 8.1+)
+// Use readonly properties (modern PHP)
 final readonly class User {
     public function __construct(
         public int $id,
@@ -64,7 +63,7 @@ class UserService {
 ## Best Practices
 
 ```php
-// Use match over switch (PHP 8.0+)
+// Use match over switch (modern PHP)
 $result = match ($status) {
     'pending' => handlePending(),
     'approved' => handleApproved(),

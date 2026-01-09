@@ -46,7 +46,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Runtime stage
-FROM php:8.2-fpm-alpine
+FROM php:fpm-alpine
 WORKDIR /var/www/html
 
 # Install extensions
@@ -77,7 +77,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
 # Runtime stage
-FROM php:8.2-fpm-alpine
+FROM php:fpm-alpine
 WORKDIR /var/www/html
 
 RUN apk add --no-cache nginx \

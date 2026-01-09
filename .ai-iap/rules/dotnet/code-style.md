@@ -2,7 +2,6 @@
 
 ## General Rules
 
-- **.NET 8+**, **C# 12+**
 - **Nullable reference types** enabled
 - **EditorConfig** for style
 - **Async/await** for I/O

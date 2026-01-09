@@ -2,7 +2,6 @@
 
 ## General Rules
 
-- **Python 3.10+ (3.11 recommended)**
 - **PEP 8** style guide
 - **Type hints** everywhere
 - **Black** for formatting
@@ -30,7 +29,7 @@ from typing import Optional
 def get_user(user_id: int) -> Optional[User]:
     return users.get(user_id)
 
-# Use built-in types (Python 3.9+)
+# Use built-in types (modern Python)
 def process_items(items: list[str]) -> dict[str, int]:
     return {item: len(item) for item in items}
 ```
@@ -66,7 +65,7 @@ message = f"Hello, {name}!"
 if (user := find_user(id)) is not None:
     print(user.name)
 
-# Match statement (Python 3.10+)
+# Match statement (modern Python)
 match status:
     case "pending":
         handle_pending()

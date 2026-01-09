@@ -39,7 +39,7 @@ For Python with pip:
 
 ```dockerfile
 # Build stage
-FROM python:3.11-slim AS build
+FROM python:3-slim AS build
 WORKDIR /app
 
 # Install dependencies
@@ -47,7 +47,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Runtime stage
-FROM python:3.11-slim
+FROM python:3-slim
 WORKDIR /app
 
 # Copy dependencies from build
@@ -68,13 +68,13 @@ CMD ["python", "app.py"]
 For Flask/Django:
 
 ```dockerfile
-FROM python:3.11-slim AS build
+FROM python:3-slim AS build
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-FROM python:3.11-slim
+FROM python:3-slim
 WORKDIR /app
 
 COPY --from=build /root/.local /root/.local
@@ -138,13 +138,13 @@ HEALTHCHECK --interval=30s --timeout=3s \
 
 Use Alpine for smaller image:
 ```dockerfile
-FROM python:3.11-alpine AS build
+FROM python:3-alpine AS build
 RUN apk add --no-cache gcc musl-dev linux-headers
 ```
 
 Use Poetry for dependency management:
 ```dockerfile
-FROM python:3.11-slim AS build
+FROM python:3-slim AS build
 RUN pip install poetry
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt > requirements.txt
