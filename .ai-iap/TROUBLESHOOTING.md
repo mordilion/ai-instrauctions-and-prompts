@@ -260,7 +260,8 @@ git add -f .cursor/rules/*.mdc
 git commit -m "Add generated AI configs"
 ```
 
-**Recommendation**: See README for git strategy options (share generated files vs share source)
+**Recommendation**: Ensure your repo is not ignoring the files you intend to share.
+For team sharing, commit the source folders (`.ai-iap/`, `.ai-iap-custom/`) and the state file (`.ai-iap-state.json`), and decide whether to also commit generated outputs (`.cursor/rules/`, `CLAUDE.md`, etc.).
 
 ---
 

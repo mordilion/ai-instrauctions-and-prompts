@@ -53,12 +53,16 @@ Test-Item "Example rule file exists (company-standards.example.md)" $tsExampleRu
 $tsExampleProc = Test-Path ".ai-iap-custom/processes/typescript/deploy-internal.example.md"
 Test-Item "Example process file exists (deploy-internal.example.md)" $tsExampleProc
 
-# Test 7: GitIgnore configured
-$gitignoreContent = Get-Content .gitignore -Raw
-$hasCustomIgnore = $gitignoreContent -match "\.ai-iap-custom/"
-$hasExampleException = $gitignoreContent -match "!.*example"
-Test-Item "GitIgnore includes .ai-iap-custom/" $hasCustomIgnore
-Test-Item "GitIgnore excepts example files" $hasExampleException
+# Test 7: GitIgnore configuration (optional)
+if (Test-Path ".gitignore") {
+    $gitignoreContent = Get-Content .gitignore -Raw
+    $hasCustomIgnore = $gitignoreContent -match "\.ai-iap-custom/"
+
+    # Teams typically want to commit/share .ai-iap-custom/ (especially for custom function patterns).
+    Test-Item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" (-not $hasCustomIgnore) -Warning
+} else {
+    Test-Item "GitIgnore file exists (optional)" $false -Warning
+}
 
 # Test 8: Documentation exists
 Test-Item "CUSTOMIZATION.md exists" (Test-Path "CUSTOMIZATION.md")

@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Extension System Verification Script (Bash)
 # Tests that extension system is properly implemented
 
 set -euo pipefail
+IFS=$'\n\t'
 
 # Colors
 readonly RED='\033[0;31m'
@@ -21,24 +22,24 @@ test_item() {
     local warning="${3:-false}"
     
     if [[ "$condition" == "true" ]]; then
-        echo -e "${GREEN}[PASS]${NC} $name"
+        printf '%b\n' "${GREEN}[PASS]${NC} $name"
         PASSED=$((PASSED + 1))
     else
         if [[ "$warning" == "true" ]]; then
-            echo -e "${YELLOW}[WARN]${NC} $name"
+            printf '%b\n' "${YELLOW}[WARN]${NC} $name"
             WARNINGS=$((WARNINGS + 1))
         else
-            echo -e "${RED}[FAIL]${NC} $name"
+            printf '%b\n' "${RED}[FAIL]${NC} $name"
             FAILED=$((FAILED + 1))
         fi
     fi
 }
 
-echo ""
-echo -e "${CYAN}=====================================${NC}"
-echo -e "${CYAN}  Extension System Verification${NC}"
-echo -e "${CYAN}=====================================${NC}"
-echo ""
+printf '\n'
+printf '%b\n' "${CYAN}=====================================${NC}"
+printf '%b\n' "${CYAN}  Extension System Verification${NC}"
+printf '%b\n' "${CYAN}=====================================${NC}"
+printf '\n'
 
 # Test 1: Core config exists
 test_item "Core config exists" "$([[ -f .ai-iap/config.json ]] && echo true || echo false)"
@@ -61,15 +62,15 @@ fi
 test_item "Example custom rule exists" "$([[ -f .ai-iap-custom/rules/typescript/company-standards.example.md ]] && echo true || echo false)"
 test_item "Example custom process exists" "$([[ -f .ai-iap-custom/processes/typescript/deploy-internal.example.md ]] && echo true || echo false)"
 
-# Test 5: GitIgnore configured
+# Test 5: GitIgnore configuration (optional)
 if [[ -f .gitignore ]]; then
-    if grep -q "\.ai-iap-custom/" .gitignore && grep -q "!.*example" .gitignore; then
-        test_item "GitIgnore properly configured" "true"
+    if grep -q "\.ai-iap-custom/" .gitignore; then
+        test_item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" "false" "true"
     else
-        test_item "GitIgnore properly configured" "false"
+        test_item "GitIgnore does not ignore .ai-iap-custom/ (recommended)" "true"
     fi
 else
-    test_item "GitIgnore properly configured" "false"
+    test_item "GitIgnore file exists (optional)" "false" "true"
 fi
 
 # Test 6: Documentation exists

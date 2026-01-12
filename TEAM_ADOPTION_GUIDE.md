@@ -10,11 +10,9 @@ For engineering teams evaluating AI Instructions & Prompts
 
 This is a **foundational standards system** that provides:
 
-- âœ… Universal coding best practices (SOLID, OWASP, documentation)
-
-- âœ… Framework-specific patterns (React, Django, Spring Boot, etc.)
-
-- âš ï¸ **Opinionated** process workflows (Git branches, CI/CD, Docker)
+- **Universal coding best practices** (SOLID, OWASP, documentation)
+- **Framework-specific patterns** (React, Django, Spring Boot, etc.)
+- **Opinionated process workflows** (Git branches, CI/CD, Docker)
 
 **Recommendation**: Adopt **selectively** based on your existing infrastructure.
 
@@ -22,7 +20,7 @@ This is a **foundational standards system** that provides:
 
 ## Assessment: What Should You Adopt?
 
-### âœ… **ADOPT Without Modification**
+### **Adopt without modification**
 
 These are universally applicable and conflict-free:
 
@@ -36,7 +34,7 @@ These are universally applicable and conflict-free:
 
 **Action**: Load these into your AI tools immediately.
 
-### âš ï¸ **ADAPT to Your Workflow**
+### **Adapt to your workflow**
 
 These assume specific tooling/workflows - customize first:
 
@@ -63,7 +61,7 @@ These assume specific tooling/workflows - customize first:
 }
 ```
 
-### âŒ **SKIP or REPLACE**
+### **Skip or replace**
 
 These may conflict with established practices:
 
@@ -84,47 +82,36 @@ These may conflict with established practices:
 
 **Week 1-2**: Foundation
 
-- âœ… Load general rules (code-style, security)
-
-- âœ… Add documentation standards
-
-- âš ï¸ Review with 2-3 senior engineers
+- Load general rules (code-style, security)
+- Add documentation standards
+- Review with 2-3 senior engineers
 
 **Week 3-4**: Framework-Specific
 
-- âœ… Add framework rules (React, Spring Boot, etc.)
-
-- âœ… Test with 1-2 projects
-
-- âš ï¸ Gather feedback from team
+- Add framework rules (React, Spring Boot, etc.)
+- Test with 1-2 projects
+- Gather feedback from team
 
 **Month 2**: Process Integration
 
-- âš ï¸ Adapt process guides to your workflow
-
-- âš ï¸ Create custom extensions (.ai-iap-custom/)
-
-- âŒ Skip incompatible sections
+- Adapt process guides to your workflow
+- Create custom extensions (`.ai-iap-custom/`)
+- Skip incompatible sections
 
 **Month 3+**: Refinement
 
-- âœ… Monitor AI behavior consistency
-
-- âš ï¸ Update based on team feedback
-
-- âœ… Document deviations
+- Monitor AI behavior consistency
+- Update based on team feedback
+- Document deviations
 
 ### Strategy 2: **Big-Bang Adoption** (Risky)
 
 **Only if**:
 
-- âœ… Greenfield project (no existing standards)
-
-- âœ… Small team (<5 engineers)
-
-- âœ… All using GitHub + Docker
-
-- âœ… No strong existing conventions
+- Greenfield project (no existing standards)
+- Small team (<5 engineers)
+- All using GitHub + Docker
+- No strong existing conventions
 
 **Steps**:
 
@@ -165,7 +152,7 @@ These may conflict with established practices:
 | Your Situation | AI Instructions & Prompts Says | Resolution |
 | ---------------- | ------------------------------- | ------------ |
 | **Use GitLab CI** | GitHub Actions | Adapt CI/CD guide, create `.ai-iap-custom/processes/*/ci-cd-gitlab.md` |
-| **Use xUnit (.NET)** | NUnit required | âœ… **FIXED** - Now allows all frameworks |
+| **Use xUnit (.NET)** | NUnit required | Resolved by customizing: document your preferred test framework via `.ai-iap-custom/` |
 
 | **Trunk-based dev** | Feature branches | Skip branch naming, use `.ai-iap-custom/` to document trunk approach |
 | **Jira integration** | Generic branches | Add `.ai-iap-custom/config.json` with Jira prefix |
@@ -196,7 +183,9 @@ These may conflict with established practices:
 
 - [ ] Review generated configs
 
-- [ ] Create `.ai-iap-custom/` with team overrides
+- [ ] Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` in the repo (shared across the team)
+
+- [ ] Create/update `.ai-iap-custom/` with team overrides and custom function patterns
 
 - [ ] Test with 1-2 pilot projects
 
@@ -228,11 +217,11 @@ These may conflict with established practices:
 
 ## Common Anti-Patterns (What NOT to Do)
 
-âŒ **Adopt everything blindly** â†’ Conflicts with existing workflows
-âŒ **Modify core `.ai-iap/` files directly** â†’ Can't pull updates
-âŒ **Skip security rules** â†’ Vulnerabilities in AI-generated code
-âŒ **Ignore team feedback** â†’ Low adoption, inconsistent usage
-âŒ **No ownership** â†’ Rules become stale, unused
+- **Don't adopt everything blindly** → conflicts with existing workflows
+- **Don't modify core `.ai-iap/` files directly** → makes upstream updates painful
+- **Don't skip security rules** → increases risk of vulnerabilities in AI-generated code
+- **Don't ignore team feedback** → low adoption and inconsistent usage
+- **Don't run without ownership** → rules become stale and unused
 
 ---
 
@@ -264,24 +253,12 @@ Track these after 30-60 days:
 
 ```text
 START: Should we adopt AI Instructions & Prompts?
-â”‚
-â”œâ”€ Do you have ZERO coding standards?
-â”‚  â””â”€ YES â†’ âœ… ADOPT fully (big-bang)
-â”‚  â””â”€ NO â†’ Continue...
-â”‚
-â”œâ”€ Do you have strong existing workflows?
-â”‚  â””â”€ YES â†’ âš ï¸ CHERRY-PICK (general rules only)
-â”‚  â””â”€ NO â†’ Continue...
-â”‚
-â”œâ”€ Are you on GitHub + using Docker?
-â”‚  â””â”€ YES â†’ âœ… ADOPT with minor adaptations
-â”‚  â””â”€ NO â†’ âš ï¸ ADAPT (replace CI/CD, Docker sections)
-â”‚
-â”œâ”€ Is your team <5 engineers?
-â”‚  â””â”€ YES â†’ âœ… ADOPT (gradual rollout)
-â”‚  â””â”€ NO â†’ âš ï¸ ADAPT (pilot with 1-2 teams first)
-â”‚
-â””â”€ DEFAULT â†’ âš ï¸ GRADUAL ADOPTION (6-12 week rollout)
+
+Decision guide:
+- If you have **no coding standards**: adopt broadly (big-bang can work for small teams).
+- If you have **strong existing workflows**: cherry-pick general rules first.
+- If you are **not on GitHub + Docker**: adapt process guides to your platform/tooling.
+- If your team is **large**: start with a pilot (1-2 teams), then scale gradually.
 ```
 
 ---

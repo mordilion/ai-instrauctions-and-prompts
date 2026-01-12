@@ -542,38 +542,35 @@ When setup runs, your file will be used instead of the core file.
 
 ## Update Strategies
 
-### Strategy A: Local Customizations (Default)
+### Strategy A: Team Sharing (Recommended)
 
-**Setup**: `.ai-iap-custom/` is git-ignored
+**Setup**: Commit `.ai-iap-custom/` so your team shares the same:
+- rules overrides
+- custom processes
+- custom function patterns
 
 ```bash
 # Pull updates safely
 git pull origin main
 
-# Your customizations remain untouched
-# Re-run setup to regenerate with updates
-./ai-iap/setup.sh
+# Re-run setup to regenerate outputs with the shared customizations
+./.ai-iap/setup.sh
 ```
 
-**Best for**: Individual developers or small teams
+**Best for**: Teams (recommended when using shared functions/custom patterns)
 
 ---
 
-### Strategy B: Team Sharing
+### Strategy B: Local-Only Customizations (Advanced)
 
-**Setup**: Commit `.ai-iap-custom/` to your repository
+**Setup**: Keep `.ai-iap-custom/` local and do NOT commit it
 
 ```bash
-# Add to git
-git add .ai-iap-custom/
-git commit -m "chore: add company AI standards"
-git push
-
-# Team members get customizations automatically
-# Everyone runs setup after pull
+# Keep customizations private to your machine/user
+# (not recommended if you want shared function patterns)
 ```
 
-**Best for**: Teams with shared standards
+**Best for**: Individual developers experimenting locally (NOT recommended if you want shared custom function patterns)
 
 ---
 
@@ -939,7 +936,7 @@ Before or after making changes, verify the extension system is working:
 The verification script tests:
 
 - File structure (example files exist)
-- Git configuration (proper ignores)
+- Git configuration (warns if `.ai-iap-custom/` is ignored, since teams usually want to share it)
 - Documentation completeness
 - Script integration (merge functions)
 - Config structure validity

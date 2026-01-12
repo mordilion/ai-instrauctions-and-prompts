@@ -176,9 +176,9 @@ Want to add company-specific standards, internal processes, or override core rul
 
 | Strategy | Setup | Best For |
 |----------|-------|----------|
-| **Local** (Default) | `.ai-iap-custom/` git-ignored | Individual developers |
-| **Team Sharing** | Commit `.ai-iap-custom/` | Teams with shared standards |
-| **Separate Repo** | Maintain as submodule | Large orgs, company-wide |
+| **Team Sharing** (Recommended) | Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` | Teams (shared standards + shared function patterns) |
+| **Separate Repo** | Maintain `.ai-iap-custom/` as submodule | Large orgs, company-wide |
+| **Local Only** (Advanced) | Keep `.ai-iap-custom/` uncommitted | Individual experimentation |
 
 ### Benefits
 
