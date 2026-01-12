@@ -3,7 +3,7 @@
 > **Scope**: SQL formatting rules for clarity and maintainability.
 
 ## 1. Formatting
-- **Prefer**: Uppercase keywords (`SELECT`, `WHERE`, `JOIN`) for readability.
+- **Prefer**: Uppercase SQL keywords for readability (examples: `SELECT`, `FROM`, `WHERE`, `JOIN`, `GROUP BY`, `ORDER BY`, `INSERT`, `UPDATE`, `DELETE`, `CREATE`, `ALTER`, `DROP`, etc.). This list is **not exhaustive**.
 - **ALWAYS**: Use consistent indentation for nested queries and joins.
 
 ## 2. Naming
