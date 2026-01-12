@@ -87,7 +87,7 @@ else
     test_item "PowerShell setup script has merge function" "false"
 fi
 
-# Test 8: Config structure (example file)
+# Test 7: Config structure (example file)
 if [[ -f .ai-iap-custom/config.example.json ]]; then
     has_languages=$(jq -r '.languages != null' .ai-iap-custom/config.example.json 2>/dev/null || echo "false")
     has_typescript=$(jq -r '.languages.typescript != null' .ai-iap-custom/config.example.json 2>/dev/null || echo "false")
@@ -100,7 +100,7 @@ if [[ -f .ai-iap-custom/config.example.json ]]; then
     test_item "TypeScript has 'customProcesses'" "$has_custom_processes"
 fi
 
-# Test 9: Merge function syntax (basic check)
+# Test 8: Merge function syntax (basic check)
 if [[ -f .ai-iap/setup.sh ]]; then
     if grep -q "MERGED_CONFIG_FILE" .ai-iap/setup.sh && grep -q "WORKING_CONFIG" .ai-iap/setup.sh; then
         test_item "Bash merge variables defined" "true"

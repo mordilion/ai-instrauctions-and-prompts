@@ -1435,17 +1435,55 @@ function Save-State {
         [hashtable]$SelectedProcesses
     )
 
-    $state = [PSCustomObject]@{
+    function Normalize-StringArrayHashtable {
+        param([hashtable]$InputTable)
+
+        $out = @{}
+        foreach ($k in $InputTable.Keys) {
+            $v = $InputTable[$k]
+
+            if ($null -eq $v) {
+                $out[$k] = @()
+                continue
+            }
+
+            # Convert single string to single-item array to keep schema stable.
+            if ($v -is [string]) {
+                $out[$k] = @($v)
+                continue
+            }
+
+            # If it's already a collection, keep as array.
+            if ($v -is [System.Collections.IEnumerable]) {
+                $out[$k] = @($v)
+                continue
+            }
+
+            $out[$k] = @($v.ToString())
+        }
+        return $out
+    }
+
+    $state = @{
         version = $Script:Version
         selectedTools = $SelectedTools
         selectedLanguages = $SelectedLanguages
         selectedDocumentation = $SelectedDocumentation
-        selectedFrameworks = $SelectedFrameworks
+        selectedFrameworks = (Normalize-StringArrayHashtable -InputTable $SelectedFrameworks)
         selectedStructures = $SelectedStructures
-        selectedProcesses = $SelectedProcesses
+        selectedProcesses = (Normalize-StringArrayHashtable -InputTable $SelectedProcesses)
     }
 
-    $state | ConvertTo-Json -Depth 100 | Out-File -FilePath $Script:StateFile -Encoding UTF8
+    # Write compact JSON to avoid noisy indentation differences across environments/editors.
+    try {
+        Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop
+        $serializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+        $serializer.MaxJsonLength = 2147483647
+        $json = $serializer.Serialize($state)
+        $json | Out-File -FilePath $Script:StateFile -Encoding UTF8
+    } catch {
+        $state | ConvertTo-Json -Depth 100 | Out-File -FilePath $Script:StateFile -Encoding UTF8
+    }
 }
 
 function ConvertTo-Hashtable {
