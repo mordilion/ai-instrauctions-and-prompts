@@ -757,6 +757,13 @@ select_languages_simple() {
         if [[ "$always_apply" == "true" ]]; then
             suffix=" (always included)"
         fi
+        # Clarify "framework buckets" (e.g., Node.js) that have no base files
+        local file_count framework_count
+        file_count=$(jq -r ".languages[\"${lang_keys[$i]}\"].files | length" "$WORKING_CONFIG" 2>/dev/null || echo "0")
+        framework_count=$(jq -r ".languages[\"${lang_keys[$i]}\"].frameworks // {} | keys | length" "$WORKING_CONFIG" 2>/dev/null || echo "0")
+        if [[ "$file_count" == "0" && "$framework_count" != "0" ]]; then
+            suffix="$suffix (frameworks only)"
+        fi
         echo "  $((i+1)). ${languages[$i]}$suffix"
     done
     echo "  a. All languages"

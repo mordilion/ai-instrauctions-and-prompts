@@ -23,8 +23,8 @@
 
 > **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks):
 >
-> 1. **CHECK** `.ai-iap-custom/functions/INDEX.md` (if it exists)
-> 2. **THEN CHECK** `.ai-iap/functions/INDEX.md`
+> 1. **CHECK** the custom functions index (if it exists)
+> 2. **THEN CHECK** the core functions index
 > 3. **OPEN** the relevant function file and **COPY** the exact code pattern
 >
 > **NEVER** add installation commands to function files and **NEVER** generate these patterns from scratch if a function exists.

@@ -29,7 +29,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
-- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
+- **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
 - **🔒 Security Rules** – OWASP Top 10 coverage for all languages (token-optimized, 80% more efficient)
@@ -234,6 +234,39 @@ Want to add company-specific standards, internal processes, or override core rul
 |----------|------------|
 | Backend | Express.js ⭐, Fastify, Koa, Hapi |
 
+### HTML
+HTML rules (including guidance for safe JavaScript embedding).
+
+### CSS
+CSS rules (including style blocks in component files like `.vue` / `.svelte`).
+
+### Sass/SCSS
+Sass/SCSS rules (modules, nesting discipline, tokens, maintainable architecture).
+
+### Less
+Less rules (variables, mixins, maintainable structure).
+
+### PostCSS
+PostCSS rules (plugin-based CSS processing and supply-chain awareness).
+
+### Stylus
+Stylus rules (consistent conventions, maintainable structure).
+
+### YAML
+YAML rules (CI/CD pipelines, Kubernetes manifests, Docker Compose, tool configs).
+
+### JSON
+JSON rules (tooling configs, manifests like `package.json`, application configs).
+
+### dotenv (.env)
+`.env` rules (safe environment configuration, `.env.example`, no secrets in git).
+
+### Dockerfile
+Dockerfile rules (secure, reproducible builds; multi-stage; no secrets in images).
+
+### SQL
+SQL rules (injection prevention, safe migrations, basic performance hygiene).
+
 ### Java
 | Category | Frameworks |
 |----------|------------|
@@ -341,6 +374,8 @@ For supported frameworks, choose how you want to organize your code:
 │   │       └── api.md          # REST APIs, OpenAPI/Swagger, SDK docs
 │   ├── javascript/             # JavaScript-specific rules
 │   ├── typescript/             # TypeScript-specific rules (includes security.md)
+│   ├── html/                   # HTML rules (includes security.md)
+│   ├── css/                    # CSS rules (includes security.md)
 │   ├── nodejs/                 # Node.js backend (shared JS/TS)
 │   ├── swift/                  # Swift-specific rules (includes security.md)
 │   ├── kotlin/                 # Kotlin-specific rules (includes security.md)
@@ -605,6 +640,17 @@ Understanding how many tokens your rule selection consumes helps optimize AI con
 | **Dart** | 823 + 1,095 | 3,535 | 1,595 | 1,630 | **8,678** |
 | **.NET** | 844 + 1,020 | 5,008 | 1,356 | 1,540 | **9,768** |
 | **PHP** | 860 + 1,050 | 5,158 | 1,553 | 1,585 | **10,206** |
+| **HTML** | 587 + 245 | – | – | – | **832** |
+| **CSS** | 595 + 208 | – | – | – | **803** |
+| **Sass/SCSS** | 369 + 137 | – | – | – | **506** |
+| **Less** | 288 + 126 | – | – | – | **414** |
+| **PostCSS** | 282 + 124 | – | – | – | **406** |
+| **Stylus** | 285 + 123 | – | – | – | **408** |
+| **YAML** | 366 + 198 | – | – | – | **564** |
+| **JSON** | 257 + 160 | – | – | – | **417** |
+| **dotenv (.env)** | 270 + 193 | – | – | – | **462** |
+| **Dockerfile** | 300 + 222 | – | – | – | **521** |
+| **SQL** | 305 + 194 | – | – | – | **500** |
 | **Bash** | 878 + 484 | – | – | – | **1,362** |
 | **PowerShell** | 916 + 394 | – | – | – | **1,310** |
 | **Grand Total** | | | | | **~180,000 - 184,000** |

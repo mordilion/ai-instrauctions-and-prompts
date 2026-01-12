@@ -1,7 +1,7 @@
 # Bash Security
 
 > **Scope**: Bash/shell-specific security.  
-> **Extends**: `.ai-iap/rules/general/security.md`  
+> **Extends**: General security rules  
 > **Applies to**: `*.sh, *.bash, *.zsh, *.ksh`
 
 ## 1. Input Handling
@@ -34,5 +34,5 @@
 - **ALWAYS**: Minimize `sudo` usage; scope it to the smallest possible commands.
 - **ALWAYS**: Sanitize/avoid trusting `PATH` in privileged scripts; consider setting a safe `PATH`.
 
-Follow baseline rules in `.ai-iap/rules/general/security.md`; the rules above are additive.
+Follow the general security rules; the rules above are additive.
 

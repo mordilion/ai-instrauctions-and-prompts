@@ -1,7 +1,7 @@
 # PowerShell Security
 
 > **Scope**: PowerShell-specific security.  
-> **Extends**: `.ai-iap/rules/general/security.md`  
+> **Extends**: General security rules  
 > **Applies to**: `*.ps1, *.psm1, *.psd1`
 
 ## 1. Code Execution (MUST be safe)
@@ -28,5 +28,5 @@
 - **ALWAYS**: Minimize administrative actions; scope them to the smallest possible commands.
 - **ALWAYS**: For destructive operations, require confirmation or support `-WhatIf` / `-Confirm`.
 
-Follow baseline rules in `.ai-iap/rules/general/security.md`; the rules above are additive.
+Follow the general security rules; the rules above are additive.
 

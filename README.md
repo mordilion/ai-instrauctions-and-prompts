@@ -15,7 +15,8 @@ Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continu
 
 - 🔧 **Multi-Tool** – One source, 10 AI tools configured
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript,
-  Dart/Flutter, .NET/C#, PHP, Node.js, Bash, PowerShell
+  HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Dart/Flutter, .NET/C#, PHP,
+  Node.js, Bash, PowerShell
 - 📦 **50+ Frameworks** – React, Next.js, NestJS, AdonisJS, Spring Boot, Django, FastAPI, Laravel, iOS, Android, and more
 - 🏗️ **Structure Templates** – Clean Architecture, MVVM, MVI, Vertical Slices, Feature-First, DDD, Modular
 - 🔒 **Security Rules** – OWASP Top 10 coverage for all languages (token-optimized)

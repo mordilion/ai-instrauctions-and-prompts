@@ -13,6 +13,7 @@ $ErrorActionPreference = "Stop"
 $Script:ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Script:ConfigFile = Join-Path $Script:ScriptDir "config.json"
 $Script:RulesDir = Join-Path $Script:ScriptDir "rules"
+$Script:RepoRoot = Split-Path -Parent $Script:ScriptDir
 
 $Script:PassCount = 0
 $Script:FailCount = 0
@@ -28,6 +29,61 @@ function Test-Result {
         Write-Host "$Name - $Message"
         $Script:FailCount++
     }
+}
+
+function Get-ReferencedRepoFilePathsFromText {
+    param([string]$Text)
+
+    $results = New-Object System.Collections.Generic.List[string]
+
+    # Backticked paths: `path/to/file.ext`
+    foreach ($m in [regex]::Matches($Text, '`([^`\\r\\n]+)`')) {
+        $results.Add($m.Groups[1].Value)
+    }
+
+    # Markdown links: [label](path/to/file.ext)
+    foreach ($m in [regex]::Matches($Text, '\[[^\]]+\]\(([^)\r\n]+)\)')) {
+        $results.Add($m.Groups[1].Value)
+    }
+
+    # Extends lines: Extends: some/path.ext
+    foreach ($m in [regex]::Matches($Text, '^\s*>\s*\*\*Extends\*\*:\s*([^\r\n]+)\s*$', [System.Text.RegularExpressions.RegexOptions]::Multiline)) {
+        $results.Add($m.Groups[1].Value.Trim())
+    }
+    foreach ($m in [regex]::Matches($Text, '^\s*Extends:\s*([^\r\n]+)\s*$', [System.Text.RegularExpressions.RegexOptions]::Multiline)) {
+        $results.Add($m.Groups[1].Value.Trim())
+    }
+
+    $results
+}
+
+function Is-ForbiddenRepoFileReference {
+    param([string]$PathText)
+
+    if ([string]::IsNullOrWhiteSpace($PathText)) { return $false }
+
+    $p = $PathText.Trim()
+
+    # Ignore URLs and mailto
+    if ($p -match "^(https?:)?//" -or $p -match "^mailto:") { return $false }
+
+    # Ignore anchors/fragments in links
+    if ($p -match "#") { $p = ($p -split "#", 2)[0].Trim() }
+    if ([string]::IsNullOrWhiteSpace($p)) { return $false }
+
+    # Only consider things that look like repo paths (contain a slash) and are dot-prefixed
+    # We intentionally do NOT treat single-file names like `package.json` as forbidden.
+    $looksLikePath = ($p -match "[\\/]" )
+    $isDotPrefixed = ($p -match "^\." )
+    if (-not $looksLikePath -or -not $isDotPrefixed) { return $false }
+
+    # If it looks like a file path inside the repo, forbid it (unstable across setups)
+    if ($p -match "\.(mdc?|md|json|ya?ml|ps1|sh|txt)$") { return $true }
+
+    # Also forbid explicit .ai-iap folder paths even if extension is missing
+    if ($p -match "^\.ai-iap([\\/]|$)") { return $true }
+
+    return $false
 }
 
 Write-Host "`n=== AI Instructions & Prompts Validation ===`n" -ForegroundColor Cyan
@@ -102,7 +158,33 @@ Get-ChildItem -Path $Script:RulesDir -Recurse -Filter "*.md" | ForEach-Object {
 
 Test-Result "All markdown files start with header" ($invalidMarkdown.Count -eq 0) "Invalid: $($invalidMarkdown -join ', ')"
 
-# Test 6: No duplicate framework keys
+# Test 6: Rules/processes must NOT reference repo file paths
+$forbiddenRefs = @()
+$dirsToScan = @(
+    (Join-Path $Script:ScriptDir "rules"),
+    (Join-Path $Script:ScriptDir "processes"),
+    (Join-Path $Script:RepoRoot ".cursor\rules")
+)
+foreach ($dir in $dirsToScan) {
+    if (-not (Test-Path $dir)) { continue }
+
+    Get-ChildItem -Path $dir -Recurse -Include "*.md","*.mdc" | ForEach-Object {
+        $ruleFile = $_.FullName
+        $text = Get-Content $ruleFile -Raw
+
+        $refs = Get-ReferencedRepoFilePathsFromText -Text $text | Select-Object -Unique
+        foreach ($ref in $refs) {
+            if (-not (Is-ForbiddenRepoFileReference -PathText $ref)) { continue }
+
+            $relRule = $ruleFile.Substring($Script:RepoRoot.Length).TrimStart('\','/')
+            $forbiddenRefs += "$relRule contains forbidden file reference '$ref'"
+        }
+    }
+}
+
+Test-Result "No repo file-path references in rules/processes" ($forbiddenRefs.Count -eq 0) "Found: $($forbiddenRefs -join '; ')"
+
+# Test 7: No duplicate framework keys
 $duplicateKeys = @()
 foreach ($langKey in $config.languages.PSObject.Properties.Name) {
     $lang = $config.languages.$langKey
@@ -117,7 +199,7 @@ foreach ($langKey in $config.languages.PSObject.Properties.Name) {
 
 Test-Result "No duplicate framework keys" ($duplicateKeys.Count -eq 0) "Duplicates in: $($duplicateKeys -join ', ')"
 
-# Test 7: Check for frameworks with unresolved dependencies
+# Test 8: Check for frameworks with unresolved dependencies
 $unresolvedDeps = @()
 foreach ($langKey in $config.languages.PSObject.Properties.Name) {
     $lang = $config.languages.$langKey

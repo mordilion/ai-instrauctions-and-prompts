@@ -20,13 +20,13 @@ alwaysApply: true
 **Change Propagation** (CRITICAL):
 - **Whenever you change ANYTHING**, you **MUST** check and update dependent parts to keep the meta-project consistent.
 - **ALWAYS** check for necessary updates in:
-  - `.ai-iap/setup.sh` and `.ai-iap/setup.ps1`
-  - `.ai-iap-state.json` behavior (reruns/add-remove flows must keep working)
-  - `.ai-iap/config.json`
-  - `.ai-iap/rules/**`
-  - `.ai-iap/processes/**`
-  - `.ai-iap/functions/**` and `.ai-iap/functions/INDEX.md`
-  - `README.md`, `.ai-iap/README.md`, `CUSTOMIZATION.md`, `.ai-iap/docs/**`
+  - setup scripts
+  - state file behavior (reruns/add-remove flows must keep working)
+  - config metadata
+  - language/framework/structure rule sources (from this repo)
+  - processes library
+  - functions library + functions index
+  - root docs and tool setup docs (readme, customization, troubleshooting)
   - All supported AI tool outputs and their paths (see the supported tools list in the meta-project rules)
 - **NEVER** leave stale references (old paths, old folder names, removed concepts).
 
@@ -35,8 +35,8 @@ alwaysApply: true
 
 **Implementation Workflow** (CRITICAL):
 - **BEFORE** implementing error handling, async operations, input validation, database queries, or HTTP requests:
-  1. Check `.ai-iap-custom/functions/INDEX.md` (if it exists)
-  2. Then check `.ai-iap/functions/INDEX.md`
+  1. Check the custom functions index (if it exists)
+  2. Then check the core functions index
   3. Use the exact pattern from the relevant function file
   4. Choose the appropriate framework/library version
   5. Copy the exact code pattern (no installation commands)
@@ -45,9 +45,9 @@ alwaysApply: true
 - This saves 70-80% of tokens and ensures consistent, secure implementations
 
 **Functions Authoring Rule** (CRITICAL):
-- When creating a new function file under `.ai-iap/functions/`, **ALWAYS** start from `.ai-iap/functions/_TEMPLATE.md`.
+- When creating a new function file, **ALWAYS** start from the functions template.
 - Keep the YAML frontmatter structure consistent and keep the content after the header as **code examples only**.
-- Update `.ai-iap/functions/INDEX.md` when adding new function files.
+- Update the functions index when adding new function files.
 
 **Rule & Process Writing Standards**:
 - Use explicit directives: `> **ALWAYS**`, `> **NEVER**`, `> **BEFORE starting**`

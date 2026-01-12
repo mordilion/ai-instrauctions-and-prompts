@@ -349,6 +349,13 @@ function Select-Languages {
         if ($Config.languages.$($langKeys[$i]).alwaysApply -eq $true) {
             $suffix = " (always included)"
         }
+        # Clarify "framework buckets" (e.g., Node.js) that have no base files
+        $langKey = $langKeys[$i]
+        $fileCount = @($Config.languages.$langKey.files).Count
+        $frameworkCount = if ($Config.languages.$langKey.frameworks) { @($Config.languages.$langKey.frameworks.PSObject.Properties).Count } else { 0 }
+        if ($fileCount -eq 0 -and $frameworkCount -gt 0) {
+            $suffix += " (frameworks only)"
+        }
         Write-Host "  $($i + 1). $($languages[$i])$suffix"
     }
     Write-Host "  a. All languages"
@@ -448,18 +455,18 @@ function Select-Documentation {
         Write-Host "Suggestion for backend/fullstack project: a (all)" -ForegroundColor DarkGray
     }
     
-    $input = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):"
+    $docInput = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):"
     
     $selectedDocumentation = @()
     
-    if ($input -eq "s" -or $input -eq "S") {
+    if ($docInput -eq "s" -or $docInput -eq "S") {
         return @()
-    } elseif ($input -eq "a" -or $input -eq "A") {
+    } elseif ($docInput -eq "a" -or $docInput -eq "A") {
         foreach ($key in $docKeys) {
             $selectedDocumentation += $Config.languages.general.documentation.$key.file
         }
     } else {
-        foreach ($num in $input.Split(" ")) {
+        foreach ($num in $docInput.Split(" ")) {
             $idx = [int]$num - 1
             if ($idx -ge 0 -and $idx -lt $docKeys.Count) {
                 $selectedDocumentation += $Config.languages.general.documentation.$($docKeys[$idx]).file
@@ -751,7 +758,7 @@ function New-CursorFrontmatter {
     
     $langConfig = $Config.languages.$Lang
     $globs = $langConfig.globs
-    $alwaysApply = if ($langConfig.alwaysApply -ne $null) { $langConfig.alwaysApply.ToString().ToLower() } else { "false" }
+    $alwaysApply = if ($null -ne $langConfig.alwaysApply) { $langConfig.alwaysApply.ToString().ToLower() } else { "false" }
     
     if ($IsFramework) {
         $fw = $langConfig.frameworks.$File

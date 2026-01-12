@@ -49,8 +49,8 @@
 - **ALWAYS**: Use `npm ci` in CI to ensure reproducible installs.
 
 ## 4. Framework-specific pointers (examples)
-- Express: enable `helmet`, `cors` with explicit origins, `express-rate-limit`, and validate body with `ajv`/`joi`. See `.ai-iap/rules/nodejs/frameworks/express.md` for structure guidance.
-- React: prefer JSX escaping, keep DOMPurify usage centralized. See `.ai-iap/rules/javascript/frameworks/react.md` for layout examples.
+- Express: enable `helmet`, `cors` with explicit origins, `express-rate-limit`, and validate body with `ajv`/`joi`. Follow the Express framework guidance (if selected).
+- React: prefer JSX escaping, keep DOMPurify usage centralized. Follow the React framework guidance (if selected).
 
 ## 5. Quick checklist
 - Validate inputs (Ajv/Joi)
@@ -60,4 +60,4 @@
 - Use secure, HttpOnly cookies for auth
 - Enforce CSP and avoid `unsafe-*` policies
 
-Follow baseline rules in `.ai-iap/rules/general/security.md`; language-specific rules above are additive.
+Follow baseline rules in General security rules; language-specific rules above are additive.
