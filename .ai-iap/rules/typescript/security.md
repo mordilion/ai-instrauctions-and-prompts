@@ -2,7 +2,7 @@
 
 > **Scope**: TypeScript-specific security (frontend & backend)
 > **Extends**: General security rules
-> **Applies to**: *.ts, *.tsx files
+> **Applies to**: *.ts, *.tsx, *.mts, *.cts, *.vue, *.svelte files
 
 ## 0. Embedded SQL (when SQL appears inside TypeScript)
 - **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in TS code.

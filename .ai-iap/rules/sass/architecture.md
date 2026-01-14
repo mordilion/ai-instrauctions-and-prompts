@@ -1,6 +1,6 @@
 # Sass/SCSS Architecture
 
-> **Scope**: Apply these rules when working with Sass/SCSS stylesheets (`*.scss`, `*.sass`). These extend the general architecture guidelines.
+> **Scope**: Apply these rules when working with Sass/SCSS stylesheets (`*.scss`, `*.sass`, `*.module.scss`, `*.module.sass`). These extend the general architecture guidelines.
 
 ## 1. Core Principles
 - **Prefer modern Sass modules**: Use `@use` / `@forward`; avoid legacy `@import`.

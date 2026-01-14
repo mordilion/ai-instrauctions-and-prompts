@@ -1,7 +1,7 @@
 # ASP.NET Core Framework
 
 > **Scope**: ASP.NET Core web APIs and MVC  
-> **Applies to**: *.cs files in ASP.NET Core projects
+> **Applies to**: *.cs, *.csproj, *.razor files in ASP.NET Core projects
 > **Extends**: dotnet/architecture.md, dotnet/code-style.md
 
 ## CRITICAL REQUIREMENTS

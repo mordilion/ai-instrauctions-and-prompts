@@ -2,7 +2,7 @@
 
 > **Scope**: .NET and C#-specific security practices
 > **Extends**: General security rules
-> **Applies to**: *.cs files
+> **Applies to**: *.cs, *.csproj, *.razor files
 
 ## 0. Embedded SQL (when SQL appears inside C#)
 - **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in C# code.

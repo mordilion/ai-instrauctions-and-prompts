@@ -1,7 +1,7 @@
 # Kotlin Code Style
 
 > **Scope**: All Kotlin files
-> **Applies to**: *.kt files
+> **Applies to**: *.kt, *.kts files
 
 ## CRITICAL REQUIREMENTS
 

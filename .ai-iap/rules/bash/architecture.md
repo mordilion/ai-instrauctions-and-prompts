@@ -1,6 +1,6 @@
 # Bash Architecture
 
-> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, etc.). These extend the general architecture guidelines.
+> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, `*.zsh`, `*.ksh`, `*.bats`). These extend the general architecture guidelines.
 
 ## 1. Core Principles
 - **Single responsibility**: One script = one job. Split reusable logic into libraries.

@@ -1,6 +1,6 @@
 # Less Architecture
 
-> **Scope**: Apply these rules when working with Less stylesheets (`*.less`). These extend the general architecture guidelines.
+> **Scope**: Apply these rules when working with Less stylesheets (`*.less`, `*.module.less`). These extend the general architecture guidelines.
 
 ## 1. Core Principles
 - **Design tokens first**: Centralize colors/spacing/typography as variables.

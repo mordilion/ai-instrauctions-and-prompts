@@ -6,7 +6,7 @@ globs: "*.sh,*.bash,*.zsh,*.ksh,*.bats"
 
 # Bash Code Style
 
-> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, etc.). These extend the general code style guidelines.
+> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, `*.zsh`, `*.ksh`, `*.bats`). These extend the general code style guidelines.
 
 ## 1. Strict Mode (Default)
 - **ALWAYS**: Use strict mode near the top:

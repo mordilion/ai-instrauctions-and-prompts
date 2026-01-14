@@ -1,7 +1,7 @@
 # TypeScript Architecture
 
 > **Scope**: TypeScript architectural patterns and principles
-> **Applies to**: *.ts, *.tsx files
+> **Applies to**: *.ts, *.tsx, *.mts, *.cts, *.vue, *.svelte files
 > **Extends**: General architecture rules
 > **Precedence**: Structure > Framework > Language > General
 

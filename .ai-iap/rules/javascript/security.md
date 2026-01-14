@@ -2,7 +2,7 @@
 
 > **Scope**: JavaScript-specific security (browser & Node.js)
 > **Extends**: General security rules
-> **Applies to**: *.js, *.mjs, *.cjs, *.jsx
+> **Applies to**: *.js, *.jsx, *.mjs, *.cjs, *.vue, *.svelte
 
 ## 0. Embedded SQL (when SQL appears inside JavaScript)
 - **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in JS code.

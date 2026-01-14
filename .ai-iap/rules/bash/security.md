@@ -2,7 +2,7 @@
 
 > **Scope**: Bash/shell-specific security.  
 > **Extends**: General security rules  
-> **Applies to**: `*.sh, *.bash, *.zsh, *.ksh`
+> **Applies to**: `*.sh, *.bash, *.zsh, *.ksh, *.bats`
 
 ## 1. Input Handling
 - **ALWAYS**: Treat all inputs as untrusted (args, env vars, files, command output).

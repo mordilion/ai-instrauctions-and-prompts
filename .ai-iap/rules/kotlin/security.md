@@ -2,7 +2,7 @@
 
 > **Scope**: Kotlin-specific security (Android, Ktor, Spring Boot)
 > **Extends**: General security rules
-> **Applies to**: *.kt files
+> **Applies to**: *.kt, *.kts files
 
 ## 0. Embedded SQL (when SQL appears inside Kotlin)
 - **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Kotlin code.
