@@ -118,7 +118,7 @@ paths: **/*.{jsx,tsx}
 
 ```bash
 # Linux/Mac
-./ai-iap/setup.sh
+./.ai-iap/setup.sh
 
 # Windows
 .\.ai-iap\setup.ps1

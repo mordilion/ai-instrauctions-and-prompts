@@ -185,6 +185,8 @@ These may conflict with established practices:
 
 - [ ] Commit `.ai-iap/`, `.ai-iap-custom/`, and `.ai-iap-state.json` in the repo (shared across the team)
 
+- [ ] Re-run setup in **Modify selection** mode when you need to add/remove tools, languages, frameworks, or processes
+
 - [ ] Create/update `.ai-iap-custom/` with team overrides and custom function patterns
 
 - [ ] Test with 1-2 pilot projects

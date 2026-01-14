@@ -237,7 +237,8 @@ git push origin main
 
 **Issue**: Git says "up to date" but generated files not tracked
 
-**Cause**: Files are in `.gitignore`
+**Cause**: The files are ignored by your repository configuration (often via `.gitignore`).
+The setup script will **not** modify `.gitignore`.
 
 **Check**:
 ```bash
@@ -249,11 +250,11 @@ git status --ignored
 #   CLAUDE.md
 ```
 
-**Fix** (if you want to commit generated files):
+**Fix** (only if you intentionally want to commit generated outputs):
 ```bash
-# Option 1: Remove from .gitignore
+# Option 1: Stop ignoring them
 nano .gitignore
-# Delete or comment out the lines for generated files
+# Delete or comment out the ignore patterns for generated files
 
 # Option 2: Force add specific files
 git add -f .cursor/rules/*.mdc
@@ -311,12 +312,12 @@ cat .ai-iap/rules/typescript/architecture.md
 **Check**:
 ```bash
 # Validate frontmatter
-head -5 .cursor/rules/general-persona.mdc
+head -10 .cursor/rules/general/persona.mdc
 
 # Should start with:
 # ---
-# globs:
-#   - "**/*"
+# aiIapManaged: true
+# ...
 # ---
 ```
 

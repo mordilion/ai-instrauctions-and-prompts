@@ -179,7 +179,7 @@ logger.info('User created', { userId });
 
 ```bash
 # Linux/Mac
-./ai-iap/setup.sh
+./.ai-iap/setup.sh
 
 # Windows
 .\.ai-iap\setup.ps1
@@ -880,7 +880,7 @@ git checkout origin/main -- .ai-iap/
 # They live in .ai-iap-custom/ (no conflicts)
 
 # Re-run setup
-./ai-iap/setup.sh
+./.ai-iap/setup.sh
 ```
 
 ---
@@ -937,12 +937,12 @@ Before or after making changes, verify the extension system is working:
 The verification script tests:
 
 - File structure (example files exist)
-- Git configuration (warns if `.ai-iap-custom/` is ignored, since teams usually want to share it)
+- Shared source folders are present (`.ai-iap/`, `.ai-iap-custom/`) and scripts can load/merge customizations
 - Documentation completeness
 - Script integration (merge functions)
 - Config structure validity
 
-**Result**: 15 tests should pass with 0 failures.
+**Result**: 13 tests should pass with 0 failures.
 
 ### Automated Testing
 
