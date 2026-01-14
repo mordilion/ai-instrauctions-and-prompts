@@ -71,6 +71,12 @@ You can safely run setup multiple times.
 - On rerun, you can **reuse**, **modify**, or **clean up** previously generated outputs
 - Cleanup is **safe by default**: only files marked `aiIapManaged: true` (or files with the generated header comment) are removed
 
+When you choose **Modify selection**, the wizard will show your previous selection and use it as the default:
+
+- Press **Enter** to keep the previous selection at each step
+- Enter a new list of numbers to **add/remove** items
+- Use **`s`** (skip) on optional steps (documentation/frameworks/processes/structures) to remove previously selected items
+
 ### 3. Follow the Wizard
 
 The setup wizard will guide you through:

@@ -222,11 +222,26 @@ function Get-ValidatedSelection {
         [array]$Options,
         [int]$MaxValue,
         [bool]$AllowEmpty = $false,
-        [bool]$AllowSkip = $false
+        [bool]$AllowSkip = $false,
+        [string]$DefaultInput = "",
+        [bool]$AllowClearDefault = $false
     )
     
     while ($true) {
         $userInput = Read-Host $Prompt
+
+        if ($AllowClearDefault -and ($userInput -eq 'c' -or $userInput -eq 'C') -and -not [string]::IsNullOrWhiteSpace($DefaultInput)) {
+            $DefaultInput = ""
+            Write-Host ""
+            Write-InfoMessage "Cleared previous default. Enter a new selection."
+            Write-Host ""
+            continue
+        }
+
+        if ([string]::IsNullOrWhiteSpace($userInput) -and -not [string]::IsNullOrWhiteSpace($DefaultInput)) {
+            # Press Enter => keep previous selection (default).
+            $userInput = $DefaultInput
+        }
         
         $selected = @()
         $isValid = $true
@@ -289,7 +304,10 @@ function Get-ValidatedSelection {
 }
 
 function Select-Tools {
-    param([PSCustomObject]$Config)
+    param(
+        [PSCustomObject]$Config,
+        [string[]]$DefaultSelected = @()
+    )
     
     $tools = @()
     $toolKeys = @()
@@ -313,18 +331,39 @@ function Select-Tools {
     Write-Host "  * = recommended" -ForegroundColor DarkGray
     Write-Host "  a. All tools"
     Write-Host ""
+
+    $defaultInput = ""
+    if ($DefaultSelected -and $DefaultSelected.Count -gt 0) {
+        $idxs = @()
+        for ($i = 0; $i -lt $toolKeys.Count; $i++) {
+            if ($DefaultSelected -contains $toolKeys[$i]) {
+                $idxs += ($i + 1)
+            }
+        }
+        if ($idxs.Count -gt 0) {
+            Write-Host ("Previously selected: " + ($DefaultSelected -join ", ")) -ForegroundColor DarkGray
+            Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
+            $defaultInput = ($idxs -join " ")
+            Write-Host ""
+        }
+    }
     
     $selectedTools = Get-ValidatedSelection `
-        -Prompt "Enter choices (e.g., 1 3 or 'a' for all):" `
+        -Prompt ("Enter choices (e.g., 1 3 or 'a' for all)" + ($(if ($defaultInput) { " [$defaultInput]" } else { "" })) + ":") `
         -Options $toolKeys `
         -MaxValue $toolKeys.Count `
-        -AllowEmpty $false
+        -AllowEmpty $false `
+        -DefaultInput $defaultInput `
+        -AllowClearDefault $true
     
     return $selectedTools
 }
 
 function Select-Languages {
-    param([PSCustomObject]$Config)
+    param(
+        [PSCustomObject]$Config,
+        [string[]]$DefaultSelected = @()
+    )
     
     $languages = @()
     $langKeys = @()
@@ -360,12 +399,30 @@ function Select-Languages {
     }
     Write-Host "  a. All languages"
     Write-Host ""
+
+    $defaultInput = ""
+    if ($DefaultSelected -and $DefaultSelected.Count -gt 0) {
+        $idxs = @()
+        for ($i = 0; $i -lt $langKeys.Count; $i++) {
+            if ($DefaultSelected -contains $langKeys[$i]) {
+                $idxs += ($i + 1)
+            }
+        }
+        if ($idxs.Count -gt 0) {
+            Write-Host ("Previously selected: " + ($DefaultSelected -join ", ")) -ForegroundColor DarkGray
+            Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
+            $defaultInput = ($idxs -join " ")
+            Write-Host ""
+        }
+    }
     
     $selectedLanguages = Get-ValidatedSelection `
-        -Prompt "Enter choices (e.g., 1 2 4 or 'a' for all):" `
+        -Prompt ("Enter choices (e.g., 1 2 4 or 'a' for all)" + ($(if ($defaultInput) { " [$defaultInput]" } else { "" })) + ":") `
         -Options $langKeys `
         -MaxValue $langKeys.Count `
-        -AllowEmpty $false
+        -AllowEmpty $false `
+        -DefaultInput $defaultInput `
+        -AllowClearDefault $true
     
     # Always include languages with alwaysApply: true
     foreach ($alwaysLang in $alwaysApplyLangs) {
@@ -380,7 +437,8 @@ function Select-Languages {
 function Select-Documentation {
     param(
         [PSCustomObject]$Config,
-        [string[]]$SelectedLanguages
+        [string[]]$SelectedLanguages,
+        [string[]]$DefaultSelectedDocumentation = @()
     )
     
     # Check if documentation options exist
@@ -430,7 +488,7 @@ function Select-Documentation {
         
         # Check if recommended
         if ($docRecs[$i] -eq $true) {
-            $suffix = " ⭐"
+            $suffix = " *"
         }
         
         # Check applicability
@@ -443,7 +501,7 @@ function Select-Documentation {
         Write-Host "      $($docDescs[$i])" -ForegroundColor DarkGray
     }
     Write-Host ""
-    Write-Host "  ⭐ = recommended" -ForegroundColor DarkGray
+    Write-Host "  * = recommended" -ForegroundColor DarkGray
     Write-Host "  a. All documentation"
     Write-Host "  s. Skip (no documentation standards)"
     Write-Host ""
@@ -455,7 +513,32 @@ function Select-Documentation {
         Write-Host "Suggestion for backend/fullstack project: a (all)" -ForegroundColor DarkGray
     }
     
-    $docInput = Read-Host "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):"
+    $defaultInput = ""
+    if ($DefaultSelectedDocumentation -and $DefaultSelectedDocumentation.Count -gt 0) {
+        # DefaultSelectedDocumentation stores files like "documentation/code"
+        $idxs = @()
+        for ($i = 0; $i -lt $docKeys.Count; $i++) {
+            $file = $Config.languages.general.documentation.$($docKeys[$i]).file
+            if ($DefaultSelectedDocumentation -contains $file) {
+                $idxs += ($i + 1)
+            }
+        }
+        if ($idxs.Count -gt 0) {
+            Write-Host ("Previously selected: " + ($DefaultSelectedDocumentation -join ", ")) -ForegroundColor DarkGray
+            Write-Host "Press Enter to keep the previous selection, or enter a new list (use 's' to remove all)." -ForegroundColor DarkGray
+            $defaultInput = ($idxs -join " ")
+            Write-Host ""
+        }
+    }
+
+    $prompt = "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)"
+    if ($defaultInput) { $prompt += " [$defaultInput]" }
+    $prompt += ":"
+    $docInput = Read-Host $prompt
+
+    if ([string]::IsNullOrWhiteSpace($docInput) -and $defaultInput) {
+        $docInput = $defaultInput
+    }
     
     $selectedDocumentation = @()
     
@@ -480,7 +563,8 @@ function Select-Documentation {
 function Select-Frameworks {
     param(
         [PSCustomObject]$Config,
-        [string[]]$SelectedLanguages
+        [string[]]$SelectedLanguages,
+        [hashtable]$DefaultSelectedFrameworks = @{}
     )
     
     $selectedFrameworks = @{}
@@ -537,13 +621,30 @@ function Select-Frameworks {
         Write-Host "  s. Skip (no frameworks)"
         Write-Host "  a. All frameworks"
         Write-Host ""
+
+        $defaultInput = ""
+        if ($DefaultSelectedFrameworks -and $DefaultSelectedFrameworks.ContainsKey($lang)) {
+            $prev = @($DefaultSelectedFrameworks[$lang])
+            $idxs = @()
+            for ($i = 0; $i -lt $frameworkKeys.Count; $i++) {
+                if ($prev -contains $frameworkKeys[$i]) {
+                    $idxs += ($i + 1)
+                }
+            }
+            if ($idxs.Count -gt 0) {
+                Write-Host ("Previously selected: " + ($prev -join ", ")) -ForegroundColor DarkGray
+                $defaultInput = ($idxs -join " ")
+                Write-Host ""
+            }
+        }
         
         $langFrameworks = Get-ValidatedSelection `
-            -Prompt "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip):" `
+            -Prompt ("Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip)" + ($(if ($defaultInput) { " [$defaultInput]" } else { "" })) + ":") `
             -Options $frameworkKeys `
             -MaxValue $frameworkKeys.Count `
             -AllowEmpty $false `
-            -AllowSkip $true
+            -AllowSkip $true `
+            -DefaultInput $defaultInput
         
         if ($langFrameworks.Count -gt 0) {
             $selectedFrameworks[$lang] = $langFrameworks
@@ -556,7 +657,8 @@ function Select-Frameworks {
 function Select-Processes {
     param(
         [PSCustomObject]$Config,
-        [string[]]$SelectedLanguages
+        [string[]]$SelectedLanguages,
+        [hashtable]$DefaultSelectedProcesses = @{}
     )
     
     $selectedProcesses = @{}
@@ -611,13 +713,30 @@ function Select-Processes {
         Write-Host "  s. Skip (no processes)"
         Write-Host "  a. All processes"
         Write-Host ""
+
+        $defaultInput = ""
+        if ($DefaultSelectedProcesses -and $DefaultSelectedProcesses.ContainsKey($lang)) {
+            $prev = @($DefaultSelectedProcesses[$lang])
+            $idxs = @()
+            for ($i = 0; $i -lt $processKeys.Count; $i++) {
+                if ($prev -contains $processKeys[$i]) {
+                    $idxs += ($i + 1)
+                }
+            }
+            if ($idxs.Count -gt 0) {
+                Write-Host ("Previously selected: " + ($prev -join ", ")) -ForegroundColor DarkGray
+                $defaultInput = ($idxs -join " ")
+                Write-Host ""
+            }
+        }
         
         $langProcesses = Get-ValidatedSelection `
-            -Prompt "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip):" `
+            -Prompt ("Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)" + ($(if ($defaultInput) { " [$defaultInput]" } else { "" })) + ":") `
             -Options $processKeys `
             -MaxValue $processKeys.Count `
             -AllowEmpty $false `
-            -AllowSkip $true
+            -AllowSkip $true `
+            -DefaultInput $defaultInput
         
         if ($langProcesses.Count -gt 0) {
             $selectedProcesses[$lang] = $langProcesses
@@ -631,7 +750,8 @@ function Select-Structures {
     param(
         [PSCustomObject]$Config,
         [string[]]$SelectedLanguages,
-        [hashtable]$SelectedFrameworks
+        [hashtable]$SelectedFrameworks,
+        [hashtable]$DefaultSelectedStructures = @{}
     )
     
     $selectedStructures = @{}
@@ -685,13 +805,35 @@ function Select-Structures {
             Write-Host "  * = recommended" -ForegroundColor DarkGray
             Write-Host "  s. Skip (use default patterns only)"
             Write-Host ""
-            
-            $choice = Read-Host "Enter choice (1-$($structures.Count) or 's' to skip):"
+
+            $defaultChoice = ""
+            $structKey = "$lang-$fwKey"
+            if ($DefaultSelectedStructures -and $DefaultSelectedStructures.ContainsKey($structKey)) {
+                $prevFile = [string]$DefaultSelectedStructures[$structKey]
+                for ($i = 0; $i -lt $structures.Count; $i++) {
+                    if ($structures[$i].File -eq $prevFile) {
+                        $defaultChoice = [string]($i + 1)
+                        break
+                    }
+                }
+                if ($defaultChoice) {
+                    Write-Host ("Previously selected: " + $prevFile) -ForegroundColor DarkGray
+                    Write-Host ""
+                }
+            }
+
+            $prompt = "Enter choice (1-$($structures.Count) or 's' to skip)"
+            if ($defaultChoice) { $prompt += " [$defaultChoice]" }
+            $prompt += ":"
+            $choice = Read-Host $prompt
+
+            if ([string]::IsNullOrWhiteSpace($choice) -and $defaultChoice) {
+                $choice = $defaultChoice
+            }
             
             if ($choice -ne 's' -and $choice -ne 'S') {
                 $idx = [int]$choice - 1
                 if ($idx -ge 0 -and $idx -lt $structureKeys.Count) {
-                    $structKey = "$lang-$fwKey"
                     $selectedStructures[$structKey] = $structures[$idx].File
                 }
             }
@@ -1429,6 +1571,26 @@ function Write-PreviousStateSummary {
     if ($State.selectedDocumentation -and $State.selectedDocumentation.Count -gt 0) {
         Write-Host "  Documentation: $($State.selectedDocumentation -join ', ')"
     }
+    if ($State.selectedFrameworks) {
+        $fw = ConvertTo-Hashtable -InputObject $State.selectedFrameworks
+        foreach ($lang in $fw.Keys) {
+            $vals = @($fw[$lang])
+            if ($vals.Count -gt 0) { Write-Host "  Frameworks ($lang): $($vals -join ', ')" }
+        }
+    }
+    if ($State.selectedStructures) {
+        $st = ConvertTo-Hashtable -InputObject $State.selectedStructures
+        foreach ($k in $st.Keys) {
+            if ($st[$k]) { Write-Host "  Structure ($k): $($st[$k])" }
+        }
+    }
+    if ($State.selectedProcesses) {
+        $pr = ConvertTo-Hashtable -InputObject $State.selectedProcesses
+        foreach ($lang in $pr.Keys) {
+            $vals = @($pr[$lang])
+            if ($vals.Count -gt 0) { Write-Host "  Processes ($lang): $($vals -join ', ')" }
+        }
+    }
     Write-Host ""
 }
 
@@ -1625,6 +1787,7 @@ function Main {
     $state = Get-PreviousState
     $setupMode = "wizard" # reuse | wizard | cleanup | fresh
 
+    $usePreviousDefaults = $false
     if ($null -ne $state) {
         Write-PreviousStateSummary -State $state
 
@@ -1640,7 +1803,7 @@ function Main {
 
         switch ($choice) {
             "1" { $setupMode = "reuse" }
-            "2" { $setupMode = "wizard" }
+            "2" { $setupMode = "wizard"; $usePreviousDefaults = $true }
             "3" { $setupMode = "cleanup" }
             "4" { $setupMode = "fresh" }
             default { $setupMode = "reuse" }
@@ -1680,14 +1843,30 @@ function Main {
     }
     else {
         # Selection (wizard)
-        $selectedTools = Select-Tools -Config $config
+        $defaultTools = @()
+        $defaultLangs = @()
+        $defaultDocs = @()
+        $defaultFrameworks = @{}
+        $defaultStructures = @{}
+        $defaultProcesses = @{}
+
+        if ($usePreviousDefaults -and $state) {
+            $defaultTools = @($state.selectedTools)
+            $defaultLangs = @($state.selectedLanguages)
+            $defaultDocs = @($state.selectedDocumentation)
+            $defaultFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
+            $defaultStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
+            $defaultProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
+        }
+
+        $selectedTools = Select-Tools -Config $config -DefaultSelected $defaultTools
     
     if ($selectedTools.Count -eq 0) {
         Write-WarningMessage "No tools selected. Exiting."
         exit 0
     }
     
-        $selectedLanguages = Select-Languages -Config $config
+        $selectedLanguages = Select-Languages -Config $config -DefaultSelected $defaultLangs
     
     if ($selectedLanguages.Count -eq 0) {
         Write-WarningMessage "No languages selected. Exiting."
@@ -1695,16 +1874,17 @@ function Main {
     }
     
         # Documentation selection
-        $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages
+        # Documentation selection (press Enter to keep previous; 's' removes all docs)
+        $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedDocumentation $defaultDocs
         
         # Framework selection
-        $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages
+        $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedFrameworks $defaultFrameworks
         
         # Structure selection (for frameworks that have structure options)
-        $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks
+        $selectedStructures = Select-Structures -Config $config -SelectedLanguages $selectedLanguages -SelectedFrameworks $selectedFrameworks -DefaultSelectedStructures $defaultStructures
         
         # Process selection
-        $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages
+        $selectedProcesses = Select-Processes -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedProcesses $defaultProcesses
     }
     
     Write-Host ""

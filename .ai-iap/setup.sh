@@ -366,6 +366,7 @@ print_previous_state_summary() {
 prompt_previous_run_mode() {
     # Sets global SETUP_MODE to: reuse | wizard | cleanup | fresh
     SETUP_MODE="wizard"
+    USE_PREVIOUS_DEFAULTS="false"
     [[ ! -f "$STATE_FILE" ]] && return 0
 
     if load_previous_state; then
@@ -386,7 +387,7 @@ prompt_previous_run_mode() {
 
     case "$choice" in
         1) SETUP_MODE="reuse" ;;
-        2) SETUP_MODE="wizard" ;;
+        2) SETUP_MODE="wizard"; USE_PREVIOUS_DEFAULTS="true" ;;
         3) SETUP_MODE="cleanup" ;;
         4) SETUP_MODE="fresh" ;;
         *) SETUP_MODE="reuse" ;;
@@ -677,9 +678,39 @@ select_tools_simple() {
     echo ""
     
     SELECTED_TOOLS=()
-    
+
+    local default_numbers=""
+    if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && ${#PREVIOUS_SELECTED_TOOLS[@]} -gt 0 ]]; then
+        local -A _idx_by_key=()
+        for ((i=0; i<${#tool_keys[@]}; i++)); do _idx_by_key["${tool_keys[$i]}"]=$((i+1)); done
+        for k in "${PREVIOUS_SELECTED_TOOLS[@]}"; do
+            [[ -n "${_idx_by_key[$k]:-}" ]] && default_numbers+="${_idx_by_key[$k]} "
+        done
+        default_numbers="${default_numbers%" "}"
+        if [[ -n "$default_numbers" ]]; then
+            echo "Previously selected: ${PREVIOUS_SELECTED_TOOLS[*]}"
+            echo "Press Enter to keep the previous selection, or enter a new list."
+            echo ""
+        fi
+    fi
+
     while true; do
-        read -rp "Enter choices (e.g., 1 3 or 'a' for all): " input
+        local prompt="Enter choices (e.g., 1 3 or 'a' for all)"
+        [[ -n "$default_numbers" ]] && prompt+=" [$default_numbers]"
+        prompt+=": "
+        read -rp "$prompt" input
+
+        if [[ ("$input" == "c" || "$input" == "C") && -n "$default_numbers" ]]; then
+            default_numbers=""
+            echo ""
+            print_info "Cleared previous default. Enter a new selection."
+            echo ""
+            continue
+        fi
+
+        if [[ -z "$input" && -n "$default_numbers" ]]; then
+            input="$default_numbers"
+        fi
         
         if [[ "$input" == "a" || "$input" == "A" ]]; then
             SELECTED_TOOLS=("${tool_keys[@]}")
@@ -768,21 +799,82 @@ select_languages_simple() {
     done
     echo "  a. All languages"
     echo ""
-    
-    read -rp "Enter choices (e.g., 1 2 4 or 'a' for all): " input
-    
-    SELECTED_LANGUAGES=()
-    
-    if [[ "$input" == "a" || "$input" == "A" ]]; then
-        SELECTED_LANGUAGES=("${lang_keys[@]}")
-    else
-        for num in $input; do
-            local idx=$((num - 1))
-            if [[ $idx -ge 0 && $idx -lt ${#lang_keys[@]} ]]; then
-                SELECTED_LANGUAGES+=("${lang_keys[$idx]}")
-            fi
+
+    local default_numbers=""
+    if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && ${#PREVIOUS_SELECTED_LANGUAGES[@]} -gt 0 ]]; then
+        local -A _idx_by_key=()
+        for ((i=0; i<${#lang_keys[@]}; i++)); do _idx_by_key["${lang_keys[$i]}"]=$((i+1)); done
+        for k in "${PREVIOUS_SELECTED_LANGUAGES[@]}"; do
+            [[ -n "${_idx_by_key[$k]:-}" ]] && default_numbers+="${_idx_by_key[$k]} "
         done
+        default_numbers="${default_numbers%" "}"
+        if [[ -n "$default_numbers" ]]; then
+            echo "Previously selected: ${PREVIOUS_SELECTED_LANGUAGES[*]}"
+            echo "Press Enter to keep the previous selection, or enter a new list."
+            echo ""
+        fi
     fi
+
+    SELECTED_LANGUAGES=()
+
+    while true; do
+        local prompt="Enter choices (e.g., 1 2 4 or 'a' for all)"
+        [[ -n "$default_numbers" ]] && prompt+=" [$default_numbers]"
+        prompt+=": "
+        read -rp "$prompt" input
+
+        if [[ ("$input" == "c" || "$input" == "C") && -n "$default_numbers" ]]; then
+            default_numbers=""
+            echo ""
+            print_info "Cleared previous default. Enter a new selection."
+            echo ""
+            continue
+        fi
+
+        if [[ -z "$input" && -n "$default_numbers" ]]; then
+            input="$default_numbers"
+        fi
+
+        if [[ "$input" == "a" || "$input" == "A" ]]; then
+            SELECTED_LANGUAGES=("${lang_keys[@]}")
+            break
+        fi
+
+        if [[ -z "$input" ]]; then
+            echo ""
+            print_error "No languages selected."
+            echo "Please enter at least one language number (e.g., 2) or 'a' for all."
+            echo ""
+            continue
+        fi
+
+        local is_valid=true
+        local temp_langs=()
+        for num in $input; do
+            if ! [[ "$num" =~ ^[0-9]+$ ]]; then
+                echo ""
+                print_error "Invalid input: '$num'"
+                echo "Please enter numbers only (e.g., 1 2 3) or 'a' for all."
+                echo ""
+                is_valid=false
+                break
+            fi
+            local idx=$((num - 1))
+            if [[ $idx -lt 0 || $idx -ge ${#lang_keys[@]} ]]; then
+                echo ""
+                print_error "Invalid choice: $num"
+                echo "Please enter a number between 1 and ${#lang_keys[@]}."
+                echo ""
+                is_valid=false
+                break
+            fi
+            temp_langs+=("${lang_keys[$idx]}")
+        done
+        if [[ "$is_valid" == "true" && ${#temp_langs[@]} -gt 0 ]]; then
+            SELECTED_LANGUAGES=("${temp_langs[@]}")
+            break
+        fi
+    done
     
     # Always include languages with alwaysApply: true
     for always_lang in "${always_apply_langs[@]}"; do
@@ -846,7 +938,7 @@ select_documentation() {
         
         # Check if recommended
         if [[ "${doc_recs[$i]}" == "true" ]]; then
-            suffix=" ⭐"
+            suffix=" *"
         fi
         
         # Check applicability
@@ -862,7 +954,7 @@ select_documentation() {
         echo "      ${doc_descs[$i]}"
     done
     echo ""
-    echo "  ⭐ = recommended"
+    echo "  * = recommended"
     echo "  a. All documentation"
     echo "  s. Skip (no documentation standards)"
     echo ""
@@ -874,7 +966,31 @@ select_documentation() {
         echo "Suggestion for backend/fullstack project: a (all)"
     fi
     
-    read -rp "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip): " input
+    local default_numbers=""
+    if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && ${#PREVIOUS_SELECTED_DOCUMENTATION[@]} -gt 0 ]]; then
+        # PREVIOUS_SELECTED_DOCUMENTATION stores files like "documentation/code"
+        local -A _idx_by_file=()
+        for ((i=0; i<${#doc_keys[@]}; i++)); do
+            _idx_by_file["$(get_documentation_file "${doc_keys[$i]}")"]=$((i+1))
+        done
+        for f in "${PREVIOUS_SELECTED_DOCUMENTATION[@]}"; do
+            [[ -n "${_idx_by_file[$f]:-}" ]] && default_numbers+="${_idx_by_file[$f]} "
+        done
+        default_numbers="${default_numbers%" "}"
+        if [[ -n "$default_numbers" ]]; then
+            echo ""
+            echo "Previously selected: ${PREVIOUS_SELECTED_DOCUMENTATION[*]}"
+        fi
+    fi
+
+    local prompt="Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)"
+    [[ -n "$default_numbers" ]] && prompt+=" [$default_numbers]"
+    prompt+=": "
+    read -rp "$prompt" input
+
+    if [[ -z "$input" && -n "$default_numbers" ]]; then
+        input="$default_numbers"
+    fi
     
     SELECTED_DOCUMENTATION=()
     
@@ -954,8 +1070,28 @@ select_frameworks() {
         echo "  s. Skip (no frameworks)"
         echo "  a. All frameworks"
         echo ""
-        
-        read -rp "Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip): " input
+
+        local default_numbers=""
+        if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && -n "${PREVIOUS_SELECTED_FRAMEWORKS[$lang]:-}" ]]; then
+            local -A _idx_by_key=()
+            for ((i=0; i<${#fw_keys[@]}; i++)); do _idx_by_key["${fw_keys[$i]}"]=$((i+1)); done
+            for k in ${PREVIOUS_SELECTED_FRAMEWORKS[$lang]}; do
+                [[ -n "${_idx_by_key[$k]:-}" ]] && default_numbers+="${_idx_by_key[$k]} "
+            done
+            default_numbers="${default_numbers%" "}"
+            if [[ -n "$default_numbers" ]]; then
+                echo "Previously selected: ${PREVIOUS_SELECTED_FRAMEWORKS[$lang]}"
+            fi
+        fi
+
+        local prompt="Enter choices (e.g., 1 3 5 or 'a' for all, 's' to skip)"
+        [[ -n "$default_numbers" ]] && prompt+=" [$default_numbers]"
+        prompt+=": "
+        read -rp "$prompt" input
+
+        if [[ -z "$input" && -n "$default_numbers" ]]; then
+            input="$default_numbers"
+        fi
         
         local selected_fw=()
         
@@ -1035,8 +1171,28 @@ select_processes() {
         echo "  s. Skip (no processes)"
         echo "  a. All processes"
         echo ""
-        
-        read -rp "Enter choices (e.g., 1 2 or 'a' for all, 's' to skip): " input
+
+        local default_numbers=""
+        if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && -n "${PREVIOUS_SELECTED_PROCESSES[$lang]:-}" ]]; then
+            local -A _idx_by_key=()
+            for ((i=0; i<${#proc_keys[@]}; i++)); do _idx_by_key["${proc_keys[$i]}"]=$((i+1)); done
+            for k in ${PREVIOUS_SELECTED_PROCESSES[$lang]}; do
+                [[ -n "${_idx_by_key[$k]:-}" ]] && default_numbers+="${_idx_by_key[$k]} "
+            done
+            default_numbers="${default_numbers%" "}"
+            if [[ -n "$default_numbers" ]]; then
+                echo "Previously selected: ${PREVIOUS_SELECTED_PROCESSES[$lang]}"
+            fi
+        fi
+
+        local prompt="Enter choices (e.g., 1 2 or 'a' for all, 's' to skip)"
+        [[ -n "$default_numbers" ]] && prompt+=" [$default_numbers]"
+        prompt+=": "
+        read -rp "$prompt" input
+
+        if [[ -z "$input" && -n "$default_numbers" ]]; then
+            input="$default_numbers"
+        fi
         
         local selected_proc=()
         
@@ -1101,8 +1257,27 @@ select_structures() {
             echo "  * = recommended"
             echo "  s. Skip (use default patterns only)"
             echo ""
-            
-            read -rp "Enter choice (1-${#struct_keys[@]} or 's' to skip): " input
+
+            local default_choice=""
+            local prev_file="${PREVIOUS_SELECTED_STRUCTURES["$lang-$fw"]:-}"
+            if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" && -n "$prev_file" ]]; then
+                for ((i=0; i<${#struct_files[@]}; i++)); do
+                    if [[ "${struct_files[$i]}" == "$prev_file" ]]; then
+                        default_choice="$((i+1))"
+                        break
+                    fi
+                done
+                [[ -n "$default_choice" ]] && echo "Previously selected: $prev_file"
+            fi
+
+            local prompt="Enter choice (1-${#struct_keys[@]} or 's' to skip)"
+            [[ -n "$default_choice" ]] && prompt+=" [$default_choice]"
+            prompt+=": "
+            read -rp "$prompt" input
+
+            if [[ -z "$input" && -n "$default_choice" ]]; then
+                input="$default_choice"
+            fi
             
             if [[ "$input" != "s" && "$input" != "S" ]]; then
                 local idx=$((input - 1))
