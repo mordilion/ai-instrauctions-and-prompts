@@ -10,6 +10,7 @@
 ## 2. Nesting
 - **Avoid**: Nesting deeper than 2 levels.
 - **Prefer**: `&` for modifiers (`&--active`) and state classes (`&.is-open`).
+- **NEVER**: Use `!important`.
 
 ## 3. Modules
 - **Prefer**: `@use` / `@forward`.

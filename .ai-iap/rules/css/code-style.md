@@ -12,6 +12,7 @@
 - **Prefer**: `rem` for font sizing and spacing; use `px` only when needed.
 - **Avoid**: Deep descendant selectors (e.g., `.a .b .c .d`).
 - **Avoid**: Styling by tag selectors except for base styles (e.g., `h1`, `p` in a reset layer).
+- **NEVER**: Use `!important`.
 
 ## 3. Performance
 - **Avoid**: Expensive selectors (overly generic descendant chains).

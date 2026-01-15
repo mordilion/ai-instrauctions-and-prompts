@@ -10,4 +10,5 @@
 ## 2. Readability
 - **Prefer**: Explicit braces/colons if a codebase mixes styles; keep it consistent.
 - **Avoid**: Too much implicit nesting/whitespace-driven meaning.
+- **NEVER**: Use `!important`.
 

@@ -10,4 +10,5 @@
 ## 2. Plugin usage
 - **Prefer**: Document non-obvious plugin effects (e.g., nesting, autoprefixing rules).
 - **Avoid**: Plugin chains that hide output behavior (hard to debug).
+- **NEVER**: Use `!important`.
 

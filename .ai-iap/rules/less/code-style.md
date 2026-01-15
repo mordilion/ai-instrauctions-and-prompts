@@ -10,6 +10,7 @@
 ## 2. Nesting
 - **Avoid**: Deep nesting; keep selectors shallow.
 - **Prefer**: Explicit class names over long descendant chains.
+- **NEVER**: Use `!important`.
 
 ## 3. Variables and mixins
 - **Prefer**: Variables for repeated values.
