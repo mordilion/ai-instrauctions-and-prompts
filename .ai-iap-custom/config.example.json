@@ -3,7 +3,7 @@
   "description": "Custom configuration for AI Instructions & Prompts",
   "languages": {
     "general": {
-      "customFiles": ["company-security", "compliance-standards"]
+      "customFiles": ["compliance-standards"]
     },
     "typescript": {
       "customFiles": ["company-standards", "internal-apis"],

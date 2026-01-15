@@ -92,9 +92,16 @@ yarn-error.log*
 # ============================================================================
 
 # Ignore custom files (keep local only)
-.ai-iap-custom/
+.ai-iap-custom/**
 
 # BUT: Always include example files for reference
+!.ai-iap-custom/
+!.ai-iap-custom/rules/
+!.ai-iap-custom/rules/**/
+!.ai-iap-custom/processes/
+!.ai-iap-custom/processes/**/
+!.ai-iap-custom/functions/
+!.ai-iap-custom/functions/**/
 !.ai-iap-custom/*.example.*
 !.ai-iap-custom/**/*.example.*
 !.ai-iap-custom/README.md

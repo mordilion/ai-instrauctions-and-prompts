@@ -10,7 +10,7 @@ This directory allows you to extend or override the core `.ai-iap/` configuratio
 ├── config.json                 # Custom configuration (extends core)
 ├── rules/                      # Custom or override rules
 │   ├── general/
-│   │   └── company-security.md
+│   │   └── compliance-standards.md
 │   └── typescript/
 │       └── company-standards.md
 └── processes/                  # Custom processes

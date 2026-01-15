@@ -50,7 +50,7 @@ The `.ai-iap-custom/` directory allows you to:
 ├── config.json                         # Custom configuration
 ├── rules/                              # Custom or override rules
 │   ├── general/
-│   │   └── company-security.md
+│   │   └── compliance-standards.md
 │   ├── typescript/
 │   │   ├── company-standards.md        # Additional rule
 │   │   └── code-style.md               # Overrides core code-style.md
@@ -595,24 +595,18 @@ git remote add origin https://github.com/company/ai-standards
 
 ## Examples
 
-### Example 1: Add Company Security Rules
+### Example 1: Add Compliance Standards
 
-**File**: `.ai-iap-custom/rules/general/company-security.md`
+**File**: `.ai-iap-custom/rules/general/compliance-standards.md`
 
 ```markdown
-# Company Security Standards
+# Compliance Standards (Company / Project)
 
-> **ALWAYS** follow OWASP Top 10
+> **ALWAYS** follow your compliance policy for this repo (data classification, retention, access)
 
-> **NEVER** commit secrets to git
+> **NEVER** store or log secrets/credentials in source control
 
-> **ALWAYS** use company vault for credentials:
-
-\`\`\`typescript
-import { getSecret } from '@company/vault';
-
-const apiKey = await getSecret('API_KEY');
-\`\`\`
+> **ALWAYS** ensure audit logs exist for privileged actions and data export
 ```
 
 **Config**: `.ai-iap-custom/config.json`
@@ -621,7 +615,7 @@ const apiKey = await getSecret('API_KEY');
 {
   "languages": {
     "general": {
-      "customFiles": ["company-security"]
+      "customFiles": ["compliance-standards"]
     }
   }
 }
