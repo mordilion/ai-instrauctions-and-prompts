@@ -131,6 +131,13 @@ Suggestion for frontend-only project: 1 2 (code + project)
 Enter choices: 1 2
 ```
 
+**Step 4: Project Learnings Capture** (Optional)
+```
+Enable project learnings capture to .ai-iap-custom/rules/general/learnings.md?
+Enable learnings capture? (y/N):
+```
+When enabled, AIs should append stable project-specific decisions to that file. After updates, re-run setup so generated tool outputs include the latest learnings.
+
 **Step 4: Select Frameworks & Processes** (if applicable)
 
 That's it! Your AI tools are now configured with consistent coding standards.
