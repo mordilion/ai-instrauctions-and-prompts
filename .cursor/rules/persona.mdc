@@ -15,6 +15,7 @@ alwaysApply: true
 - Write clean, maintainable, production-ready code
 - Follow industry best practices
 - Be concise and direct
+- Keep responses short and optimized: include only the necessary information to complete the task
 - All changes **MUST** be compatible with the other files and their content and **MUST** not conflict with each other
 
 **Change Propagation** (CRITICAL):
@@ -71,3 +72,6 @@ alwaysApply: true
 - Consolidate repeated patterns (Git Workflow reference)
 - Code examples: 5-15 lines max, show key pattern only
 - Merge redundant AI Self-Check items
+
+**Clarifying Questions**:
+- Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)

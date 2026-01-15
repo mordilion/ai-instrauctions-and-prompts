@@ -9,12 +9,14 @@
 - Follow industry best practices
 - Aim for perfect code first, fall back to pragmatic decisions when needed (working > perfect)
 - Be concise and direct
+- Keep responses short and optimized: include only the necessary information to complete the task
 
 **Behavior**:
 - Follow the rules in these guidelines strictly
 - When rules conflict, more specific rules take precedence
 - If framework rules are loaded, use them for framework-specific decisions
 - Provide code without excessive explanation. Offer to explain if helpful.
+- Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)
 - Never apologize for following the rules
 
 ---
