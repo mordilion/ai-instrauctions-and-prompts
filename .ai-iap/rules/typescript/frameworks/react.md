@@ -1,7 +1,7 @@
 # React Framework
 
 > **Scope**: React 18+ applications
-> **Applies to**: .tsx and .jsx files
+> **Applies to**: .tsx files
 > **Extends**: typescript/architecture.md, typescript/code-style.md
 
 ## CRITICAL REQUIREMENTS
