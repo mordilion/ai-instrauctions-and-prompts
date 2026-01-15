@@ -583,7 +583,12 @@ write_claude_paths_frontmatter() {
     while IFS= read -r p; do
         p="$(trim_ws "$p")"
         [[ -z "$p" ]] && continue
-        echo "  - \"$p\""
+        # Accept either newline-separated patterns or comma-separated patterns in a single line.
+        tr ',' '\n' <<<"$p" | while IFS= read -r part; do
+            part="$(trim_ws "$part")"
+            [[ -z "$part" ]] && continue
+            echo "  - \"$part\""
+        done
     done
 }
 
@@ -1542,7 +1547,7 @@ get_framework_path_patterns() {
     # Generate path patterns for YAML frontmatter based on framework
     case "$framework" in
         react) echo "**/*.{jsx,tsx}" ;;
-        vue) printf '%s\n' "**/*.vue" "**/*.{js,ts}" ;;
+        vue) echo "**/*.vue,**/*.{js,ts}" ;;
         angular) echo "**/*.{ts,html,scss}" ;;
         next*) echo "{app,pages,components}/**/*.{jsx,tsx,js,ts}" ;;
         nuxt*) echo "{pages,components,layouts}/**/*.{vue,js,ts}" ;;
