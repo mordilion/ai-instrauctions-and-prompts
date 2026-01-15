@@ -1187,6 +1187,40 @@ function New-ClaudeFrontmatter {
     return ($lines -join "`n") + "`n"
 }
 
+function Split-CommaOutsideBraces {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    $parts = New-Object System.Collections.Generic.List[string]
+    $sb = New-Object System.Text.StringBuilder
+    $depth = 0
+
+    foreach ($ch in $Value.ToCharArray()) {
+        if ($ch -eq '{') {
+            $depth++
+            [void]$sb.Append($ch)
+            continue
+        }
+        if ($ch -eq '}') {
+            if ($depth -gt 0) { $depth-- }
+            [void]$sb.Append($ch)
+            continue
+        }
+        if ($ch -eq ',' -and $depth -eq 0) {
+            $parts.Add($sb.ToString())
+            $sb.Clear() | Out-Null
+            continue
+        }
+
+        [void]$sb.Append($ch)
+    }
+
+    $parts.Add($sb.ToString())
+    return $parts.ToArray()
+}
+
 function New-ClaudeConfig {
     param(
         [PSCustomObject]$Config,
@@ -1278,7 +1312,14 @@ function New-ClaudeConfig {
                 # Add YAML frontmatter with path patterns for framework-specific files
                 $pathPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
                 $pathList = @()
-                if ($pathPatterns) { $pathList = @($pathPatterns -split "(`r`n|`n|,)") }
+                if ($pathPatterns) {
+                    foreach ($line in ($pathPatterns -split "(`r`n|`n)")) {
+                        foreach ($p in (Split-CommaOutsideBraces -Value $line)) {
+                            $t = $p.Trim()
+                            if (-not [string]::IsNullOrWhiteSpace($t)) { $pathList += $t }
+                        }
+                    }
+                }
                 $frontmatter = New-ClaudeFrontmatter -Paths $pathList
                 $fullContent = $frontmatter + $content
                 
@@ -1300,7 +1341,14 @@ function New-ClaudeConfig {
                         # Add path patterns for structure-specific rules
                         $structPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
                         $structPathList = @()
-                        if ($structPatterns) { $structPathList = @($structPatterns -split "(`r`n|`n|,)") }
+                        if ($structPatterns) {
+                            foreach ($line in ($structPatterns -split "(`r`n|`n)")) {
+                                foreach ($p in (Split-CommaOutsideBraces -Value $line)) {
+                                    $t = $p.Trim()
+                                    if (-not [string]::IsNullOrWhiteSpace($t)) { $structPathList += $t }
+                                }
+                            }
+                        }
                         $structFrontmatter = New-ClaudeFrontmatter -Paths $structPathList
                         $structFullContent = $structFrontmatter + $structContent
                         

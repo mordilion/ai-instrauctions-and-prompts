@@ -558,6 +558,32 @@ trim_ws() {
     echo "$s"
 }
 
+split_commas_outside_braces() {
+    # Splits a single string on commas that are NOT inside {...}.
+    # Prints parts one per line.
+    local s="$1"
+    local part=""
+    local depth=0
+    local i ch
+    for ((i=0; i<${#s}; i++)); do
+        ch="${s:i:1}"
+        case "$ch" in
+            "{") depth=$((depth+1)); part+="$ch" ;;
+            "}") [[ $depth -gt 0 ]] && depth=$((depth-1)); part+="$ch" ;;
+            ",")
+                if [[ $depth -eq 0 ]]; then
+                    echo "$part"
+                    part=""
+                else
+                    part+="$ch"
+                fi
+                ;;
+            *) part+="$ch" ;;
+        esac
+    done
+    echo "$part"
+}
+
 get_claude_paths_for_language() {
     local lang="$1"
     local always_apply globs
@@ -583,8 +609,8 @@ write_claude_paths_frontmatter() {
     while IFS= read -r p; do
         p="$(trim_ws "$p")"
         [[ -z "$p" ]] && continue
-        # Accept either newline-separated patterns or comma-separated patterns in a single line.
-        tr ',' '\n' <<<"$p" | while IFS= read -r part; do
+        # Accept comma-separated patterns, but only split commas outside brace expansions like "{a,b}/**/*.{x,y}".
+        split_commas_outside_braces "$p" | while IFS= read -r part; do
             part="$(trim_ws "$part")"
             [[ -z "$part" ]] && continue
             echo "  - \"$part\""
