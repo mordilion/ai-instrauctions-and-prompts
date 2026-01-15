@@ -1113,7 +1113,7 @@ function Get-FrameworkPathPatterns {
     # Generate path patterns for YAML frontmatter based on framework
     switch -Regex ($Framework) {
         "react" { return "**/*.{jsx,tsx}" }
-        "vue" { return "**/*.vue`n**/*.{js,ts}" }
+        "vue" { return "**/*.vue,**/*.{js,ts}" }
         "angular" { return "**/*.{ts,html,scss}" }
         "next" { return "{app,pages,components}/**/*.{jsx,tsx,js,ts}" }
         "nuxt" { return "{pages,components,layouts}/**/*.{vue,js,ts}" }
@@ -1278,7 +1278,7 @@ function New-ClaudeConfig {
                 # Add YAML frontmatter with path patterns for framework-specific files
                 $pathPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
                 $pathList = @()
-                if ($pathPatterns) { $pathList = @($pathPatterns -split "`n") }
+                if ($pathPatterns) { $pathList = @($pathPatterns -split "(`r`n|`n|,)") }
                 $frontmatter = New-ClaudeFrontmatter -Paths $pathList
                 $fullContent = $frontmatter + $content
                 
@@ -1300,7 +1300,7 @@ function New-ClaudeConfig {
                         # Add path patterns for structure-specific rules
                         $structPatterns = Get-FrameworkPathPatterns -Framework $fw -Lang $lang
                         $structPathList = @()
-                        if ($structPatterns) { $structPathList = @($structPatterns -split "`n") }
+                        if ($structPatterns) { $structPathList = @($structPatterns -split "(`r`n|`n|,)") }
                         $structFrontmatter = New-ClaudeFrontmatter -Paths $structPathList
                         $structFullContent = $structFrontmatter + $structContent
                         
