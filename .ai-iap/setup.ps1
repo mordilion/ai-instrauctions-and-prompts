@@ -583,6 +583,23 @@ function Select-ProjectLearningsCapture {
     return $false
 }
 
+function Select-CommitStandards {
+    param(
+        [bool]$DefaultEnabled
+    )
+
+    Write-Host ""
+    Write-Host "Enable commit standards (Conventional Commits) rules?" -ForegroundColor White
+    Write-Host "When enabled, the AI will follow general/commit-standards for commit messages." -ForegroundColor DarkGray
+    Write-Host ""
+
+    $defaultText = if ($DefaultEnabled) { "y" } else { "n" }
+    $answer = Read-Host "Enable commit standards? (y/N) [$defaultText]"
+    if ([string]::IsNullOrWhiteSpace($answer)) { $answer = $defaultText }
+
+    return ($answer -match "^[Yy]$")
+}
+
 function Select-Frameworks {
     param(
         [PSCustomObject]$Config,
@@ -967,7 +984,8 @@ function New-CursorConfig {
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses,
-        [bool]$EnableProjectLearnings
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
     )
     
     $outputDir = Join-Path $Script:ProjectRoot ".cursor\rules"
@@ -985,6 +1003,9 @@ function New-CursorConfig {
         $files = $Config.languages.$lang.files
         
         foreach ($file in $files) {
+            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
+                continue
+            }
             $content = Read-InstructionFile -Lang $lang -File $file
             
             if ($null -eq $content) {
@@ -1292,7 +1313,8 @@ function New-ClaudeConfig {
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses,
-        [bool]$EnableProjectLearnings
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
     )
     
     Write-InfoMessage "Generating Claude configuration..."
@@ -1318,6 +1340,9 @@ function New-ClaudeConfig {
         
         $files = $Config.languages.$lang.files
         foreach ($file in $files) {
+            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
+                continue
+            }
             $fileContent = Read-InstructionFile -Lang $lang -File $file
             if ($null -eq $fileContent) { continue }
             
@@ -1620,7 +1645,8 @@ function New-ConcatenatedConfig {
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses,
-        [bool]$EnableProjectLearnings
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
     )
     
     Write-InfoMessage "Generating $ToolName configuration..."
@@ -1645,6 +1671,9 @@ function New-ConcatenatedConfig {
         $files = $Config.languages.$lang.files
         
         foreach ($file in $files) {
+            if ($lang -eq "general" -and $file -eq "commit-standards" -and -not $EnableCommitStandards) {
+                continue
+            }
             $fileContent = Read-InstructionFile -Lang $lang -File $file
             
             if ($null -ne $fileContent) {
@@ -1727,39 +1756,40 @@ function New-ToolConfig {
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses,
-        [bool]$EnableProjectLearnings
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
     )
     
     switch ($Tool) {
         "cursor" {
-            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "claude" {
-            New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "google-ai-studio" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "amazon-q" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "tabnine" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "cody" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         "continue" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings -EnableCommitStandards $EnableCommitStandards
         }
         default {
             Write-WarningMessage "Unknown tool: $Tool"
@@ -1831,6 +1861,9 @@ function Write-PreviousStateSummary {
     if ($null -ne $State.enableProjectLearnings) {
         Write-Host "  Project learnings capture: $($State.enableProjectLearnings)"
     }
+    if ($null -ne $State.enableCommitStandards) {
+        Write-Host "  Commit standards: $($State.enableCommitStandards)"
+    }
     Write-Host ""
 }
 
@@ -1842,7 +1875,8 @@ function Save-State {
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
         [hashtable]$SelectedProcesses,
-        [bool]$EnableProjectLearnings
+        [bool]$EnableProjectLearnings,
+        [bool]$EnableCommitStandards
     )
 
     function Normalize-StringArrayHashtable {
@@ -1883,6 +1917,7 @@ function Save-State {
         selectedStructures = $SelectedStructures
         selectedProcesses = (Normalize-StringArrayHashtable -InputTable $SelectedProcesses)
         enableProjectLearnings = $EnableProjectLearnings
+        enableCommitStandards = $EnableCommitStandards
     }
 
     # Write compact JSON to avoid noisy indentation differences across environments/editors.
@@ -2074,6 +2109,7 @@ function Main {
     $selectedStructures = @{}
     $selectedProcesses = @{}
     $enableProjectLearnings = $false
+    $enableCommitStandards = $true
 
     if ($setupMode -eq "reuse" -and $state) {
         $selectedTools = @($state.selectedTools)
@@ -2083,6 +2119,7 @@ function Main {
         $selectedStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
         $selectedProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
         if ($null -ne $state.enableProjectLearnings) { $enableProjectLearnings = [bool]$state.enableProjectLearnings }
+        if ($null -ne $state.enableCommitStandards) { $enableCommitStandards = [bool]$state.enableCommitStandards }
 
         # Ensure the learnings file exists if enabled (non-destructive)
         New-ProjectLearningsFileIfMissing -EnableProjectLearnings $enableProjectLearnings
@@ -2096,6 +2133,7 @@ function Main {
         $defaultStructures = @{}
         $defaultProcesses = @{}
         $defaultLearnings = $false
+        $defaultCommitStandards = $true
 
         if ($usePreviousDefaults -and $state) {
             $defaultTools = @($state.selectedTools)
@@ -2105,6 +2143,7 @@ function Main {
             $defaultStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
             $defaultProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
             if ($null -ne $state.enableProjectLearnings) { $defaultLearnings = [bool]$state.enableProjectLearnings }
+            if ($null -ne $state.enableCommitStandards) { $defaultCommitStandards = [bool]$state.enableCommitStandards }
         }
 
         $selectedTools = Select-Tools -Config $config -DefaultSelected $defaultTools
@@ -2124,6 +2163,9 @@ function Main {
         # Documentation selection
         # Documentation selection (press Enter to keep previous; 's' removes all docs)
         $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedDocumentation $defaultDocs
+
+        # Optional: Commit standards (Conventional Commits)
+        $enableCommitStandards = Select-CommitStandards -DefaultEnabled $defaultCommitStandards
 
         # Optional: Project learnings capture (.ai-iap-custom/rules/general/learnings.md)
         $enableProjectLearnings = Select-ProjectLearningsCapture -DefaultEnabled $defaultLearnings
@@ -2146,6 +2188,7 @@ function Main {
         Write-Host "  Documentation: $($selectedDocumentation -join ', ')"
     }
     Write-Host "  Project learnings capture: $enableProjectLearnings"
+    Write-Host "  Commit standards: $enableCommitStandards"
     
     if ($selectedFrameworks.Count -gt 0) {
         foreach ($lang in $selectedFrameworks.Keys) {
@@ -2186,10 +2229,10 @@ function Main {
     
     # Generate files
     foreach ($tool in $selectedTools) {
-        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings
+        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings -EnableCommitStandards $enableCommitStandards
     }
 
-    Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings
+    Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings -EnableCommitStandards $enableCommitStandards
     
     # Gitignore prompt
     Add-ToGitignore

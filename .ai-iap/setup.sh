@@ -279,6 +279,7 @@ declare -A PREVIOUS_SELECTED_FRAMEWORKS
 declare -A PREVIOUS_SELECTED_STRUCTURES
 declare -A PREVIOUS_SELECTED_PROCESSES
 PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
+PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
 
 have_previous_state() {
     [[ -f "$STATE_FILE" ]]
@@ -292,6 +293,7 @@ load_previous_state() {
     PREVIOUS_SELECTED_STRUCTURES=()
     PREVIOUS_SELECTED_PROCESSES=()
     PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
+    PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
 
     [[ ! -f "$STATE_FILE" ]] && return 1
 
@@ -345,6 +347,10 @@ load_previous_state() {
     PREVIOUS_ENABLE_PROJECT_LEARNINGS="$(jq -r '.enableProjectLearnings // false' "$STATE_FILE")"
     [[ "$PREVIOUS_ENABLE_PROJECT_LEARNINGS" != "true" ]] && PREVIOUS_ENABLE_PROJECT_LEARNINGS="false"
 
+    # Backwards compatible: if missing, default to true (existing projects keep behavior)
+    PREVIOUS_ENABLE_COMMIT_STANDARDS="$(jq -r '.enableCommitStandards // true' "$STATE_FILE")"
+    [[ "$PREVIOUS_ENABLE_COMMIT_STANDARDS" != "false" ]] && PREVIOUS_ENABLE_COMMIT_STANDARDS="true"
+
     return 0
 }
 
@@ -366,6 +372,7 @@ print_previous_state_summary() {
         echo "  Processes ($lang): ${PREVIOUS_SELECTED_PROCESSES[$lang]}"
     done
     echo "  Project learnings capture: ${PREVIOUS_ENABLE_PROJECT_LEARNINGS}"
+    echo "  Commit standards: ${PREVIOUS_ENABLE_COMMIT_STANDARDS}"
     echo ""
 }
 
@@ -514,6 +521,7 @@ save_state() {
         --argjson selectedStructures "$structs_json" \
         --argjson selectedProcesses "$procs_json" \
         --argjson enableProjectLearnings "${ENABLE_PROJECT_LEARNINGS:-false}" \
+        --argjson enableCommitStandards "${ENABLE_COMMIT_STANDARDS:-true}" \
         '{
             version: $version,
             selectedTools: $selectedTools,
@@ -522,7 +530,8 @@ save_state() {
             selectedFrameworks: $selectedFrameworks,
             selectedStructures: $selectedStructures,
             selectedProcesses: $selectedProcesses,
-            enableProjectLearnings: $enableProjectLearnings
+            enableProjectLearnings: $enableProjectLearnings,
+            enableCommitStandards: $enableCommitStandards
         }' > "$STATE_FILE"
 }
 
@@ -978,6 +987,7 @@ select_languages_simple() {
 # Array to store selected documentation files
 SELECTED_DOCUMENTATION=()
 ENABLE_PROJECT_LEARNINGS="false"
+ENABLE_COMMIT_STANDARDS="true"
 
 ensure_project_learnings_file() {
     [[ "${ENABLE_PROJECT_LEARNINGS:-false}" != "true" ]] && return 0
@@ -1034,6 +1044,26 @@ select_project_learnings_capture() {
         ensure_project_learnings_file
     else
         ENABLE_PROJECT_LEARNINGS="false"
+    fi
+}
+
+select_commit_standards() {
+    echo ""
+    printf '%b\n' "Enable ${BOLD}commit standards${NC} rules (Conventional Commits)?"
+    echo "When enabled, the AI will follow commit message rules from general/commit-standards."
+    echo ""
+
+    local default_choice="y"
+    if [[ "${USE_PREVIOUS_DEFAULTS:-false}" == "true" ]]; then
+        [[ "$PREVIOUS_ENABLE_COMMIT_STANDARDS" == "false" ]] && default_choice="n"
+    fi
+
+    read -rp "Enable commit standards? (y/N) [$default_choice]: " input
+    input="${input:-$default_choice}"
+    if [[ "$input" =~ ^[Yy]$ ]]; then
+        ENABLE_COMMIT_STANDARDS="true"
+    else
+        ENABLE_COMMIT_STANDARDS="false"
     fi
 }
 
@@ -1823,6 +1853,9 @@ generate_claude() {
         
         while IFS= read -r file; do
             local content
+            if [[ "$lang" == "general" && "$file" == "commit-standards" && "${ENABLE_COMMIT_STANDARDS:-true}" != "true" ]]; then
+                continue
+            fi
             content=$(read_instruction_file "$lang" "$file") || continue
             
             local output_file="$lang_core_dir/$file.md"
@@ -2018,6 +2051,9 @@ generate_concatenated() {
             
             # Base language files
             while IFS= read -r file; do
+                if [[ "$lang" == "general" && "$file" == "commit-standards" && "${ENABLE_COMMIT_STANDARDS:-true}" != "true" ]]; then
+                    continue
+                fi
                 local content
                 content=$(read_instruction_file "$lang" "$file") || continue
                 
@@ -2214,6 +2250,7 @@ main() {
         SELECTED_LANGUAGES=("${PREVIOUS_SELECTED_LANGUAGES[@]}")
         SELECTED_DOCUMENTATION=("${PREVIOUS_SELECTED_DOCUMENTATION[@]}")
         ENABLE_PROJECT_LEARNINGS="${PREVIOUS_ENABLE_PROJECT_LEARNINGS:-false}"
+        ENABLE_COMMIT_STANDARDS="${PREVIOUS_ENABLE_COMMIT_STANDARDS:-true}"
         ensure_project_learnings_file
 
         SELECTED_FRAMEWORKS=()
@@ -2241,6 +2278,9 @@ main() {
         # Documentation selection
         select_documentation
 
+        # Optional: Commit standards (Conventional Commits)
+        select_commit_standards
+
         # Optional: Project learnings capture (.ai-iap-custom/rules/general/learnings.md)
         select_project_learnings_capture
         
@@ -2262,6 +2302,7 @@ main() {
         echo "  Documentation: ${SELECTED_DOCUMENTATION[*]}"
     fi
     echo "  Project learnings capture: ${ENABLE_PROJECT_LEARNINGS}"
+    echo "  Commit standards: ${ENABLE_COMMIT_STANDARDS}"
     
     for lang in "${!SELECTED_FRAMEWORKS[@]}"; do
         echo "  Frameworks ($lang): ${SELECTED_FRAMEWORKS[$lang]}"

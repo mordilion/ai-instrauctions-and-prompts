@@ -132,14 +132,20 @@ Suggestion for frontend-only project: 1 2 (code + project)
 Enter choices: 1 2
 ```
 
-**Step 4: Project Learnings Capture** (Optional)
+**Step 4: Commit Standards** (Optional)
+```
+Enable commit standards (Conventional Commits) rules?
+Enable commit standards? (y/N):
+```
+
+**Step 5: Project Learnings Capture** (Optional)
 ```
 Enable project learnings capture to .ai-iap-custom/rules/general/learnings.md?
 Enable learnings capture? (y/N):
 ```
 When enabled, AIs should append stable project-specific decisions to that file. After updates, re-run setup so generated tool outputs include the latest learnings.
 
-**Step 5: Select Frameworks, Structures & Processes** (if applicable)
+**Step 6: Select Frameworks, Structures & Processes** (if applicable)
 
 That's it! Your AI tools are now configured with consistent coding standards.
 
