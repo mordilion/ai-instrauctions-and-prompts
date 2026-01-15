@@ -1,6 +1,6 @@
 # HTML Architecture
 
-> **Scope**: Apply these rules ONLY when working with `.html` / `.htm` files. These extend the general architecture guidelines.
+> **Scope**: Apply these rules ONLY when working with `.html` / `.htm` files and HTML/template sections in component files (e.g. `.vue`, `.svelte`). These extend the general architecture guidelines.
 
 ## 1. Core Principles
 - **Separation of concerns**: HTML = structure; CSS = presentation; JavaScript = behavior.

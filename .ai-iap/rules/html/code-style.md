@@ -1,6 +1,6 @@
 # HTML Code Style
 
-> **Scope**: Apply these rules ONLY when working with `.html` / `.htm` files. These extend the general code style guidelines.
+> **Scope**: Apply these rules ONLY when working with `.html` / `.htm` files and HTML/template sections in component files (e.g. `.vue`, `.svelte`). These extend the general code style guidelines.
 
 ## 1. Formatting
 - **Indentation**: 2 spaces per level.

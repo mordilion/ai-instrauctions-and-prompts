@@ -2,6 +2,7 @@
 
 > **Scope**: HTML-specific security (especially when embedding JavaScript).  
 > **Extends**: General security rules
+> **Applies to**: *.html, *.htm, *.vue, *.svelte
 
 ## 1. XSS (Primary Risk)
 - **NEVER**: Inject untrusted strings into HTML without escaping/sanitization.
