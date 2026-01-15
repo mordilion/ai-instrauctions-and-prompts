@@ -550,6 +550,16 @@ get_language_custom_files() {
     jq -r ".languages[\"$1\"].customFiles[]? // empty" "$WORKING_CONFIG" 2>/dev/null || true
 }
 
+is_custom_language_file() {
+    # Returns 0 (true) if $2 is listed under languages[$1].customFiles in config.
+    local lang="$1"
+    local file="$2"
+    while IFS= read -r f; do
+        [[ "$f" == "$file" ]] && return 0
+    done < <(get_language_custom_files "$lang")
+    return 1
+}
+
 get_language_globs() {
     jq -r ".languages[\"$1\"].globs" "$WORKING_CONFIG"
 }
@@ -1454,7 +1464,10 @@ read_instruction_file() {
         candidates+=("$SCRIPT_DIR/rules/$lang/frameworks/$file.md")
     else
         candidates+=("$CUSTOM_RULES_DIR/$lang/$file.md")
-        candidates+=("$SCRIPT_DIR/rules/$lang/$file.md")
+        # If the file originates from customFiles, only look in .ai-iap-custom to avoid misleading warnings.
+        if ! is_custom_language_file "$lang" "$file"; then
+            candidates+=("$SCRIPT_DIR/rules/$lang/$file.md")
+        fi
     fi
 
     for filepath in "${candidates[@]}"; do

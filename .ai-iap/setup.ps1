@@ -890,20 +890,29 @@ function Read-InstructionFile {
         $candidates += (Join-Path $Script:CustomProcessesDir "$Lang\$File.md")
         $candidates += (Join-Path $Script:CustomProcessesDir "ondemand\$Lang\$File.md")
         $candidates += (Join-Path $Script:CustomProcessesDir "permanent\$Lang\$File.md")
-        $candidates += (Join-Path $Script:ScriptDir "processes\ondemand\$Lang\$File.md")
-        $candidates += (Join-Path $Script:ScriptDir "processes\permanent\$Lang\$File.md")
+
+        $coreOnDemand = (Join-Path $Script:ScriptDir "processes\ondemand\$Lang\$File.md")
+        $corePermanent = (Join-Path $Script:ScriptDir "processes\permanent\$Lang\$File.md")
+        if (Test-Path $coreOnDemand) { $candidates += $coreOnDemand }
+        if (Test-Path $corePermanent) { $candidates += $corePermanent }
     }
     elseif ($IsStructure) {
-        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\frameworks\structures\$File.md")
-        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\structures\$File.md")
+        $custom = (Join-Path $Script:CustomRulesDir "$Lang\frameworks\structures\$File.md")
+        $core = (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\structures\$File.md")
+        $candidates += $custom
+        if (Test-Path $core) { $candidates += $core }
     }
     elseif ($IsFramework) {
-        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\frameworks\$File.md")
-        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\$File.md")
+        $custom = (Join-Path $Script:CustomRulesDir "$Lang\frameworks\$File.md")
+        $core = (Join-Path $Script:ScriptDir "rules\$Lang\frameworks\$File.md")
+        $candidates += $custom
+        if (Test-Path $core) { $candidates += $core }
     }
     else {
-        $candidates += (Join-Path $Script:CustomRulesDir "$Lang\$File.md")
-        $candidates += (Join-Path $Script:ScriptDir "rules\$Lang\$File.md")
+        $custom = (Join-Path $Script:CustomRulesDir "$Lang\$File.md")
+        $core = (Join-Path $Script:ScriptDir "rules\$Lang\$File.md")
+        $candidates += $custom
+        if (Test-Path $core) { $candidates += $core }
     }
 
     foreach ($path in $candidates) {
