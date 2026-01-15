@@ -439,7 +439,6 @@ cleanup_tool_outputs() {
             ;;
         claude)
             cleanup_managed_claude_rules
-            cleanup_generated_file_if_managed "$PROJECT_ROOT/CLAUDE.md"
             ;;
         github-copilot)
             cleanup_generated_file_if_managed "$PROJECT_ROOT/.github/copilot-instructions.md"
@@ -1114,6 +1113,7 @@ select_documentation() {
         if [[ -n "$default_numbers" ]]; then
             echo ""
             echo "Previously selected: ${PREVIOUS_SELECTED_DOCUMENTATION[*]}"
+            echo "Press Enter to keep the previous selection, or enter a new list."
         fi
     fi
 
@@ -1215,6 +1215,7 @@ select_frameworks() {
             default_numbers="${default_numbers%" "}"
             if [[ -n "$default_numbers" ]]; then
                 echo "Previously selected: ${PREVIOUS_SELECTED_FRAMEWORKS[$lang]}"
+                echo "Press Enter to keep the previous selection, or enter a new list."
             fi
         fi
 
@@ -1316,6 +1317,7 @@ select_processes() {
             default_numbers="${default_numbers%" "}"
             if [[ -n "$default_numbers" ]]; then
                 echo "Previously selected: ${PREVIOUS_SELECTED_PROCESSES[$lang]}"
+                echo "Press Enter to keep the previous selection, or enter a new list."
             fi
         fi
 
@@ -1401,7 +1403,7 @@ select_structures() {
                         break
                     fi
                 done
-                [[ -n "$default_choice" ]] && echo "Previously selected: $prev_file"
+                [[ -n "$default_choice" ]] && echo "Previously selected: $prev_file" && echo "Press Enter to keep the previous selection, or enter a new list."
             fi
 
             local prompt="Enter choice (1-${#struct_keys[@]} or 's' to skip)"

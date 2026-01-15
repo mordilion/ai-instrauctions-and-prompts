@@ -656,6 +656,7 @@ function Select-Frameworks {
             }
             if ($idxs.Count -gt 0) {
                 Write-Host ("Previously selected: " + ($prev -join ", ")) -ForegroundColor DarkGray
+                Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
                 $defaultInput = ($idxs -join " ")
                 Write-Host ""
             }
@@ -748,6 +749,7 @@ function Select-Processes {
             }
             if ($idxs.Count -gt 0) {
                 Write-Host ("Previously selected: " + ($prev -join ", ")) -ForegroundColor DarkGray
+                Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
                 $defaultInput = ($idxs -join " ")
                 Write-Host ""
             }
@@ -841,6 +843,7 @@ function Select-Structures {
                 }
                 if ($defaultChoice) {
                     Write-Host ("Previously selected: " + $prevFile) -ForegroundColor DarkGray
+                    Write-Host "Press Enter to keep the previous selection, or enter a new list." -ForegroundColor DarkGray
                     Write-Host ""
                 }
             }
@@ -1714,39 +1717,40 @@ function New-ToolConfig {
         [string[]]$SelectedDocumentation,
         [hashtable]$SelectedFrameworks,
         [hashtable]$SelectedStructures,
-        [hashtable]$SelectedProcesses
+        [hashtable]$SelectedProcesses,
+        [bool]$EnableProjectLearnings
     )
     
     switch ($Tool) {
         "cursor" {
-            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-CursorConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "claude" {
-            New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ClaudeConfig -Config $Config -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "github-copilot" {
-            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "GitHub Copilot" -OutputFile ".github\copilot-instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "windsurf" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Windsurf" -OutputFile ".windsurfrules" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "aider" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Aider" -OutputFile "CONVENTIONS.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "google-ai-studio" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Google AI Studio" -OutputFile "GOOGLE_AI_STUDIO.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "amazon-q" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Amazon Q Developer" -OutputFile "AMAZON_Q.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "tabnine" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Tabnine" -OutputFile "TABNINE.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "cody" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Cody (Sourcegraph)" -OutputFile ".cody\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         "continue" {
-            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+            New-ConcatenatedConfig -Config $Config -ToolName "Continue.dev" -OutputFile ".continue\instructions.md" -SelectedLanguages $SelectedLanguages -SelectedDocumentation $SelectedDocumentation -SelectedFrameworks $SelectedFrameworks -SelectedStructures $SelectedStructures -SelectedProcesses $SelectedProcesses -EnableProjectLearnings $EnableProjectLearnings
         }
         default {
             Write-WarningMessage "Unknown tool: $Tool"
@@ -1980,7 +1984,6 @@ function Cleanup-ToolOutputs {
         "cursor" { Remove-ManagedCursorRules }
         "claude" {
             Remove-ManagedClaudeRules
-            Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot "CLAUDE.md")
         }
         "github-copilot" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".github\copilot-instructions.md") }
         "windsurf" { Remove-GeneratedFileIfManaged -Path (Join-Path $Script:ProjectRoot ".windsurfrules") }
@@ -2061,19 +2064,19 @@ function Main {
     $selectedFrameworks = @{}
     $selectedStructures = @{}
     $selectedProcesses = @{}
-    $Script:EnableProjectLearnings = $false
+    $enableProjectLearnings = $false
 
     if ($setupMode -eq "reuse" -and $state) {
         $selectedTools = @($state.selectedTools)
         $selectedLanguages = @($state.selectedLanguages)
-        $selectedDocumentation = @($state.selectedDocumentation)
+        $selectedDocumentation = if ($state.selectedDocumentation) { @($state.selectedDocumentation) } else { @() }
         $selectedFrameworks = ConvertTo-Hashtable -InputObject $state.selectedFrameworks
         $selectedStructures = ConvertTo-Hashtable -InputObject $state.selectedStructures
         $selectedProcesses = ConvertTo-Hashtable -InputObject $state.selectedProcesses
-        if ($null -ne $state.enableProjectLearnings) { $Script:EnableProjectLearnings = [bool]$state.enableProjectLearnings }
+        if ($null -ne $state.enableProjectLearnings) { $enableProjectLearnings = [bool]$state.enableProjectLearnings }
 
         # Ensure the learnings file exists if enabled (non-destructive)
-        New-ProjectLearningsFileIfMissing -EnableProjectLearnings $Script:EnableProjectLearnings
+        New-ProjectLearningsFileIfMissing -EnableProjectLearnings $enableProjectLearnings
     }
     else {
         # Selection (wizard)
@@ -2114,7 +2117,7 @@ function Main {
         $selectedDocumentation = Select-Documentation -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedDocumentation $defaultDocs
 
         # Optional: Project learnings capture (.ai-iap-custom/rules/general/learnings.md)
-        $Script:EnableProjectLearnings = Select-ProjectLearningsCapture -DefaultEnabled $defaultLearnings
+        $enableProjectLearnings = Select-ProjectLearningsCapture -DefaultEnabled $defaultLearnings
         
         # Framework selection
         $selectedFrameworks = Select-Frameworks -Config $config -SelectedLanguages $selectedLanguages -DefaultSelectedFrameworks $defaultFrameworks
@@ -2133,7 +2136,7 @@ function Main {
     if ($selectedDocumentation.Count -gt 0) {
         Write-Host "  Documentation: $($selectedDocumentation -join ', ')"
     }
-    Write-Host "  Project learnings capture: $($Script:EnableProjectLearnings)"
+    Write-Host "  Project learnings capture: $enableProjectLearnings"
     
     if ($selectedFrameworks.Count -gt 0) {
         foreach ($lang in $selectedFrameworks.Keys) {
@@ -2174,10 +2177,10 @@ function Main {
     
     # Generate files
     foreach ($tool in $selectedTools) {
-        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses
+        New-ToolConfig -Config $config -Tool $tool -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings
     }
 
-    Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $Script:EnableProjectLearnings
+    Save-State -SelectedTools $selectedTools -SelectedLanguages $selectedLanguages -SelectedDocumentation $selectedDocumentation -SelectedFrameworks $selectedFrameworks -SelectedStructures $selectedStructures -SelectedProcesses $selectedProcesses -EnableProjectLearnings $enableProjectLearnings
     
     # Gitignore prompt
     Add-ToGitignore
