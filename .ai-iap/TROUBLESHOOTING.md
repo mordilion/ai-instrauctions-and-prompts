@@ -247,7 +247,7 @@ git status --ignored
 # Look for:
 # Ignored files:
 #   .cursor/
-#   CLAUDE.md
+#   .claude/
 ```
 
 **Fix** (only if you intentionally want to commit generated outputs):

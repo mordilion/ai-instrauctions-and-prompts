@@ -13,50 +13,31 @@ Claude supports two powerful features for context management:
 1. **Memory** - Persistent knowledge stored in Claude's knowledge base
 2. **Skills** - Auto-triggered instructions based on project context
 
-This setup routine generates both components automatically.
+This setup routine generates **project rules** under `.claude/rules/` for Claude Code.
 
 ---
 
 ## Generated Files
 
-### 1. CLAUDE.md (Always-On Rules)
-
-**Location**: `CLAUDE.md` (project root)
-
-**Purpose**: Contains rules that are **always active** during conversations
-
-**Content**:
-- General coding standards
-- Language-specific code style
-- Security guidelines
-- Architecture patterns
-- Testing approaches
-
-**When to use**: Core standards that apply to all development work
-
-```markdown
-# AI Coding Instructions
-
-## TypeScript - code-style
-
-...rules...
-
-## General - security
-
-...rules...
-```
-
----
-
-### 2. .claude/rules/ (Modular Rules)
+### 1. .claude/rules/ (Project Rules)
 
 **Location**: `.claude/rules/{category}/{framework}.md`
 
-**Purpose**: Modular, topic-specific instructions that are **automatically loaded** by Claude
+**Purpose**: Modular, topic-specific instructions that are **automatically loaded** by Claude Code
 
 **Structure**:
 ```
 .claude/rules/
+├── core/
+│   ├── general/
+│   │   ├── persona.md
+│   │   └── security.md
+│   ├── typescript/
+│   │   ├── code-style.md
+│   │   └── testing.md
+│   └── documentation/
+│       ├── documentation-code.md
+│       └── documentation-project.md
 ├── frontend/
 │   ├── react.md
 │   ├── vue.md
@@ -87,26 +68,13 @@ paths: **/*.{jsx,tsx}
 
 ## How Claude Uses These Files
 
-### Memory (CLAUDE.md)
+Claude Code supports:
 
-1. **Always Loaded**: Rules in `CLAUDE.md` are active in every conversation
-2. **Context Window**: Consumes token budget, so keep concise
-3. **Best For**: 
-   - Core coding standards
-   - Security requirements
-   - Commit message formats
-   - General architecture principles
+1. **Project memory** via `CLAUDE.md` or `.claude/CLAUDE.md` (optional)
+2. **Project rules** via `.claude/rules/*.md`
 
-### Rules (.claude/rules/)
-
-1. **Automatically Loaded**: All `.md` files in `.claude/rules/` are loaded as project memory
-2. **Path-Specific**: Rules with `paths:` frontmatter only apply to matching files
-3. **Modular Organization**: Organized by category (frontend, backend, mobile, processes)
-4. **Best For**:
-   - Framework-specific guidelines (React, Vue, Spring Boot)
-   - Project structure patterns (Feature-First, Clean Architecture)
-   - Process workflows (Database Migrations, CI/CD)
-   - Language-specific conventions for certain file types
+Per the official docs, all `.md` files in `.claude/rules/` are loaded automatically, and rules can be scoped with `paths:` frontmatter. This setup generates **rules-only** under `.claude/rules/` (including “always-on” rules under `.claude/rules/core/`).  
+Reference: [Claude Memory Documentation](https://code.claude.com/docs/en/memory)
 
 **Example**: A rule with `paths: **/*.{jsx,tsx}` only applies when working with React component files.
 
@@ -133,8 +101,8 @@ paths: **/*.{jsx,tsx}
 
 ### Generated Output
 
-✅ **CLAUDE.md** - Always-on core rules (15-30KB typical)
-✅ **.claude/rules/** - Modular rules organized by category (10-20 files typical)
+✅ **.claude/rules/core/** - Core rules (always apply)
+✅ **.claude/rules/** - Modular rules organized by category (frontend/, backend/, processes/, etc.)
 
 ---
 
@@ -220,29 +188,17 @@ and Prisma migration commands with rollback support."
 
 ## Best Practices
 
-### CLAUDE.md (Always-On)
-
-✅ **DO**:
-- Include universal coding standards
-- Add security requirements
-- Define commit message format
-- Keep concise (10-30KB max)
-
-❌ **DON'T**:
-- Include framework-specific details (use rules)
-- Add implementation processes (use rules)
-- Make it too large (token cost)
-
 ### Rules (.claude/rules/)
 
 ✅ **DO**:
+- Put “always-on” standards in `.claude/rules/core/` without `paths:`
 - Create focused rules per topic (React, Vue, Django)
 - Use descriptive filenames
 - Add `paths:` frontmatter for file-specific rules
 - Organize by category subdirectories
 
 ❌ **DON'T**:
-- Duplicate content from CLAUDE.md
+- Duplicate the same rules across multiple files
 - Make rules too broad
 - Forget to update after framework changes
 
@@ -311,7 +267,7 @@ To reset Claude's memory for your project:
 
 ### After (with modular rules)
 
-- CLAUDE.md: **15,000 tokens** (core rules)
+- .claude/rules/core/: **Core rules** (always apply)
 - .claude/rules/: **Modular organization** (frontend/, backend/, etc.)
 - Path-specific rules only apply to relevant files
 - **Better organization and maintainability**
@@ -345,10 +301,8 @@ To reset Claude's memory for your project:
 **Problem**: Token limit warnings
 
 **Solutions**:
-1. Move framework rules to .claude/rules/
-2. Move processes to .claude/rules/
-3. Keep only core standards in CLAUDE.md
-4. Use path-specific rules to reduce active content
+1. Move more content into smaller, focused `.claude/rules/` files
+2. Use `paths:` frontmatter for file-specific rules to reduce what applies at once
 
 ### Memory Not Persisting
 
@@ -372,7 +326,7 @@ To reset Claude's memory for your project:
 # 2. Select: TypeScript, React, Feature-First, Database Migrations
 
 # 3. Generated:
-✓ CLAUDE.md (core rules)
+✓ .claude/rules/core/typescript/code-style.md
 ✓ .claude/rules/frontend/react.md
 ✓ .claude/rules/frontend/react-feature.md
 ✓ .claude/rules/processes/typescript-database-migrations.md
