@@ -39,3 +39,21 @@
 5. General architecture rules
 6. General code-style rules
 
+---
+
+## 📌 Project Learnings Capture (Optional, Setup-Enabled)
+
+If your project has `.ai-iap-custom/` and the file `.ai-iap-custom/rules/general/learnings.md` exists, treat it as the **single source of truth** for project-specific learnings and decisions from user conversations.
+
+> **ALWAYS**:
+> - Append **new, stable learnings** (decisions, conventions, constraints, “how we do things here”) to `.ai-iap-custom/rules/general/learnings.md`
+> - Keep additions **token-efficient** but **unambiguous** so multiple AIs interpret them the same way
+> - Prefer short directives and concrete examples over long prose
+> - Avoid duplication; update/replace outdated learnings instead of piling on
+> - Tell the user to **re-run setup** so the new/updated learnings file is included in generated AI tool outputs
+
+> **NEVER**:
+> - Store secrets, API keys, credentials, or sensitive data in learnings files
+> - Add speculative guesses; ask questions instead
+
+> **Note**: This behavior is **selectable during setup**. If disabled, do not create or modify learnings files.
