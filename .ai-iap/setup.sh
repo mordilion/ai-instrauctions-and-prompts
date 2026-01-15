@@ -1651,7 +1651,10 @@ generate_claude() {
                 local content
                 content=$(read_instruction_file "$lang" "$doc_file") || continue
                 
-                local output_file="$doc_dir/$doc_file.md"
+                # doc_file is typically like "documentation/code" - avoid nesting "documentation/" twice.
+                local doc_name
+                doc_name=$(basename "$doc_file")
+                local output_file="$doc_dir/$doc_name.md"
                 {
                     echo "---"
                     echo "aiIapManaged: true"

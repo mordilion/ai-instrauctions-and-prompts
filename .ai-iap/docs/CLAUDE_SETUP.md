@@ -36,8 +36,8 @@ This setup routine generates **project rules** under `.claude/rules/` for Claude
 │   │   ├── code-style.md
 │   │   └── testing.md
 │   └── documentation/
-│       ├── documentation-code.md
-│       └── documentation-project.md
+│       ├── code.md
+│       └── project.md
 ├── frontend/
 │   ├── react.md
 │   ├── vue.md

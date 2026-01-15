@@ -1185,7 +1185,9 @@ aiIapManaged: true
                 $docContent = Read-InstructionFile -Lang $lang -File $docFile
                 if ($null -eq $docContent) { continue }
                 
-                $outputFile = Join-Path $docDir "$docFile.md"
+                # $docFile is typically like "documentation/code" - avoid nesting "documentation/" twice.
+                $docName = Split-Path -Path $docFile -Leaf
+                $outputFile = Join-Path $docDir "$docName.md"
                 $frontmatter = @"
 ---
 aiIapManaged: true
