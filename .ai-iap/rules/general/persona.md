@@ -25,8 +25,8 @@
 
 > **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks):
 >
-> 1. **CHECK** the custom functions index (if it exists)
-> 2. **THEN CHECK** the core functions index
+> 1. **CHECK** `.ai-iap-custom/functions/INDEX.md` (if it exists) for company-specific patterns
+> 2. **THEN CHECK** `.ai-iap/functions/INDEX.md`
 > 3. **OPEN** the relevant function file and **COPY** the exact code pattern
 >
 > **NEVER** add installation commands to function files and **NEVER** generate these patterns from scratch if a function exists.
@@ -43,10 +43,10 @@
 
 ## 📌 Project Learnings Capture (Optional, Setup-Enabled)
 
-If your project has a **project learnings file** (often named `learnings.md`) created by your setup/customization workflow, treat it as the **single source of truth** for project-specific learnings and decisions from user conversations.
+If your project has `.ai-iap-custom/` and the file `.ai-iap-custom/rules/general/learnings.md` exists, treat it as the **single source of truth** for project-specific learnings and decisions from user conversations.
 
 > **ALWAYS**:
-> - Append **new, stable learnings** (decisions, conventions, constraints, “how we do things here”) to the project learnings file
+> - Append **new, stable learnings** (decisions, conventions, constraints, “how we do things here”) to `.ai-iap-custom/rules/general/learnings.md`
 > - Keep additions **token-efficient** but **unambiguous** so multiple AIs interpret them the same way
 > - Prefer short directives and concrete examples over long prose
 > - Avoid duplication; update/replace outdated learnings instead of piling on
