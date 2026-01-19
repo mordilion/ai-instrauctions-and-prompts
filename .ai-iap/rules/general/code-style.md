@@ -19,10 +19,16 @@
 - **Intent**: Name describes WHAT, not HOW.
 
 ## 4. Control Flow
-- **Guard Clauses**: Return early. Avoid `else`.
-  - ✅ Good: `if (!valid) return; processData();`
+- **No `else`**: Avoid `else` (and `else if`) everywhere by default.
+  - Prefer early returns, separating concerns into small functions, and using `switch` / pattern matching when you need
+    multiple exclusive branches.
+  - ✅ Good (guard clause): `if (!valid) return; processData();`
+  - ✅ Good (multiple branches): `return status switch { Ok => HandleOk(), _ => HandleError() };`
   - ❌ Bad: `if (valid) { processData(); } else { return; }`
-- **Happy Path**: Main logic at lowest indentation.
+  - ❌ Bad: `if (a) { ... } else if (b) { ... } else { ... }`
+- **Happy Path**: Keep main logic at the lowest indentation level.
+- **Template languages**: If the language/framework requires `else` in markup (e.g. Razor `@if/else`, Svelte `{:else}`),
+  prefer modeling UI state explicitly (e.g. enum) and render with `switch` or extracted components to minimize `else`.
 
 ## 5. Best Practices
 - **Comments**: Explain WHY, never WHAT. Code MUST be self-documenting.
