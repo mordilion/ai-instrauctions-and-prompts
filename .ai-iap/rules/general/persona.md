@@ -21,15 +21,18 @@
 
 ---
 
-## 🚨 MANDATORY: Functions Lookup (Reduce AI Guessing)
+## 🚨 MANDATORY: Code Library Lookup (Reduce AI Guessing)
 
-> **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks):
+> **BEFORE** implementing common patterns (error handling, async operations, input validation, database queries, HTTP requests, logging, caching, auth, rate limiting, webhooks) or design patterns (Singleton, Factory, Observer, etc.):
 >
-> 1. **CHECK** `.ai-iap-custom/functions/INDEX.md` (if it exists) for company-specific patterns
-> 2. **THEN CHECK** `.ai-iap/functions/INDEX.md`
-> 3. **OPEN** the relevant function file and **COPY** the exact code pattern
+> 1. **CHECK** custom patterns first (if they exist):
+>    - `.ai-iap-custom/code-library/functions/` for custom implementation patterns
+>    - `.ai-iap-custom/code-library/design-patterns/` for custom design patterns
+> 2. **THEN CHECK** `.ai-iap/code-library/INDEX.md` for core patterns overview
+> 3. **BROWSE** either `functions/INDEX.md` (implementation patterns) or `design-patterns/INDEX.md` (design patterns)
+> 4. **OPEN** the relevant pattern file and **COPY** the exact code pattern
 >
-> **NEVER** add installation commands to function files and **NEVER** generate these patterns from scratch if a function exists.
+> **NEVER** add installation commands to pattern files and **NEVER** generate these patterns from scratch if they exist in the library.
 
 **Rule Priority** (highest to lowest):
 1. Structure rules (folder organization, when selected)

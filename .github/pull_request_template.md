@@ -6,7 +6,7 @@ What does this change do and why?
 
 - [ ] Rules library (`.ai-iap/rules/`)
 - [ ] Processes library (`.ai-iap/processes/`)
-- [ ] Functions library (`.ai-iap/functions/`)
+- [ ] Code library (`.ai-iap/code-library/`)
 - [ ] Setup scripts (`.ai-iap/setup.*`, validation scripts)
 - [ ] Docs (`README.md`, `CUSTOMIZATION.md`, etc.)
 - [ ] CI / GitHub Actions (`.github/workflows/`)

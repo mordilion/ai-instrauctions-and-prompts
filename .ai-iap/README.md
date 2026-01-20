@@ -458,33 +458,37 @@ Functions are **5-20 line code patterns** for common coding tasks, shown **acros
 
 | Function | Purpose | Languages | File |
 |----------|---------|-----------|------|
-| **Error Handling** | Exception handling, custom errors, error propagation | All 8 | [error-handling.md](functions/error-handling.md) |
-| **Async Operations** | Async/await, promises, parallel execution, timeouts | All 8 | [async-operations.md](functions/async-operations.md) |
-| **Input Validation** | Data validation, sanitization, type checking | All 8 | [input-validation.md](functions/input-validation.md) |
-| **Database Queries** | Safe queries, parameterization, SQL injection prevention | All 8 | [database-query.md](functions/database-query.md) |
-| **HTTP Requests** | API calls, retry logic, timeout handling | All 8 | [http-requests.md](functions/http-requests.md) |
-| **Logging** | Structured logs, correlation IDs, redaction | All 8 | [logging.md](functions/logging.md) |
-| **Caching** | TTL caches, invalidation, distributed caching | All 8 | [caching.md](functions/caching.md) |
-| **Config & Secrets** | Env/config loading, fail-fast validation, redaction | All 8 | [config-secrets.md](functions/config-secrets.md) |
-| **Auth & Authorization** | JWT/session auth, RBAC/policy checks | All 8 | [auth-authorization.md](functions/auth-authorization.md) |
-| **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | [rate-limiting.md](functions/rate-limiting.md) |
-| **Webhooks** | Signature verification, idempotency basics | All 8 | [webhooks.md](functions/webhooks.md) |
-| **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | [money-decimal.md](functions/money-decimal.md) |
+| **Error Handling** | Exception handling, custom errors, error propagation | All 8 | [error-handling.md](code-library/functions/error-handling.md) |
+| **Async Operations** | Async/await, promises, parallel execution, timeouts | All 8 | [async-operations.md](code-library/functions/async-operations.md) |
+| **Input Validation** | Data validation, sanitization, type checking | All 8 | [input-validation.md](code-library/functions/input-validation.md) |
+| **Database Queries** | Safe queries, parameterization, SQL injection prevention | All 8 | [database-query.md](code-library/functions/database-query.md) |
+| **HTTP Requests** | API calls, retry logic, timeout handling | All 8 | [http-requests.md](code-library/functions/http-requests.md) |
+| **Logging** | Structured logs, correlation IDs, redaction | All 8 | [logging.md](code-library/functions/logging.md) |
+| **Caching** | TTL caches, invalidation, distributed caching | All 8 | [caching.md](code-library/functions/caching.md) |
+| **Config & Secrets** | Env/config loading, fail-fast validation, redaction | All 8 | [config-secrets.md](code-library/functions/config-secrets.md) |
+| **Auth & Authorization** | JWT/session auth, RBAC/policy checks | All 8 | [auth-authorization.md](code-library/functions/auth-authorization.md) |
+| **Rate Limiting** | Throttling, 429 handling, abuse protection | All 8 | [rate-limiting.md](code-library/functions/rate-limiting.md) |
+| **Webhooks** | Signature verification, idempotency basics | All 8 | [webhooks.md](code-library/functions/webhooks.md) |
+| **Money & Decimals** | Minor units, decimal math, rounding rules | All 8 | [money-decimal.md](code-library/functions/money-decimal.md) |
 
 **All functions cover**: TypeScript, Python, Java, C#, PHP, Kotlin, Swift, Dart
 
 ### 🚨 CRITICAL RULE for AI Assistants
 
-**BEFORE** implementing any of these patterns, **ALWAYS CHECK** `functions/INDEX.md` first:
+**BEFORE** implementing any patterns or design patterns, **ALWAYS CHECK** `code-library/INDEX.md` first:
 
 ```
 AI Workflow:
-1. User asks to implement a common pattern (errors/async/validation/DB/HTTP/etc.)
-2. AI checks `.ai-iap/functions/INDEX.md` ← MANDATORY STEP
-3. AI opens relevant function file (e.g., error-handling.md)
-4. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
-5. AI copies exact pattern (no installation commands in function files)
-6. AI implements with zero guessing
+1. User asks to implement a pattern (errors/async/validation/DB/HTTP/Singleton/Factory/etc.)
+2. AI checks custom patterns first (if they exist):
+   - `.ai-iap-custom/code-library/functions/` for custom implementation patterns
+   - `.ai-iap-custom/code-library/design-patterns/` for custom design patterns
+3. AI then checks `.ai-iap/code-library/INDEX.md` ← MANDATORY STEP
+4. AI navigates to functions/ or design-patterns/ based on need
+5. AI opens relevant pattern file (e.g., error-handling.md, creational/singleton.md)
+6. AI chooses appropriate framework version (Plain, Prisma, Laravel, etc.)
+7. AI copies exact pattern (no installation commands in pattern files)
+8. AI implements with zero guessing
 ```
 
 **DO NOT** waste tokens generating these patterns from scratch.
@@ -496,9 +500,10 @@ AI Workflow:
 
 ### How to Use
 
-1. **Check the INDEX first**: Open [functions/INDEX.md](functions/INDEX.md) to find the pattern you need
-2. **Open the function file**: Each file shows implementations for all 8 languages side-by-side
-3. **Choose your framework**: Plain (flexibility) or Framework (productivity)
+1. **Check the INDEX first**: Open [code-library/INDEX.md](code-library/INDEX.md) to find the pattern you need
+2. **Navigate to the right category**: Implementation patterns in `functions/` or Design patterns in `design-patterns/`
+3. **Open the pattern file**: Each file shows implementations for all 8 languages side-by-side
+4. **Choose your framework**: Plain (flexibility) or Framework (productivity)
 4. **Copy the exact pattern**: Use the language-specific implementation (no installation commands in function files)
 5. **Stop AI guessing**: Precise patterns = consistent code = fewer bugs
 

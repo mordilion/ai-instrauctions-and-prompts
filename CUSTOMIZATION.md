@@ -285,7 +285,7 @@ During setup, select your custom process when prompted.
 ## Adding Custom Functions
 
 Custom functions are **company-specific implementation patterns** your team uses repeatedly.
-They live in `.ai-iap-custom/functions/` so they stay **update-safe** when core `.ai-iap/` changes.
+They live in `.ai-iap-custom/code-library/functions/` so they stay **update-safe** when core `.ai-iap/` changes.
 
 ### When to Add Custom Functions
 
@@ -305,8 +305,8 @@ They live in `.ai-iap-custom/functions/` so they stay **update-safe** when core 
 
 ### Step 1: Create the Function File (Template-based)
 
-- Copy `.ai-iap/functions/_TEMPLATE.md` to:
-  - `.ai-iap-custom/functions/<your-function>.md`
+- Copy `.ai-iap/code-library/functions/_TEMPLATE.md` to:
+  - `.ai-iap-custom/code-library/functions/<your-function>.md`
 - Replace the YAML frontmatter values.
 - Keep **only code examples** after the YAML header.
 - **No installation commands** inside function files.
@@ -315,22 +315,23 @@ They live in `.ai-iap-custom/functions/` so they stay **update-safe** when core 
 
 If you create multiple custom functions, add:
 
-- `.ai-iap-custom/functions/INDEX.md`
+- `.ai-iap-custom/code-library/functions/INDEX.md`
 
 This helps AIs find company patterns faster.
 
-### Step 3: Ensure AIs Search Custom Functions First
+### Step 3: Ensure AIs Search Custom Patterns First
 
 In your project’s AI rules, add a small directive like:
 
-- Check `.ai-iap-custom/functions/INDEX.md` (if it exists)
-- Then check `.ai-iap/functions/INDEX.md`
+- Check `.ai-iap-custom/code-library/functions/` (if it exists) for custom implementation patterns
+- Check `.ai-iap-custom/code-library/design-patterns/` (if it exists) for custom design patterns
+- Then check `.ai-iap/code-library/` for core patterns
 
 ---
 
 ### Example Custom Function
 
-Create `.ai-iap-custom/functions/company-auth-header.md`:
+Create `.ai-iap-custom/code-library/functions/company-auth-header.md`:
 
 ```markdown
 ---
@@ -430,10 +431,122 @@ httpClient.DefaultRequestHeaders.Authorization =
 
 ### Function File Structure Rules
 
-- Start from `.ai-iap/functions/_TEMPLATE.md`
+- Start from `.ai-iap/code-library/functions/_TEMPLATE.md`
 - Put all metadata in YAML frontmatter
 - After the YAML header: **code examples only**
 - Keep examples short and copy-paste ready
+
+---
+
+## Adding Custom Design Patterns
+
+Custom design patterns are **company-specific architectural implementations** that extend or specialize the core design patterns library.
+
+### When to Add Custom Design Patterns
+
+✅ **Good use cases**:
+- Company-specific architectural patterns unique to your domain
+- Industry-specific pattern implementations (e.g., financial, healthcare, e-commerce)
+- Custom framework integrations for standard patterns (e.g., Singleton with company DI container)
+- Team-preferred pattern variants with company conventions
+
+❌ **Don't create custom patterns for**:
+- Standard Gang of Four patterns without customization (use core library)
+- Patterns that work universally across all companies
+- One-off implementations (document in code comments instead)
+
+### Step 1: Start from Template
+
+Copy the design pattern template:
+
+```bash
+cp .ai-iap/code-library/design-patterns/_TEMPLATE.md \
+   .ai-iap-custom/code-library/design-patterns/[category]/your-pattern.md
+```
+
+Choose category: `creational`, `structural`, or `behavioral`
+
+### Step 2: Implement for All Languages
+
+Update the template with:
+- Pattern name and purpose
+- Company-specific use cases
+- Complete implementations (20-100 lines) for all 8 languages
+- Usage examples showing real-world application
+- Related patterns and functions
+
+### Step 3: Update Custom Index
+
+Add entry to `.ai-iap-custom/code-library/design-patterns/INDEX.md` (create if doesn't exist):
+
+```markdown
+## Company Design Patterns
+
+| Pattern | Category | When to Use | File |
+|---------|----------|-------------|------|
+| **Company Service Locator** | Creational | Internal DI container integration | [creational/service-locator.md](creational/service-locator.md) |
+```
+
+### Step 4: Verify AI Priority
+
+AIs automatically check:
+1. `.ai-iap-custom/code-library/design-patterns/` first ← **Your patterns**
+2. Then `.ai-iap/code-library/design-patterns/` ← Core patterns
+
+### Example: Company Singleton with DI
+
+Create `.ai-iap-custom/code-library/design-patterns/creational/di-singleton.md`:
+
+```markdown
+---
+title: DI Container Singleton Pattern
+category: Creational Design Pattern
+difficulty: beginner
+purpose: Integrate company DI container with singleton pattern for service registration
+when_to_use:
+  - Company microservices requiring DI container registration
+  - Internal API clients that need singleton + DI
+  - Logger instances with DI container
+  - Cache managers with company DI conventions
+# ... rest of YAML frontmatter
+---
+
+## TypeScript
+
+### NestJS Singleton Provider (Recommended)
+
+\`\`\`typescript
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ConfigService {
+  private static instance: ConfigService;
+  
+  constructor() {
+    if (ConfigService.instance) {
+      return ConfigService.instance;
+    }
+    ConfigService.instance = this;
+  }
+  
+  // Company-specific config methods
+}
+\`\`\`
+
+**Usage Example:**
+\`\`\`typescript
+// Automatically registered as singleton via @Injectable
+const config = app.get(ConfigService);
+\`\`\`
+```
+
+### Design Pattern File Structure
+
+- Start from `.ai-iap/code-library/design-patterns/_TEMPLATE.md`
+- Put all metadata in YAML frontmatter
+- After the YAML header: **complete implementations** (20-100 lines)
+- Include usage examples for each language
+- Show real-world patterns from your codebase
 
 ---
 
@@ -710,7 +823,7 @@ function MyComponent() {
 
 ### Example 4: Custom Function - Company Cache Pattern
 
-**File**: `.ai-iap-custom/functions/custom-cache.md`
+**File**: `.ai-iap-custom/code-library/functions/custom-cache.md`
 
 ```markdown
 ---
@@ -789,7 +902,7 @@ async function getUserWithCache(userId: string): Promise<User> {
 }
 ```
 
-**Custom INDEX**: `.ai-iap-custom/functions/INDEX.md`
+**Custom INDEX**: `.ai-iap-custom/code-library/functions/INDEX.md`
 
 ```markdown
 # Custom Functions Index

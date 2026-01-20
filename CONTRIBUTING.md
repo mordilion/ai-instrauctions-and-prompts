@@ -65,14 +65,16 @@ If your change touches setup/merge logic, also run:
 - **Keep structure consistent** with existing files (headings order, tables, self-check sections).
 - **Avoid long prose** and repetition; prefer concise directive blocks and tables when it remains clear.
 
-### Functions library
+### Code Library (Functions & Design Patterns)
 
-If you add or change a function pattern:
+If you add or change a pattern:
 
-- **Start from the template** in `.ai-iap/functions/_TEMPLATE.md`
+- **For implementation patterns**: Start from the template in `.ai-iap/code-library/functions/_TEMPLATE.md`
+- **For design patterns**: Start from the template in `.ai-iap/code-library/design-patterns/_TEMPLATE.md`
 - Keep the YAML frontmatter format consistent
 - After the YAML header, include **code examples only** (no install commands, no long explanations)
-- Update the relevant functions index so AIs can discover the pattern
+- Design patterns: Include complete implementations (20-100 lines) plus usage examples
+- Update the relevant INDEX.md file so AIs can discover the pattern
 
 ## Licensing
 

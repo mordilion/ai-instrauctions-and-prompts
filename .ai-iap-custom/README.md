@@ -11,9 +11,16 @@ This directory allows you to extend or override the core `.ai-iap/` configuratio
 ├── rules/                      # Custom or override rules
 │   └── typescript/
 │       └── company-standards.md
-└── processes/                  # Custom processes
-    └── typescript/
-        └── deploy-internal.md
+├── processes/                  # Custom processes
+│   └── typescript/
+│       └── deploy-internal.md
+└── code-library/               # Custom code patterns
+    ├── functions/              # Custom implementation patterns
+    │   └── company-auth-header.md
+    └── design-patterns/        # Custom design patterns
+        ├── creational/
+        ├── structural/
+        └── behavioral/
 ```
 
 ## 🎯 Usage
@@ -84,6 +91,25 @@ Then create: `.ai-iap-custom/processes/typescript/deploy-internal.md`
 
 Then create: `.ai-iap-custom/rules/typescript/frameworks/remix.md`
 
+### **5. Add Custom Implementation Patterns**
+
+Add company-specific implementation patterns (auth flows, API clients, etc.):
+
+- **Start from template**: Copy `.ai-iap/code-library/functions/_TEMPLATE.md`
+- **Create file**: `.ai-iap-custom/code-library/functions/company-pattern.md`
+- **Update index**: Add to `.ai-iap-custom/code-library/functions/INDEX.md`
+
+AIs will check custom patterns before core patterns.
+
+### **6. Add Custom Design Patterns**
+
+Add company-specific design pattern implementations:
+
+- **Start from template**: Copy `.ai-iap/code-library/design-patterns/_TEMPLATE.md`
+- **Create file**: `.ai-iap-custom/code-library/design-patterns/[category]/company-pattern.md`
+- **Categories**: creational, structural, or behavioral
+- **Update index**: Add to `.ai-iap-custom/code-library/design-patterns/INDEX.md`
+
 ## 🔄 Update Strategy
 
 ### **Option A: Git Ignore (Default)**
@@ -101,6 +127,8 @@ See example files in this directory:
 - `config.example.json` - Example custom configuration
 - `rules/typescript/company-standards.example.md` - Example custom rule
 - `processes/typescript/deploy-internal.example.md` - Example custom process
+- `code-library/functions/company-auth-header.example.md` - Example custom function
+- Templates available in `.ai-iap/code-library/` for functions and design patterns
 
 Copy and rename (remove `.example`) to activate.
 

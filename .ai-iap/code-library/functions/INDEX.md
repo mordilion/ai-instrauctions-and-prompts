@@ -1,4 +1,4 @@
-# Functions Index - Cross-Language Implementation Patterns
+# Implementation Patterns Index
 
 > **Purpose**: Quick reference for common coding patterns across all supported languages
 
@@ -8,15 +8,15 @@
 
 **BEFORE** implementing **ANY** of these patterns, **CHECK THIS INDEX**:
 
-- ✅ **DO** check `.ai-iap-custom/functions/INDEX.md` first (if it exists) for company-specific patterns
-- ✅ **DO** then check `.ai-iap/functions/INDEX.md` (this file) for the core patterns
+- ✅ **DO** check `.ai-iap-custom/code-library/functions/` first (if it exists) for company-specific patterns
+- ✅ **DO** then check `.ai-iap/code-library/functions/` (this file) for core patterns
 - ❌ **DON'T** generate error handling code from scratch
 - ❌ **DON'T** guess async/await implementations
 - ❌ **DON'T** create validation logic without checking here first
 - ❌ **DON'T** write database queries without using provided patterns
 - ❌ **DON'T** implement HTTP clients without checking available options
 
-- ✅ **DO** check this INDEX before implementing any covered function pattern
+- ✅ **DO** check this INDEX before implementing any covered pattern
 - ✅ **DO** open the function file and read YAML metadata for framework options
 - ✅ **DO** use exact code patterns from function files
 - ✅ **DO** choose appropriate framework version (Native, ORM, Library, etc.)
@@ -26,7 +26,7 @@
 
 ---
 
-## Available Functions
+## Available Implementation Patterns
 
 | Function | Description | Languages | When to Use | File |
 |----------|-------------|-----------|-------------|------|
@@ -112,13 +112,21 @@ Each function file contains:
 
 Each function provides **multiple implementations** per language:
 
-**Database Queries**: Plain (native drivers), ORM frameworks, query builders
-**Error Handling**: Native try-catch, Result types, Framework error boundaries
-**Async Operations**: Native async/await, Reactive libraries, Concurrency tools
-**Input Validation**: Manual validation, Schema validators, Framework validators
-**HTTP Requests**: Native HTTP clients, Popular libraries, Framework HTTP clients
+- **Database Queries**: Plain (native drivers), ORM frameworks, query builders
+- **Error Handling**: Native try-catch, Result types, Framework error boundaries
+- **Async Operations**: Native async/await, Reactive libraries, Concurrency tools
+- **Input Validation**: Manual validation, Schema validators, Framework validators
+- **HTTP Requests**: Native HTTP clients, Popular libraries, Framework HTTP clients
 
 **Check YAML metadata in each file for complete framework list per language.**
+
+---
+
+## Design Patterns
+
+Looking for design patterns (Singleton, Factory, Observer, etc.)?
+
+**See**: [../design-patterns/INDEX.md](../design-patterns/INDEX.md)
 
 ---
 
@@ -128,6 +136,6 @@ If your team maintains custom function patterns, keep them in a separate, update
 
 ---
 
-**Last Updated**: 2026-01-16
+**Last Updated**: 2026-01-20
 **Total Functions**: 12
 **Languages Covered**: 8
