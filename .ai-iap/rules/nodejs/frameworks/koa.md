@@ -1,29 +1,22 @@
 # Koa
 
-> **Scope**: Apply these rules for Koa applications (JavaScript or TypeScript).
+> **Scope**: Koa applications (JavaScript or TypeScript)  
+> **Applies to**: Koa projects  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Koa is a modern Node.js framework from Express creators - smaller, more expressive, with async/await throughout.
-
-## Best Practices
-
-**MUST**:
-- Use async/await (NO callbacks)
-- Use ctx (context) for request/response
-- Understand onion model (middleware order)
-- Use try-catch in middleware
-
-**SHOULD**:
-- Use @koa/router for routing
-- Use koa-bodyparser for JSON
-- Place error handler first
-- Use ctx.throw for errors
-
-**AVOID**:
-- Callback-based code
-- Missing error handling
-- Business logic in routes
+> **ALWAYS**: Use async/await (no callbacks)
+> **ALWAYS**: Use ctx (context) for request/response
+> **ALWAYS**: Understand onion model (middleware order)
+> **ALWAYS**: try-catch in middleware
+> **ALWAYS**: Error handler first in middleware chain
+> 
+> **NEVER**: Use callback-based code
+> **NEVER**: Skip error handling
+> **NEVER**: Put business logic in routes
+> **NEVER**: Synchronous operations in handlers
+> **NEVER**: Expose stack traces to clients
 
 ## Project Structure
 ```
@@ -135,4 +128,19 @@ interface AppContext extends Context {
 - **ctx.state**: Share data between middleware (e.g., user)
 - **ctx.request.body**: Access parsed body (via koa-bodyparser)
 - **Async/Await**: All middleware must be async functions
+
+## AI Self-Check
+
+- [ ] async/await used (no callbacks)?
+- [ ] Using ctx for request/response?
+- [ ] Onion model understood (middleware order)?
+- [ ] try-catch in middleware?
+- [ ] Error handler first in chain?
+- [ ] @koa/router for routing?
+- [ ] koa-bodyparser for JSON?
+- [ ] ctx.throw for errors?
+- [ ] No callback-based code?
+- [ ] No missing error handling?
+- [ ] No business logic in routes?
+- [ ] No synchronous operations?
 

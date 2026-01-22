@@ -1,38 +1,22 @@
 # Slim Framework
 
-> **Scope**: Apply these rules when working with Slim PHP micro-framework.
+> **Scope**: Slim PHP micro-framework  
+> **Applies to**: PHP files in Slim projects  
+> **Extends**: php/architecture.md, php/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Slim is a PHP micro-framework for building web applications and APIs. It provides routing, middleware, and dependency injection while staying lightweight and PSR-compliant.
-
-**Key Capabilities**:
-- **Micro-Framework**: Minimal core, add what you need
-- **PSR-7/PSR-15**: Standard HTTP messages and middleware
-- **Dependency Injection**: PHP-DI container
-- **Fast**: Minimal overhead
-- **RESTful**: Perfect for APIs
-
-## Best Practices
-
-**MUST**:
-- Use single-action classes (NO traditional controllers)
-- Use PSR-7 Request/Response (NO echo/print)
-- Use middleware for cross-cutting concerns
-- Use DI container for dependencies
-- Return Response objects
-
-**SHOULD**:
-- Use route groups for organization
-- Use middleware for authentication
-- Validate input (Respect, Rakit)
-- Use services for business logic
-
-**AVOID**:
-- Logic in actions (use services)
-- Direct database access in actions
-- Echo/print (return Response)
-- Fat actions (delegate to services)
+> **ALWAYS**: Use single-action classes (not traditional controllers)
+> **ALWAYS**: Use PSR-7 Request/Response (not echo/print)
+> **ALWAYS**: Use middleware for cross-cutting concerns
+> **ALWAYS**: Use DI container for dependencies
+> **ALWAYS**: Return Response objects
+> 
+> **NEVER**: Use echo/print (return Response)
+> **NEVER**: Put logic in actions (use services)
+> **NEVER**: Direct database access in actions
+> **NEVER**: Fat actions (delegate to services)
+> **NEVER**: Skip input validation
 
 ## 1. Project Structure
 ```
@@ -114,3 +98,18 @@ return function (ContainerBuilder $containerBuilder) {
 - **Thin Actions**: Delegate to services
 - **Validate Input**: Use validation library (Respect, Rakit)
 - **JSON Responses**: Use `withJson()` helper method
+
+## AI Self-Check
+
+- [ ] Single-action classes (not traditional controllers)?
+- [ ] PSR-7 Request/Response (not echo/print)?
+- [ ] Middleware for cross-cutting concerns?
+- [ ] DI container for dependencies?
+- [ ] Response objects returned?
+- [ ] Route groups for organization?
+- [ ] Input validation (Respect/Rakit)?
+- [ ] Services for business logic?
+- [ ] No echo/print?
+- [ ] No logic in actions?
+- [ ] No direct database access in actions?
+- [ ] Error middleware configured?

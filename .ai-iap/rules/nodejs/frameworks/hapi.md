@@ -1,29 +1,22 @@
 # Hapi
 
-> **Scope**: Apply these rules for Hapi applications (JavaScript or TypeScript).
+> **Scope**: Hapi applications (JavaScript or TypeScript)  
+> **Applies to**: Hapi projects  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Hapi is a configuration-centric Node.js framework with built-in input validation, auth, and caching.
-
-## Best Practices
-
-**MUST**:
-- Use Joi for validation
-- Use plugins for modularity
-- Define routes as objects
-- Use async handlers
-
-**SHOULD**:
-- Use @hapi plugins for features
-- Use pre/post handlers for middleware
-- Use server methods for shared logic
-- Configure via options
-
-**AVOID**:
-- Missing validation schemas
-- Logic in route definitions
-- Synchronous operations
+> **ALWAYS**: Use Joi for validation
+> **ALWAYS**: Use plugins for modularity
+> **ALWAYS**: Define routes as objects
+> **ALWAYS**: Use async handlers
+> **ALWAYS**: Validation schemas for all routes
+> 
+> **NEVER**: Skip validation schemas
+> **NEVER**: Put logic in route definitions
+> **NEVER**: Synchronous operations in handlers
+> **NEVER**: Missing error handlers
+> **NEVER**: Expose internal errors
 
 ## Project Structure
 ```
@@ -79,4 +72,19 @@ export const authPlugin = {
 - **Boom Errors**: Consistent, type-safe HTTP errors
 - **Plugin System**: Encapsulate features as plugins
 - **request.payload**: Access body (not request.body)
+
+## AI Self-Check
+
+- [ ] Joi validation for all routes?
+- [ ] Plugins for modularity?
+- [ ] Routes defined as objects?
+- [ ] async handlers used?
+- [ ] Validation schemas present?
+- [ ] @hapi plugins for features?
+- [ ] pre/post handlers for middleware?
+- [ ] Boom for error responses?
+- [ ] No missing validation?
+- [ ] No logic in route definitions?
+- [ ] No synchronous operations?
+- [ ] Server methods for shared logic?
 
