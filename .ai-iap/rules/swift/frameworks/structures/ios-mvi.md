@@ -1,7 +1,22 @@
 # iOS MVI Structure
 
-## Overview
-Model-View-Intent provides unidirectional data flow with clear separation between user intents and state updates.
+> **Scope**: MVI structure for iOS  
+> **Applies to**: iOS projects with MVI  
+> **Extends**: swift/frameworks/ios.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Intent enum for user actions
+> **ALWAYS**: State struct for UI state
+> **ALWAYS**: Immutable state
+> **ALWAYS**: Single state flow
+> **ALWAYS**: ViewModel processes intents → updates state
+> 
+> **NEVER**: Mutable state
+> **NEVER**: Multiple state sources
+> **NEVER**: Business logic in ViewControllers
+> **NEVER**: Skip Intent classes
+> **NEVER**: Direct state mutation
 
 ## Directory Structure
 
@@ -78,4 +93,17 @@ class UserViewModel: ObservableObject {
 ## When to Use
 - Complex state management needs
 - Apps requiring predictable behavior
+
+## AI Self-Check
+
+- [ ] Intent enum for user actions?
+- [ ] State struct for UI state?
+- [ ] Immutable state?
+- [ ] Single state flow?
+- [ ] ViewModel processes intents?
+- [ ] No mutable state?
+- [ ] No multiple state sources?
+- [ ] No business logic in ViewControllers?
+- [ ] Intent pattern followed?
+- [ ] State transitions clear?
 

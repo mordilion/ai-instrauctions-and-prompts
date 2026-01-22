@@ -1,7 +1,22 @@
 # iOS MVVM Structure
 
-## Overview
-Model-View-ViewModel pattern separates UI from business logic with ViewModels acting as intermediaries.
+> **Scope**: MVVM structure for iOS  
+> **Applies to**: iOS projects with MVVM  
+> **Extends**: swift/frameworks/ios.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: ViewModel for UI logic
+> **ALWAYS**: Combine/async-await for observability
+> **ALWAYS**: Protocol for ViewModels
+> **ALWAYS**: Services for data access
+> **ALWAYS**: Dependency injection via constructor
+> 
+> **NEVER**: Business logic in ViewControllers
+> **NEVER**: ViewModels reference ViewControllers
+> **NEVER**: Static state in ViewModels
+> **NEVER**: Direct network calls in ViewModels
+> **NEVER**: Skip protocol abstraction
 
 ## Directory Structure
 
@@ -121,4 +136,17 @@ class UserListViewController: UIViewController {
 ## When to Use
 - Standard iOS apps
 - Apps with moderate complexity
+
+## AI Self-Check
+
+- [ ] ViewModel for UI logic?
+- [ ] Combine/async-await for observability?
+- [ ] Protocol for ViewModels?
+- [ ] Services for data access?
+- [ ] Dependency injection via constructor?
+- [ ] No business logic in ViewControllers?
+- [ ] ViewModels don't reference ViewControllers?
+- [ ] No static state in ViewModels?
+- [ ] No direct network calls in ViewModels?
+- [ ] Protocol abstraction present?
 

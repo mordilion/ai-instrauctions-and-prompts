@@ -1,7 +1,22 @@
 # Vapor Modular Structure
 
-## Overview
-Feature-first modular structure for Vapor applications.
+> **Scope**: Modular structure for Vapor  
+> **Applies to**: Vapor projects with modular structure  
+> **Extends**: swift/frameworks/vapor.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Features in Features/ folder
+> **ALWAYS**: Co-locate feature files (models, controllers, services)
+> **ALWAYS**: Common folder for cross-feature code
+> **ALWAYS**: Features independent
+> **ALWAYS**: Repository pattern per feature
+> 
+> **NEVER**: Cross-feature dependencies (use Common/)
+> **NEVER**: Split feature across locations
+> **NEVER**: Generic services folder
+> **NEVER**: Share state between features
+> **NEVER**: Deep folder nesting
 
 ## Directory Structure
 
@@ -60,4 +75,17 @@ struct UserController: RouteCollection {
 ## When to Use
 - Small to medium APIs
 - Microservices
+
+## AI Self-Check
+
+- [ ] Features in Features/ folder?
+- [ ] Feature files co-located?
+- [ ] Common folder for cross-feature code?
+- [ ] Features independent?
+- [ ] Repository pattern per feature?
+- [ ] No cross-feature dependencies?
+- [ ] No split features?
+- [ ] No generic services folder?
+- [ ] Features self-contained?
+- [ ] Minimal feature coupling?
 

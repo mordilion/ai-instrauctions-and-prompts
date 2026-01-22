@@ -1,7 +1,22 @@
 # SwiftUI Clean Architecture
 
-## Overview
-Clean Architecture for SwiftUI with domain-driven design and framework-independent business logic.
+> **Scope**: Clean Architecture structure for SwiftUI  
+> **Applies to**: SwiftUI projects with Clean Architecture  
+> **Extends**: swift/frameworks/swiftui.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no SwiftUI dependencies
+> **ALWAYS**: UseCase protocols for business operations
+> **ALWAYS**: Repository protocols in Domain
+> **ALWAYS**: Repository implementations in Data
+> **ALWAYS**: Dependency flow: Presentation → Domain ← Data
+> 
+> **NEVER**: SwiftUI imports in Domain
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Skip UseCase pattern
+> **NEVER**: Expose DTOs outside Data layer
 
 ## Directory Structure
 
@@ -72,4 +87,17 @@ class UserViewModel: ObservableObject {
 ## When to Use
 - Large SwiftUI apps
 - Complex business logic
+
+## AI Self-Check
+
+- [ ] Domain layer has no SwiftUI dependencies?
+- [ ] UseCase protocols for business operations?
+- [ ] Repository protocols in Domain?
+- [ ] Repository implementations in Data?
+- [ ] Dependency flow: Presentation → Domain ← Data?
+- [ ] No SwiftUI imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No Domain → Presentation/Data dependency?
+- [ ] UseCases pure Swift?
+- [ ] Entities in Domain?
 

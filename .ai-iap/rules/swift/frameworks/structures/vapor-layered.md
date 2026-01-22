@@ -1,7 +1,22 @@
 # Vapor Layered Structure
 
-## Overview
-Traditional layered architecture separating concerns by technical responsibilities.
+> **Scope**: Layered structure for Vapor  
+> **Applies to**: Vapor projects with layered structure  
+> **Extends**: swift/frameworks/vapor.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Controllers in Controllers/ folder
+> **ALWAYS**: Models in Models/ folder
+> **ALWAYS**: Services in Services/ folder
+> **ALWAYS**: DTOs for API contracts
+> **ALWAYS**: Controllers thin (delegate to services)
+> 
+> **NEVER**: Business logic in controllers
+> **NEVER**: Controllers access database directly
+> **NEVER**: Return models from controllers
+> **NEVER**: Fat controllers
+> **NEVER**: Skip service layer
 
 ## Directory Structure
 
@@ -57,4 +72,17 @@ struct UserService {
 ## When to Use
 - Traditional web applications
 - CRUD-focused APIs
+
+## AI Self-Check
+
+- [ ] Controllers in Controllers/ folder?
+- [ ] Models in Models/ folder?
+- [ ] Services in Services/ folder?
+- [ ] DTOs for API contracts?
+- [ ] Controllers thin?
+- [ ] Services handle business logic?
+- [ ] No business logic in controllers?
+- [ ] No controllers accessing database directly?
+- [ ] No models returned from controllers?
+- [ ] Fluent ORM for database?
 

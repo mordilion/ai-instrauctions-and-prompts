@@ -1,7 +1,22 @@
 # SwiftUI MVVM Structure
 
-## Overview
-MVVM pattern optimized for SwiftUI with @Published properties and @StateObject.
+> **Scope**: MVVM structure for SwiftUI  
+> **Applies to**: SwiftUI projects with MVVM  
+> **Extends**: swift/frameworks/swiftui.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: @MainActor for ViewModels
+> **ALWAYS**: @Published for observable properties
+> **ALWAYS**: @StateObject in views
+> **ALWAYS**: ObservableObject for ViewModels
+> **ALWAYS**: Dependency injection via constructor
+> 
+> **NEVER**: Business logic in Views
+> **NEVER**: ViewModels reference Views
+> **NEVER**: @State for complex objects (use @StateObject)
+> **NEVER**: Direct network calls in ViewModels
+> **NEVER**: Skip @MainActor for ViewModels
 
 ## Directory Structure
 
@@ -69,4 +84,17 @@ struct UserListView: View {
 ## When to Use
 - SwiftUI apps
 - Modern iOS development
+
+## AI Self-Check
+
+- [ ] @MainActor for ViewModels?
+- [ ] @Published for observable properties?
+- [ ] @StateObject in views?
+- [ ] ObservableObject for ViewModels?
+- [ ] Dependency injection?
+- [ ] No business logic in Views?
+- [ ] ViewModels don't reference Views?
+- [ ] No @State for complex objects?
+- [ ] No direct network calls in ViewModels?
+- [ ] @MainActor present?
 

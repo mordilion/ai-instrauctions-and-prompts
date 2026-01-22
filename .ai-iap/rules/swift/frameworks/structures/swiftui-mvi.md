@@ -1,7 +1,22 @@
 # SwiftUI MVI Structure
 
-## Overview
-Unidirectional data flow pattern with SwiftUI, using intents and state management.
+> **Scope**: MVI structure for SwiftUI  
+> **Applies to**: SwiftUI projects with MVI  
+> **Extends**: swift/frameworks/swiftui.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Intent enum for user actions
+> **ALWAYS**: State struct for UI state
+> **ALWAYS**: @Published state in ViewModel
+> **ALWAYS**: Immutable state
+> **ALWAYS**: Single state source
+> 
+> **NEVER**: Mutable state
+> **NEVER**: Multiple state sources
+> **NEVER**: Business logic in Views
+> **NEVER**: Skip Intent pattern
+> **NEVER**: Direct state mutation
 
 ## Directory Structure
 
@@ -95,4 +110,17 @@ struct UserView: View {
 ## When to Use
 - Complex state management
 - Apps needing debugging support
+
+## AI Self-Check
+
+- [ ] Intent enum for actions?
+- [ ] State struct for UI state?
+- [ ] @Published state in ViewModel?
+- [ ] Immutable state?
+- [ ] Single state source?
+- [ ] No mutable state?
+- [ ] No multiple state sources?
+- [ ] No business logic in Views?
+- [ ] Intent pattern followed?
+- [ ] State transitions predictable?
 

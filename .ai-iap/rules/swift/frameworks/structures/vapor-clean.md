@@ -1,7 +1,22 @@
 # Vapor Clean Architecture
 
-## Overview
-Clean Architecture for Vapor with strict separation of concerns.
+> **Scope**: Clean Architecture structure for Vapor  
+> **Applies to**: Vapor projects with Clean Architecture  
+> **Extends**: swift/frameworks/vapor.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Vapor dependencies
+> **ALWAYS**: UseCase protocols for business operations
+> **ALWAYS**: Repository protocols in Domain
+> **ALWAYS**: Repository implementations in Data
+> **ALWAYS**: Controllers in Presentation layer
+> 
+> **NEVER**: Vapor imports in Domain
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Business logic in controllers
+> **NEVER**: Skip UseCase pattern
 
 ## Directory Structure
 
@@ -64,4 +79,17 @@ struct UserController: RouteCollection {
 ## When to Use
 - Large, complex APIs
 - Long-term projects
+
+## AI Self-Check
+
+- [ ] Domain layer has no Vapor dependencies?
+- [ ] UseCase protocols for business operations?
+- [ ] Repository protocols in Domain?
+- [ ] Repository implementations in Data?
+- [ ] Controllers in Presentation?
+- [ ] No Vapor imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No business logic in controllers?
+- [ ] UseCases pure Swift?
+- [ ] Dependency flow correct?
 
