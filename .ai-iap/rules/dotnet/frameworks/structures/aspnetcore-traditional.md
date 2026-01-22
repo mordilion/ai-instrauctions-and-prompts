@@ -1,6 +1,22 @@
 # ASP.NET Core Traditional Structure
 
-> Standard layered architecture with Controllers, Services, and Data folders. Best for traditional MVC/API applications.
+> **Scope**: Traditional layered architecture for ASP.NET Core  
+> **Applies to**: ASP.NET Core projects with layered structure  
+> **Extends**: dotnet/frameworks/aspnetcore.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Controllers → Services → Repositories → Data
+> **ALWAYS**: Use interfaces for Services and Repositories
+> **ALWAYS**: DTOs for API contracts (not entities)
+> **ALWAYS**: Dependency injection for all layers
+> **ALWAYS**: Keep controllers thin (delegate to services)
+> 
+> **NEVER**: Controllers call Repositories directly
+> **NEVER**: Return entities from controllers
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Static classes for services
+> **NEVER**: Circular dependencies between layers
 
 ## Directory Structure
 
@@ -63,3 +79,16 @@ public class UserController : ControllerBase {
 ## When to Use
 - Traditional enterprise apps
 - CRUD-focused applications
+
+## AI Self-Check
+
+- [ ] Controllers → Services → Repositories → Data flow?
+- [ ] Interfaces for Services and Repositories?
+- [ ] DTOs for API contracts (not entities)?
+- [ ] Dependency injection for all layers?
+- [ ] Controllers thin (delegating to services)?
+- [ ] No controllers calling Repositories directly?
+- [ ] No entities returned from controllers?
+- [ ] No business logic in controllers?
+- [ ] No static classes for services?
+- [ ] No circular dependencies?
