@@ -1,12 +1,28 @@
 # Bash Code Style
 
-> **Scope**: Apply these rules ONLY when working with shell scripts (`*.sh`, `*.bash`, `*.zsh`, `*.ksh`, `*.bats`). These extend the general code style guidelines.
+> **Scope**: Shell script formatting (`*.sh`, `*.bash`, `*.zsh`, `*.ksh`, `*.bats`)  
+> **Applies to**: Shell scripts  
+> **Extends**: General code style guidelines
 
-## 1. Strict Mode (Default)
-- **ALWAYS**: Use strict mode near the top:
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use strict mode (set -euo pipefail, IFS=$'\n\t')
+> **ALWAYS**: Quote all variables ("$var", "${arr[@]}")
+> **ALWAYS**: Use [[ ... ]] for conditionals (not [ ... ])
+> **ALWAYS**: Use $(cmd) for command substitution (not backticks)
+> **ALWAYS**: Use local for function variables
+> 
+> **NEVER**: Use unquoted variables
+> **NEVER**: Use backticks (use $(cmd))
+> **NEVER**: Use eval unless justified
+> **NEVER**: Parse ls output
+> **NEVER**: Use echo -e (use printf)
+
+## 1. Strict Mode
+- Use strict mode near the top:
   - `set -euo pipefail`
   - `IFS=$'\n\t'`
-- **ALWAYS**: Use `trap` for cleanup of temp files and to surface failing line numbers when useful.
+- Use `trap` for cleanup
 
 ## 2. Quoting & Expansions
 - **ALWAYS**: Quote variables unless you explicitly want word-splitting/globbing: `"$var"`, `"${arr[@]}"`.
@@ -36,4 +52,19 @@
 ## 7. Tooling
 - **ALWAYS**: Run `shellcheck` on changed scripts; address warnings unless you can justify a suppression.
 - **ALWAYS**: Format with `shfmt` (2-space indent, keep it consistent).
+
+## AI Self-Check
+
+- [ ] Strict mode enabled (set -euo pipefail)?
+- [ ] All variables quoted ("$var")?
+- [ ] Using [[ ... ]] for conditionals?
+- [ ] Using $(cmd) (not backticks)?
+- [ ] local for function variables?
+- [ ] snake_case for function names?
+- [ ] Functions <50 lines?
+- [ ] printf (not echo -e)?
+- [ ] Errors to stderr (>&2)?
+- [ ] No unquoted command substitutions?
+- [ ] shellcheck passing?
+- [ ] shfmt for formatting?
 

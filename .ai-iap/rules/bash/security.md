@@ -1,13 +1,27 @@
 # Bash Security
 
-> **Scope**: Bash/shell-specific security.  
+> **Scope**: Bash/shell-specific security  
 > **Extends**: General security rules  
 > **Applies to**: `*.sh, *.bash, *.zsh, *.ksh, *.bats`
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Treat all inputs as untrusted
+> **ALWAYS**: Quote all variables ("$var")
+> **ALWAYS**: Validate paths and flags early
+> **ALWAYS**: Use mktemp for temp files
+> **ALWAYS**: Verify checksums for downloads
+> 
+> **NEVER**: Use eval on untrusted input
+> **NEVER**: source untrusted files
+> **NEVER**: curl | bash pattern
+> **NEVER**: Print secrets to logs
+> **NEVER**: Enable set -x with secrets
+
 ## 1. Input Handling
-- **ALWAYS**: Treat all inputs as untrusted (args, env vars, files, command output).
-- **ALWAYS**: Validate paths, flags, and required values early. Return exit code `2` on invalid usage.
-- **ALWAYS**: Quote expansions to prevent globbing and word-splitting injection.
+- Treat all inputs as untrusted (args, env vars, files, command output)
+- Validate paths, flags, and required values early
+- Quote expansions to prevent injection
 
 ## 2. Command Execution
 - **NEVER**: Use `eval` on untrusted input.
@@ -34,5 +48,46 @@
 - **ALWAYS**: Minimize `sudo` usage; scope it to the smallest possible commands.
 - **ALWAYS**: Sanitize/avoid trusting `PATH` in privileged scripts; consider setting a safe `PATH`.
 
-Follow the general security rules; the rules above are additive.
+## Example: Safe Script Pattern
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Validate input
+if [[ $# -ne 1 ]]; then
+    printf 'Usage: %s <username>\n' "$0" >&2
+    exit 2
+fi
+
+readonly USERNAME="$1"
+
+# Validate username (allowlist pattern)
+if [[ ! "$USERNAME" =~ ^[a-z0-9_-]+$ ]]; then
+    printf 'Error: Invalid username\n' >&2
+    exit 1
+fi
+
+# Safe temp file
+readonly TEMP_FILE="$(mktemp)"
+trap 'rm -f "$TEMP_FILE"' EXIT
+
+# Use quoted variables
+printf 'Processing user: %s\n' "$USERNAME"
+```
+
+## AI Self-Check
+
+- [ ] All inputs treated as untrusted?
+- [ ] All variables quoted ("$var")?
+- [ ] Paths and flags validated early?
+- [ ] mktemp for temp files with trap cleanup?
+- [ ] Checksums verified for downloads?
+- [ ] No eval on untrusted input?
+- [ ] No source of untrusted files?
+- [ ] No curl | bash?
+- [ ] No secrets printed to logs?
+- [ ] No set -x with secrets?
+- [ ] Minimal sudo usage?
+- [ ] Safe PATH in privileged scripts?
 
