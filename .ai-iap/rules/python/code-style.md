@@ -1,10 +1,22 @@
 # Python Code Style
 
-## General Rules
+> **Scope**: Python formatting and maintainability  
+> **Applies to**: *.py files  
+> **Extends**: General code style, python/architecture.md
 
-- **PEP 8** style guide
-- **Type hints** everywhere
-- **Black** for formatting
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Follow PEP 8 style guide
+> **ALWAYS**: Use type hints everywhere
+> **ALWAYS**: Use Black for formatting
+> **ALWAYS**: Use dataclasses for data structures
+> **ALWAYS**: Use list comprehensions (not loops + append)
+> 
+> **NEVER**: Use mutable default arguments
+> **NEVER**: Use * imports (from x import *)
+> **NEVER**: Use except: without specific exception
+> **NEVER**: Mix tabs and spaces
+> **NEVER**: Skip type hints for public functions
 
 ## Naming Conventions
 
@@ -72,3 +84,18 @@ match status:
     case "approved":
         handle_approved()
 ```
+
+## AI Self-Check
+
+- [ ] Following PEP 8?
+- [ ] Type hints everywhere?
+- [ ] Black for formatting?
+- [ ] dataclasses for data structures?
+- [ ] List comprehensions (not loops + append)?
+- [ ] snake_case for functions/variables?
+- [ ] PascalCase for classes?
+- [ ] No mutable default arguments?
+- [ ] No * imports?
+- [ ] Specific exception catches?
+- [ ] Type hints for public functions?
+- [ ] Context managers for resources?

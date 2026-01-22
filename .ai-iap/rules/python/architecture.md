@@ -1,9 +1,24 @@
 # Python Architecture
 
-## Overview
-Clean Python with type hints, dataclasses, and async patterns.
+> **Scope**: Python architectural patterns and principles  
+> **Applies to**: *.py files  
+> **Extends**: General architecture rules
 
-## Core Principles
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use type hints (PEP 484)
+> **ALWAYS**: Use dataclasses for data structures
+> **ALWAYS**: Use async/await for async operations
+> **ALWAYS**: Use ABC for interfaces
+> **ALWAYS**: Dependency injection via constructors
+> 
+> **NEVER**: Use global mutable state
+> **NEVER**: Skip type hints for public APIs
+> **NEVER**: Use dict for structured data (use dataclasses)
+> **NEVER**: Circular imports
+> **NEVER**: Wildcard imports (from x import *)
+
+## Core Patterns
 
 ### Type Hints
 ```python
@@ -69,3 +84,18 @@ async def process_users():
     tasks = [process_user(user) for user in users]
     await asyncio.gather(*tasks)
 ```
+
+## AI Self-Check
+
+- [ ] Type hints used (PEP 484)?
+- [ ] dataclasses for data structures?
+- [ ] async/await for async operations?
+- [ ] ABC for interfaces?
+- [ ] Dependency injection via constructors?
+- [ ] Package by feature (not layer)?
+- [ ] No global mutable state?
+- [ ] Type hints for public APIs?
+- [ ] No dict for structured data?
+- [ ] No circular imports?
+- [ ] No wildcard imports?
+- [ ] Context managers for resources?

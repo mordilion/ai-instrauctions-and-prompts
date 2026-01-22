@@ -1,9 +1,24 @@
 # Dart Architecture
 
-## Overview
-Clean, maintainable Dart with null safety and immutability.
+> **Scope**: Dart architectural patterns and principles  
+> **Applies to**: *.dart files  
+> **Extends**: General architecture rules
 
-## Core Principles
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Enable null safety (SDK >=2.12)
+> **ALWAYS**: Use immutable classes (@immutable, const)
+> **ALWAYS**: Use async/await for async operations
+> **ALWAYS**: Prefer final over var for immutability
+> **ALWAYS**: Use factory constructors for complex creation
+> 
+> **NEVER**: Use ! (null assertion) without justification
+> **NEVER**: Use mutable global state
+> **NEVER**: Skip null checks
+> **NEVER**: Use dynamic unless necessary
+> **NEVER**: Block async operations synchronously
+
+## Core Patterns
 
 ### Null Safety
 ```dart
@@ -107,3 +122,18 @@ class Failure<T> extends Result<T> {
   final String error;
 }
 ```
+
+## AI Self-Check
+
+- [ ] Null safety enabled (SDK >=2.12)?
+- [ ] Immutable classes (@immutable, const)?
+- [ ] async/await for async operations?
+- [ ] final over var for immutability?
+- [ ] Factory constructors for complex creation?
+- [ ] Sealed classes for finite states?
+- [ ] No ! (null assertion) without justification?
+- [ ] No mutable global state?
+- [ ] Null checks present?
+- [ ] Avoiding dynamic unless necessary?
+- [ ] copyWith pattern for immutable updates?
+- [ ] Extension methods for utilities?

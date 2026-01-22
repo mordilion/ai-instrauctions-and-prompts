@@ -1,11 +1,22 @@
 # Dart Code Style
 
-## General Rules
+> **Scope**: Dart formatting and maintainability  
+> **Applies to**: *.dart files  
+> **Extends**: General code style, dart/architecture.md
 
-- **Dart 3.0+**
-- **Null safety** enabled
-- **`dart format`** for formatting
-- **`dart analyze`** for linting
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Enable null safety (SDK >=3.0)
+> **ALWAYS**: Use `dart format` for formatting
+> **ALWAYS**: Use `dart analyze` for linting
+> **ALWAYS**: Prefer final over var for immutability
+> **ALWAYS**: Use const constructors where possible
+> 
+> **NEVER**: Use ! (null assertion) without justification
+> **NEVER**: Use var when final is sufficient
+> **NEVER**: Skip type annotations for public APIs
+> **NEVER**: Use dynamic unless necessary
+> **NEVER**: Mutable collections without reason
 
 ## Naming Conventions
 
@@ -85,3 +96,18 @@ final user = User()
   ..id = 1
   ..name = 'John';
 ```
+
+## AI Self-Check
+
+- [ ] Null safety enabled?
+- [ ] `dart format` used for formatting?
+- [ ] `dart analyze` passing?
+- [ ] Preferring final over var?
+- [ ] const constructors where possible?
+- [ ] PascalCase for classes/enums?
+- [ ] camelCase for variables/methods?
+- [ ] No ! (null assertion) without justification?
+- [ ] Type annotations for public APIs?
+- [ ] No dynamic unless necessary?
+- [ ] Arrow functions for single expressions?
+- [ ] Trailing commas for collections?

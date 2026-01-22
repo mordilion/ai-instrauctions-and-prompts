@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.php files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: Eloquent ORM or Query Builder (parameterized)
+> **ALWAYS**: password_hash(PASSWORD_BCRYPT) for passwords
+> **ALWAYS**: HTTPS in production
+> **ALWAYS**: CSRF protection enabled
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Use MD5 for passwords
+> **NEVER**: Disable CSRF protection
+> **NEVER**: Use eval() or exec() on user input
+> **NEVER**: Store secrets in code
+
 ## 0. Embedded SQL (when SQL appears inside PHP)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in PHP code.
-- **NEVER**: Concatenate or interpolate untrusted input into SQL.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate or interpolate untrusted input into SQL
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Laravel Security
 
@@ -88,6 +102,10 @@
 
 Before generating PHP code:
 - [ ] Prepared statements / ORM (no string concatenation)?
+## AI Self-Check
+
+- [ ] Parameterized queries (no string concatenation in SQL)?
+- [ ] Eloquent ORM or Query Builder?
 - [ ] `password_hash()` / Laravel `Hash::make()`?
 - [ ] Input validation on all user data?
 - [ ] CSRF tokens enabled?
@@ -96,3 +114,5 @@ Before generating PHP code:
 - [ ] HTTPS enforced?
 - [ ] Error display disabled in production?
 - [ ] Secrets in `.env` (not committed)?
+- [ ] No eval() or exec() on user input?
+- [ ] `htmlspecialchars()` for HTML output?

@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.py files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: Django ORM or SQLAlchemy (not raw SQL)
+> **ALWAYS**: bcrypt for password hashing
+> **ALWAYS**: HTTPS in production (SECURE_SSL_REDIRECT)
+> **ALWAYS**: Validate inputs with Pydantic/Marshmallow
+> 
+> **NEVER**: Build SQL with f-strings or % formatting
+> **NEVER**: Use pickle on untrusted data
+> **NEVER**: Use eval() or exec() on user input
+> **NEVER**: Store secrets in code or version control
+> **NEVER**: Disable CSRF protection
+
 ## 0. Embedded SQL (when SQL appears inside Python)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Python code.
-- **NEVER**: Build SQL with f-strings, `%` formatting, or string concatenation using untrusted input.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER build SQL with f-strings, % formatting, or string concatenation
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Django Security
 
@@ -104,6 +118,12 @@
 Before generating Python code:
 - [ ] Django ORM or SQLAlchemy (no f-strings in SQL)?
 - [ ] `bcrypt` / `passlib` for passwords?
+## AI Self-Check
+
+- [ ] Parameterized queries (no f-strings in SQL)?
+- [ ] Django ORM or SQLAlchemy (not raw SQL)?
+- [ ] bcrypt for password hashing?
+- [ ] HTTPS in production?
 - [ ] Pydantic validation (FastAPI) or Django forms?
 - [ ] HTTPS + secure cookies?
 - [ ] CSRF protection enabled?

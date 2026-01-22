@@ -1,10 +1,22 @@
 # PHP Code Style
 
-## General Rules
+> **Scope**: PHP formatting and maintainability  
+> **Applies to**: *.php files  
+> **Extends**: General code style, php/architecture.md
 
-- **PSR-12** coding standard
-- **Strict types** enabled
-- **Type hints** everywhere
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Follow PSR-12 coding standard
+> **ALWAYS**: Enable strict types (declare(strict_types=1))
+> **ALWAYS**: Use type hints everywhere
+> **ALWAYS**: Use readonly properties (PHP 8.1+)
+> **ALWAYS**: Use named arguments for clarity
+> 
+> **NEVER**: Skip type declarations
+> **NEVER**: Mix tabs and spaces
+> **NEVER**: Use short tags (<? instead of <?php)
+> **NEVER**: Use extract() function
+> **NEVER**: Skip return type hints
 
 ## Naming Conventions
 
@@ -82,3 +94,18 @@ $name = $user->name ?? 'Anonymous';
 // Nullsafe operator
 $email = $user?->profile?->email;
 ```
+
+## AI Self-Check
+
+- [ ] Following PSR-12?
+- [ ] strict_types=1 declared?
+- [ ] Type hints everywhere?
+- [ ] readonly properties used (PHP 8.1+)?
+- [ ] Named arguments for clarity?
+- [ ] PascalCase for classes?
+- [ ] camelCase for methods/properties?
+- [ ] No global variables?
+- [ ] No extract() function?
+- [ ] No short tags (using <?php)?
+- [ ] Return type hints present?
+- [ ] Constructor property promotion (PHP 8)?

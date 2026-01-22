@@ -1,9 +1,24 @@
 # PHP Architecture
 
-## Overview
-Modern PHP with clean architecture, type safety, and best practices.
+> **Scope**: PHP architectural patterns and principles  
+> **Applies to**: *.php files  
+> **Extends**: General architecture rules
 
-## Core Principles
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use strict types (declare(strict_types=1))
+> **ALWAYS**: Use type hints for all parameters and returns
+> **ALWAYS**: Use dependency injection (constructor)
+> **ALWAYS**: Use readonly properties (PHP 8.1+)
+> **ALWAYS**: Use named arguments for clarity
+> 
+> **NEVER**: Skip type declarations
+> **NEVER**: Use global variables
+> **NEVER**: Use extract() function
+> **NEVER**: Use eval() on user input
+> **NEVER**: Mix HTML and business logic
+
+## Core Patterns
 
 ### Type Safety (PHP 8+)
 ```php
@@ -102,3 +117,18 @@ $user = new User(
 ```php
 $email = $user?->profile?->email ?? 'default@example.com';
 ```
+
+## AI Self-Check
+
+- [ ] strict_types=1 declared?
+- [ ] Type hints for all parameters/returns?
+- [ ] Dependency injection via constructor?
+- [ ] readonly properties used (PHP 8.1+)?
+- [ ] Named arguments for clarity?
+- [ ] Package by feature (not layer)?
+- [ ] No global variables?
+- [ ] No extract() function?
+- [ ] No eval() on user input?
+- [ ] No mixed HTML and business logic?
+- [ ] final classes where appropriate?
+- [ ] Enums for typed constants (PHP 8.1+)?
