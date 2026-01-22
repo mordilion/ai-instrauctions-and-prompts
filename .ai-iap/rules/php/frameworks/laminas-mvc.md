@@ -1,32 +1,22 @@
 # Laminas MVC Framework
 
-> **Scope**: Apply these rules when working with Laminas MVC applications.
+> **Scope**: Laminas MVC applications  
+> **Applies to**: PHP files in Laminas MVC projects  
+> **Extends**: php/architecture.md, php/code-style.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Laminas MVC (formerly Zend Framework) is an enterprise PHP framework with a modular architecture. It provides comprehensive components for large-scale applications.
-
-**Key Capabilities**:
-- **Modular Architecture**: Feature-based modules
-- **Service Manager**: Powerful DI container
-- **Event-Driven**: EventManager for decoupling
-- **Enterprise**: Battle-tested for large apps
-- **Component Library**: 60+ reusable components
-
-## Best Practices
-
-**MUST**:
-- Use factories for ALL dependencies (NO new in controllers)
-- Use Input Filters for validation
-- Return ViewModel from controllers
-- Use modules for organization
-- Use Table Gateway for database
-
-**SHOULD**:
-- Use event manager for cross-cutting concerns
-- Use view helpers for reusable template logic
-- Use forms for complex validation
-- Configure via module.config.php
+> **ALWAYS**: Use factories for ALL dependencies
+> **ALWAYS**: Use Input Filters for validation
+> **ALWAYS**: Return ViewModel from controllers
+> **ALWAYS**: Use modules for organization
+> **ALWAYS**: Use Table Gateway for database
+> 
+> **NEVER**: Use new in controllers (use factories)
+> **NEVER**: Skip Input Filters
+> **NEVER**: Put business logic in controllers
+> **NEVER**: Direct database access in controllers
+> **NEVER**: Skip module structure
 
 **AVOID**:
 - Direct instantiation (use factories)
@@ -137,3 +127,18 @@ class UserTable
 - **Input Filters**: Validate all user input
 - **View Helpers**: Create helpers for reusable template logic
 - **Event Manager**: Use for cross-cutting concerns
+
+## AI Self-Check
+
+- [ ] Factories for ALL dependencies?
+- [ ] Input Filters for validation?
+- [ ] ViewModel returned from controllers?
+- [ ] Modules for organization?
+- [ ] Table Gateway for database?
+- [ ] Event Manager for cross-cutting concerns?
+- [ ] View Helpers for template logic?
+- [ ] No new in controllers?
+- [ ] No skipped Input Filters?
+- [ ] No business logic in controllers?
+- [ ] No direct database access in controllers?
+- [ ] module.config.php configured?
