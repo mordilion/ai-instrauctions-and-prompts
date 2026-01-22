@@ -1,29 +1,22 @@
 # Fastify
 
-> **Scope**: Apply these rules for Fastify applications (JavaScript or TypeScript).
+> **Scope**: Fastify applications (JavaScript or TypeScript)  
+> **Applies to**: Fastify projects  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Fastify is a fast Node.js framework focused on performance and developer experience with built-in schema validation.
-
-## Best Practices
-
-**MUST**:
-- Use schema validation for all routes
-- Use plugins for modularity
-- Use async/await
-- Register plugins before routes
-
-**SHOULD**:
-- Use JSON Schema for validation
-- Use TypeScript for type safety
-- Use decorators for DI
-- Enable logging
-
-**AVOID**:
-- Missing schema validation
-- Synchronous operations
-- Direct database access in routes
+> **ALWAYS**: Use schema validation for all routes
+> **ALWAYS**: Use plugins for modularity
+> **ALWAYS**: Use async/await
+> **ALWAYS**: Register plugins before routes
+> **ALWAYS**: Use JSON Schema for validation
+> 
+> **NEVER**: Skip schema validation
+> **NEVER**: Synchronous operations in handlers
+> **NEVER**: Direct database access in routes
+> **NEVER**: Register routes before plugins
+> **NEVER**: Missing error handlers
 
 ## Project Structure
 ```
@@ -135,4 +128,19 @@ declare module 'fastify' {
 - **TypeBox (TS)**: Runtime validation + type inference
 - **Plugins**: Use `fastify-plugin` for shared decorators
 - **Encapsulation**: Plugins are scoped by default
+
+## AI Self-Check
+
+- [ ] Schema validation for all routes?
+- [ ] Plugins for modularity?
+- [ ] async/await used?
+- [ ] Plugins registered before routes?
+- [ ] JSON Schema for validation?
+- [ ] TypeScript with TypeBox (if TS)?
+- [ ] Logging enabled (pino)?
+- [ ] Error handlers configured?
+- [ ] No schema validation skipped?
+- [ ] No synchronous operations?
+- [ ] No direct database access in routes?
+- [ ] Decorators used for DI?
 

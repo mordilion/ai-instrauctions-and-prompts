@@ -1,27 +1,22 @@
 # jQuery
 
-> **Scope**: Apply these rules when working with jQuery for DOM manipulation and AJAX. Consider modern alternatives (vanilla JS, Alpine.js) for new projects.
+> **Scope**: jQuery for DOM manipulation and AJAX (legacy projects)  
+> **Applies to**: JavaScript files using jQuery  
+> **Extends**: javascript/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-jQuery simplifies DOM manipulation and AJAX. Use for legacy projects only - consider vanilla JS or Alpine.js for new projects.
-
-## Best Practices
-
-**MUST**:
-- Cache selectors (store in variables)
-- Use event delegation for dynamic content
-- Chain methods when possible
-
-**SHOULD**:
-- Namespace events for easy cleanup
-- Use $.ajax() promises
-- Consider vanilla JS for simple tasks
-
-**AVOID**:
-- jQuery for new projects (use modern alternatives)
-- Repeated DOM queries
-- $.each for arrays (use native forEach)
+> **ALWAYS**: Cache selectors (store in variables)
+> **ALWAYS**: Use event delegation for dynamic content
+> **ALWAYS**: Chain methods when possible
+> **ALWAYS**: Namespace events for cleanup
+> **ALWAYS**: Use $.ajax() promises (not callbacks)
+> 
+> **NEVER**: Use jQuery for new projects (use vanilla JS/Alpine/React)
+> **NEVER**: Repeated DOM queries (cache selectors)
+> **NEVER**: $.each for arrays (use native forEach/map)
+> **NEVER**: Use document.write
+> **NEVER**: Bind events to many elements (use delegation)
 
 ## 1. When to Use jQuery
 - **Legacy Projects**: Maintaining existing jQuery codebases.
@@ -62,4 +57,19 @@ document.querySelectorAll('.item').forEach(el => el.classList.add('active'));
 // vs jQuery
 $('.item').addClass('active');
 ```
+
+## AI Self-Check
+
+- [ ] Selectors cached (stored in variables)?
+- [ ] Event delegation for dynamic content?
+- [ ] Methods chained when possible?
+- [ ] Events namespaced?
+- [ ] $.ajax() promises (not callbacks)?
+- [ ] No repeated DOM queries?
+- [ ] No $.each for arrays (using native forEach)?
+- [ ] No document.write?
+- [ ] No events bound to many elements (using delegation)?
+- [ ] Considering vanilla JS/Alpine for new code?
+- [ ] Performance optimized (selector caching)?
+- [ ] Modern alternatives evaluated?
 

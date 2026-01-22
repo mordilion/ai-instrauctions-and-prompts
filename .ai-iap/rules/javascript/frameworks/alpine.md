@@ -1,28 +1,22 @@
 # Alpine.js
 
-> **Scope**: Apply these rules when working with Alpine.js for lightweight JavaScript interactivity.
+> **Scope**: Alpine.js for lightweight interactivity  
+> **Applies to**: HTML files with Alpine.js  
+> **Extends**: javascript/architecture.md, html/architecture.md
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Alpine.js is a lightweight (15KB) JavaScript framework for adding interactivity to server-rendered HTML. Think of it as "Tailwind for JavaScript".
-
-## Best Practices
-
-**MUST**:
-- Use x-data for component state
-- Use x-cloak to hide elements until Alpine loads
-- Use @ and : shorthand
-- Keep components small and focused
-
-**SHOULD**:
-- Use Alpine.data() for reusable components
-- Use Alpine.store() for global state
-- Use modifiers (.prevent, .stop, .outside)
-
-**AVOID**:
-- Complex SPAs (use Vue/React instead)
-- Business logic in HTML
-- Missing x-cloak styles
+> **ALWAYS**: Use x-data for component state
+> **ALWAYS**: Use x-cloak to prevent flash
+> **ALWAYS**: Use @ and : shorthand
+> **ALWAYS**: Keep components small and focused
+> **ALWAYS**: Alpine.store() for global state
+> 
+> **NEVER**: Build complex SPAs (use Vue/React)
+> **NEVER**: Put business logic in HTML attributes
+> **NEVER**: Skip x-cloak styles
+> **NEVER**: Use Alpine for >50 components
+> **NEVER**: Mix Alpine with Vue/React
 
 ## 1. When to Use Alpine
 - **Progressive Enhancement**: Adding interactivity to server-rendered HTML.
@@ -75,4 +69,19 @@ Alpine.store('auth', {
   <div x-show="open" x-transition>Content</div>
 </div>
 ```
+
+## AI Self-Check
+
+- [ ] Using x-data for component state?
+- [ ] x-cloak to prevent flash?
+- [ ] @ and : shorthand used?
+- [ ] Components small and focused?
+- [ ] Alpine.data() for reusable components?
+- [ ] Alpine.store() for global state?
+- [ ] Modifiers used (.prevent, .stop)?
+- [ ] x-cloak styles present?
+- [ ] No complex SPAs (using Vue/React for that)?
+- [ ] No business logic in HTML attributes?
+- [ ] Progressive enhancement from server HTML?
+- [ ] <50 components (otherwise use larger framework)?
 

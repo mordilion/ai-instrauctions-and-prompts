@@ -1,30 +1,22 @@
 # Express.js
 
-> **Scope**: Apply these rules for Express.js applications (JavaScript or TypeScript).
+> **Scope**: Express.js applications (JavaScript or TypeScript)  
+> **Applies to**: Express.js projects  
+> **Extends**: javascript/architecture.md, nodejs/architecture.md (if exists)
 
-## Overview
+## CRITICAL REQUIREMENTS
 
-Express is the most popular Node.js web framework - minimal, flexible, with a large ecosystem.
-
-## Best Practices
-
-**MUST**:
-- Use async/await (NO callbacks)
-- Use middleware for cross-cutting concerns
-- Use error handling middleware (must be last)
-- Return responses (res.json, res.send)
-
-**SHOULD**:
-- Use Router for modular routes
-- Use controllers for request handling
-- Use services for business logic
-- Use helmet for security headers
-
-**AVOID**:
-- Business logic in routes
-- Callback hell (use async/await)
-- Missing error handling
-- Synchronous operations
+> **ALWAYS**: Use async/await (not callbacks)
+> **ALWAYS**: Use middleware for cross-cutting concerns
+> **ALWAYS**: Error handling middleware (must be last)
+> **ALWAYS**: Use Router for modular routes
+> **ALWAYS**: Use helmet for security headers
+> 
+> **NEVER**: Put business logic in routes
+> **NEVER**: Use callback hell
+> **NEVER**: Skip error handling middleware
+> **NEVER**: Synchronous operations in request handlers
+> **NEVER**: Expose stack traces to clients
 
 ## Project Structure
 ```
@@ -128,4 +120,19 @@ export {};
 - **Validation**: Use Zod (TS) or Joi
 - **Security**: helmet, cors, rate-limit
 - **Logging**: winston or pino (not console.log)
+
+## AI Self-Check
+
+- [ ] Using async/await (not callbacks)?
+- [ ] Middleware for cross-cutting concerns?
+- [ ] Error handling middleware (last)?
+- [ ] Router for modular routes?
+- [ ] helmet for security headers?
+- [ ] Controllers thin (delegating to services)?
+- [ ] Validation middleware (Zod/Joi)?
+- [ ] No business logic in routes?
+- [ ] No callback hell?
+- [ ] No missing error handling?
+- [ ] No synchronous operations in handlers?
+- [ ] CORS configured with specific origins?
 
