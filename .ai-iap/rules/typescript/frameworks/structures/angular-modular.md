@@ -1,7 +1,22 @@
 # Angular Modular/Feature Structure
 
-> **Scope**: Use this structure for large Angular applications with feature modules.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Angular rules.
+> **Scope**: Modular structure for Angular  
+> **Applies to**: Angular projects with feature modules  
+> **Extends**: typescript/frameworks/angular.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Core module for singleton services
+> **ALWAYS**: Shared module for shared components
+> **ALWAYS**: Feature modules lazy loaded
+> **ALWAYS**: Feature routing modules
+> **ALWAYS**: Features independent
+> 
+> **NEVER**: Import feature modules in Core/Shared
+> **NEVER**: Circular module dependencies
+> **NEVER**: Core imported in features (provide at root)
+> **NEVER**: Shared services in feature modules
+> **NEVER**: Deep folder nesting
 
 ## Project Structure
 ```
@@ -50,4 +65,17 @@ const routes: Routes = [
 - Enterprise applications
 - Multiple teams working on features
 - Performance-critical apps (lazy loading)
+
+## AI Self-Check
+
+- [ ] Core module for singleton services?
+- [ ] Shared module for shared components?
+- [ ] Feature modules lazy loaded?
+- [ ] Feature routing modules present?
+- [ ] Features independent?
+- [ ] No feature modules in Core/Shared?
+- [ ] No circular module dependencies?
+- [ ] Core provided at root (not imported)?
+- [ ] No shared services in features?
+- [ ] Lazy loading configured?
 

@@ -1,6 +1,22 @@
 # Django Traditional Structure
 
-> Django's conventional "app" structure with files organized by type (models, views, urls). Best for small apps and quick prototypes.
+> **Scope**: Traditional structure for Django  
+> **Applies to**: Django projects with traditional structure  
+> **Extends**: python/frameworks/django.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Models in models.py
+> **ALWAYS**: Views in views.py
+> **ALWAYS**: URLs in urls.py
+> **ALWAYS**: ViewSets for DRF
+> **ALWAYS**: Serializers for API
+> 
+> **NEVER**: Business logic in views
+> **NEVER**: Skip serializers (use ModelSerializer)
+> **NEVER**: Fat views (extract to services)
+> **NEVER**: Skip URL patterns
+> **NEVER**: Direct model access in templates
 
 ## Directory Structure
 
@@ -41,3 +57,16 @@ router.register(r'users', UserViewSet)
 ## When to Use
 - Small Django apps
 - Quick prototypes
+
+## AI Self-Check
+
+- [ ] Models in models.py?
+- [ ] Views in views.py?
+- [ ] URLs in urls.py?
+- [ ] ViewSets for DRF?
+- [ ] Serializers for API?
+- [ ] No business logic in views?
+- [ ] ModelSerializer used?
+- [ ] Views kept thin?
+- [ ] URL patterns configured?
+- [ ] No direct model access in templates?

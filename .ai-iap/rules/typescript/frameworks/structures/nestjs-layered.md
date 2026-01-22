@@ -1,7 +1,22 @@
 # NestJS Layered Structure
 
-> **Scope**: Use this structure for smaller NestJS apps organized by technical layer.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base NestJS rules.
+> **Scope**: Layered structure for NestJS  
+> **Applies to**: NestJS projects with layered structure  
+> **Extends**: typescript/frameworks/nestjs.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Controllers in controllers/ folder
+> **ALWAYS**: Services in services/ folder
+> **ALWAYS**: Entities in entities/ folder
+> **ALWAYS**: DTOs in dto/ folder
+> **ALWAYS**: Controllers thin (delegate to services)
+> 
+> **NEVER**: Business logic in controllers
+> **NEVER**: Controllers call repositories directly
+> **NEVER**: Return entities from controllers
+> **NEVER**: Fat controllers
+> **NEVER**: Skip DTO validation
 
 ## Project Structure
 ```
@@ -50,4 +65,17 @@ export class AppModule {}
 - Small APIs (< 10 endpoints)
 - Prototypes and MVPs
 - Learning NestJS
+
+## AI Self-Check
+
+- [ ] Controllers in controllers/ folder?
+- [ ] Services in services/ folder?
+- [ ] Entities in entities/ folder?
+- [ ] DTOs in dto/ folder?
+- [ ] Controllers thin?
+- [ ] Services handle business logic?
+- [ ] DTO validation present?
+- [ ] No business logic in controllers?
+- [ ] No controllers calling repositories directly?
+- [ ] No entities returned from controllers?
 
