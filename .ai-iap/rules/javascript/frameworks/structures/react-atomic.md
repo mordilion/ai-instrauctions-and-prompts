@@ -1,6 +1,22 @@
 # React Atomic Design Structure (JavaScript)
 
-> **Scope**: This structure extends the React (JS) framework rules. When selected, use this folder organization.
+> **Scope**: Atomic Design structure for React (JS)  
+> **Applies to**: React (JS) projects with Atomic Design  
+> **Extends**: javascript/frameworks/react.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Build from atoms → molecules → organisms → templates → pages
+> **ALWAYS**: No skip levels (molecules use atoms, organisms use molecules)
+> **ALWAYS**: Atoms are single elements (no dependencies)
+> **ALWAYS**: Templates are layouts (no data)
+> **ALWAYS**: Pages are templates with data
+> 
+> **NEVER**: Skip hierarchy levels
+> **NEVER**: Data in atoms/molecules
+> **NEVER**: Business logic in atoms/molecules
+> **NEVER**: Organisms depend on pages
+> **NEVER**: Unclear component categorization
 
 ## Folder Structure
 ```
@@ -47,4 +63,17 @@ src/
 - Design system projects.
 - Large teams with dedicated designers.
 - Component library development.
+
+## AI Self-Check
+
+- [ ] Building from atoms → molecules → organisms → templates → pages?
+- [ ] No skip levels (molecules use atoms)?
+- [ ] Atoms are single elements (no dependencies)?
+- [ ] Templates are layouts (no data)?
+- [ ] Pages are templates with data?
+- [ ] Components categorized correctly?
+- [ ] Storybook documentation?
+- [ ] No data in atoms/molecules?
+- [ ] No business logic in atoms/molecules?
+- [ ] Hierarchy respected?
 
