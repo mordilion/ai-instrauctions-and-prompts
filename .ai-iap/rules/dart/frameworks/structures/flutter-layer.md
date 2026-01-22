@@ -1,7 +1,22 @@
 # Flutter Layer-First Structure
 
-> **Scope**: Use this structure for Flutter apps organized by technical layer.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Flutter rules.
+> **Scope**: Layer-organized structure for Flutter  
+> **Applies to**: Flutter projects with layer-first structure  
+> **Extends**: dart/frameworks/flutter.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Presentation → Domain → Data dependency flow
+> **ALWAYS**: Models in Data layer (JSON serialization)
+> **ALWAYS**: Entities in Domain layer (business logic)
+> **ALWAYS**: Screens/Widgets in Presentation layer
+> **ALWAYS**: Repository pattern in Data layer
+> 
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Presentation or Data
+> **NEVER**: Mix UI and business logic
+> **NEVER**: Skip repository abstraction
+> **NEVER**: Circular dependencies between layers
 
 ## Project Structure
 ```
@@ -46,4 +61,17 @@ lib/
 - Solo developers or small teams
 - Rapid prototyping
 - Learning Flutter
+
+## AI Self-Check
+
+- [ ] Presentation → Domain → Data flow?
+- [ ] Models in Data layer (JSON serialization)?
+- [ ] Entities in Domain layer (if used)?
+- [ ] Screens/Widgets in Presentation layer?
+- [ ] Repository pattern in Data layer?
+- [ ] State management in Presentation?
+- [ ] No Presentation → Data direct dependency?
+- [ ] No Domain → Presentation dependency?
+- [ ] Clear layer boundaries?
+- [ ] Repository abstraction not skipped?
 

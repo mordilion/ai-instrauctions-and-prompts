@@ -1,7 +1,22 @@
 # Flutter Clean Architecture
 
-> **Scope**: Use this structure for Flutter apps with strict clean architecture.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base Flutter rules.
+> **Scope**: Clean Architecture structure for Flutter  
+> **Applies to**: Flutter projects with clean architecture  
+> **Extends**: dart/frameworks/flutter.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Domain layer has no Flutter imports
+> **ALWAYS**: Data layer implements Domain interfaces
+> **ALWAYS**: Presentation layer uses BLoC/Riverpod
+> **ALWAYS**: UseCase classes for business operations
+> **ALWAYS**: Repository pattern for data access
+> 
+> **NEVER**: Flutter imports in Domain layer
+> **NEVER**: Presentation depends on Data directly
+> **NEVER**: Domain depends on Data or Presentation
+> **NEVER**: Skip error handling (Failure classes)
+> **NEVER**: Mix concerns across layers
 
 ## Project Structure
 ```
@@ -72,4 +87,17 @@ class Login implements UseCase<User, LoginParams> {
 - Long-lived projects
 - Teams practicing DDD
 - Need for high testability
+
+## AI Self-Check
+
+- [ ] Domain layer has no Flutter imports?
+- [ ] Data layer implements Domain interfaces?
+- [ ] Presentation uses BLoC/Riverpod?
+- [ ] UseCase classes for business operations?
+- [ ] Repository pattern for data access?
+- [ ] Dependency flow: Presentation → Domain ← Data?
+- [ ] Failure classes for error handling?
+- [ ] No Flutter imports in Domain?
+- [ ] No Presentation → Data direct dependency?
+- [ ] Features organized by business domain?
 

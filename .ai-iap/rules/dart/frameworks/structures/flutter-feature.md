@@ -1,6 +1,22 @@
 # Flutter Feature-First Structure
 
-> Organize Flutter app by feature/domain with all related files co-located. Best for medium to large apps with clear feature boundaries.
+> **Scope**: Feature-organized structure for Flutter  
+> **Applies to**: Flutter projects with feature-first structure  
+> **Extends**: dart/frameworks/flutter.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Co-locate feature files (models, repos, widgets, screens)
+> **ALWAYS**: Keep features independent (minimal coupling)
+> **ALWAYS**: Shared folder for cross-feature code
+> **ALWAYS**: Repository pattern per feature
+> **ALWAYS**: State management (BLoC/Riverpod) per feature
+> 
+> **NEVER**: Share state between features directly
+> **NEVER**: Deep folder nesting (keep flat)
+> **NEVER**: Generic Services folder (feature-specific only)
+> **NEVER**: Cross-feature imports (use Shared/)
+> **NEVER**: Split feature across distant locations
 
 ## Directory Structure
 
@@ -52,3 +68,16 @@ class UserList extends StatelessWidget {
 ## When to Use
 - Medium to large Flutter apps
 - Feature-focused development
+
+## AI Self-Check
+
+- [ ] Features co-located (models, repos, widgets, screens)?
+- [ ] Features independent (minimal coupling)?
+- [ ] Shared folder for cross-feature code?
+- [ ] Repository pattern per feature?
+- [ ] State management per feature?
+- [ ] No shared state between features directly?
+- [ ] Flat structure (not deep nesting)?
+- [ ] No cross-feature imports (using Shared/)?
+- [ ] Feature boundaries clear?
+- [ ] Each feature self-contained?
