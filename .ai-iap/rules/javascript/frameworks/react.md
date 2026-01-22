@@ -221,3 +221,18 @@ useEffect(() => {
   }
 }, []);
 ```
+
+## AI Self-Check
+
+- [ ] Functional components (not class components)?
+- [ ] Hooks used correctly?
+- [ ] State lifted up appropriately?
+- [ ] Props destructured?
+- [ ] Key prop on list items?
+- [ ] useEffect dependencies correct?
+- [ ] Custom hooks for reusable logic?
+- [ ] Memoization used (useMemo, useCallback)?
+- [ ] No mutating props?
+- [ ] No inline function definitions in JSX?
+- [ ] Error boundaries implemented?
+- [ ] Components <200 lines?

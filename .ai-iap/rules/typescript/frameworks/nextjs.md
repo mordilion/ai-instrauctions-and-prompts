@@ -66,3 +66,18 @@
 **MUST**: App Router, Server Components, 'use client' for hooks, Server Actions
 **SHOULD**: loading.tsx, error.tsx, dynamic imports, static generation
 **AVOID**: Pages Router, client-side fetching, useEffect for data, API routes for mutations
+
+## AI Self-Check
+
+- [ ] Using App Router (not Pages Router)?
+- [ ] Server Components by default?
+- [ ] 'use client' for client-only features?
+- [ ] Server Actions for mutations?
+- [ ] loading.tsx for loading states?
+- [ ] error.tsx for error boundaries?
+- [ ] Dynamic imports for code splitting?
+- [ ] Static generation where possible?
+- [ ] No useEffect for data fetching?
+- [ ] No API routes for mutations (using Server Actions)?
+- [ ] Metadata API for SEO?
+- [ ] Route Handlers for API endpoints?

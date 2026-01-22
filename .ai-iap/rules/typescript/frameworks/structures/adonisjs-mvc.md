@@ -130,3 +130,16 @@ test.group('Users API', () => {
 - **Lucid ORM**: Active Record pattern
 - **VineJS**: Schema-based validation
 - **Events**: Decoupled side effects
+
+## AI Self-Check
+
+- [ ] Controllers in app/Controllers/?
+- [ ] Services in app/Services/?
+- [ ] Models in app/Models/?
+- [ ] Validators using VineJS?
+- [ ] IoC container for DI?
+- [ ] Controllers thin (delegating to services)?
+- [ ] Lucid ORM for database?
+- [ ] Events for side effects?
+- [ ] Path aliases configured (#)?
+- [ ] No business logic in controllers?

@@ -81,3 +81,16 @@ import { useUsers } from '@/features/user'
 - ✅ Independent features
 - ❌ Small apps (<3 features)
 - ❌ Highly interconnected features
+
+## AI Self-Check
+
+- [ ] Features self-contained in src/features/?
+- [ ] Shared code in src/shared/?
+- [ ] Each feature has index.ts barrel export?
+- [ ] Cross-feature imports via public API?
+- [ ] Feature independence maintained?
+- [ ] Components, hooks, utils co-located?
+- [ ] Types exported via barrel?
+- [ ] No direct cross-feature imports?
+- [ ] Features <500 lines each?
+- [ ] Shared utilities extracted?
