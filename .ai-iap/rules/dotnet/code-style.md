@@ -1,10 +1,22 @@
 # .NET Code Style
 
-## General Rules
+> **Scope**: .NET/C# formatting and maintainability  
+> **Applies to**: *.cs files  
+> **Extends**: General code style, dotnet/architecture.md
 
-- **Nullable reference types** enabled
-- **EditorConfig** for style
-- **Async/await** for I/O
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Enable nullable reference types
+> **ALWAYS**: Use EditorConfig for style
+> **ALWAYS**: Use async/await for I/O operations
+> **ALWAYS**: Use var when type is obvious
+> **ALWAYS**: Use expression-bodied members for single statements
+> 
+> **NEVER**: Block on async (.Result, .Wait())
+> **NEVER**: Use async void (except event handlers)
+> **NEVER**: Skip nullable annotations
+> **NEVER**: Use underscores for local variables
+> **NEVER**: Public fields (use properties)
 
 ## Naming Conventions
 
@@ -80,3 +92,18 @@ if (obj is User { Role: "Admin" } admin)
 // String interpolation
 var message = $"User {name} created";
 ```
+
+## AI Self-Check
+
+- [ ] Nullable reference types enabled?
+- [ ] EditorConfig configured?
+- [ ] async/await for I/O operations?
+- [ ] var when type is obvious?
+- [ ] Expression-bodied members?
+- [ ] PascalCase for public members?
+- [ ] camelCase with underscore for private fields?
+- [ ] No blocking on async (.Result, .Wait())?
+- [ ] No async void (except event handlers)?
+- [ ] No missing nullable annotations?
+- [ ] No public fields (using properties)?
+- [ ] Records for immutable data (C# 9+)?

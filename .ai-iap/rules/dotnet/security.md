@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.cs, *.csproj, *.razor files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: Use Identity for authentication
+> **ALWAYS**: BCrypt or PBKDF2 for passwords
+> **ALWAYS**: [Authorize] on controllers/actions
+> **ALWAYS**: HTTPS in production
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Use MD5/SHA1 for passwords
+> **NEVER**: Hardcode secrets in code
+> **NEVER**: Disable CSRF protection
+> **NEVER**: Check roles in business logic (use policies)
+
 ## 0. Embedded SQL (when SQL appears inside C#)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in C# code.
-- **NEVER**: Concatenate or interpolate untrusted input into SQL (including `FormattableString` → raw SQL).
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate or interpolate untrusted input into SQL
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Authentication
 
@@ -86,8 +100,14 @@
 Before generating C# code:
 - [ ] ASP.NET Core Identity or BCrypt for passwords?
 - [ ] `[Authorize]` on protected endpoints?
+## AI Self-Check
+
+- [ ] Parameterized queries (no string concatenation in SQL)?
+- [ ] Identity for authentication?
+- [ ] BCrypt or PBKDF2 for passwords?
+- [ ] [Authorize] on controllers/actions?
 - [ ] Data annotations + `[ValidateAntiForgeryToken]`?
-- [ ] EF parameterized queries (no string concatenation)?
+- [ ] EF parameterized queries?
 - [ ] HTTPS + HSTS configured?
 - [ ] Secrets in User Secrets/Key Vault?
 - [ ] CORS specific origins?
