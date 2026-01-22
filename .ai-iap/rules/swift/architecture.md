@@ -1,9 +1,24 @@
 # Swift Architecture
 
-## Overview
-Protocol-oriented, value-type architecture with immutability and type safety.
+> **Scope**: Swift architectural patterns and principles  
+> **Applies to**: *.swift files  
+> **Extends**: General architecture rules
 
-## Core Principles
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use protocols for abstraction
+> **ALWAYS**: Prefer structs over classes (value types)
+> **ALWAYS**: Use async/await for async operations
+> **ALWAYS**: Use dependency injection (constructor)
+> **ALWAYS**: Package by feature (not layer)
+> 
+> **NEVER**: Use global mutable state
+> **NEVER**: Use force unwrapping (!) without justification
+> **NEVER**: Ignore errors (use proper error handling)
+> **NEVER**: Use Singleton pattern excessively
+> **NEVER**: Block main thread with synchronous operations
+
+## Core Patterns
 
 ### Protocol-Oriented Programming
 ```swift
@@ -91,3 +106,18 @@ struct Capitalized {
     }
 }
 ```
+
+## AI Self-Check
+
+- [ ] Using protocols for abstraction?
+- [ ] Prefer structs over classes (value types)?
+- [ ] Using async/await for async operations?
+- [ ] Dependency injection via constructor?
+- [ ] Package by feature (not layer)?
+- [ ] Error handling with Result or throws?
+- [ ] No global mutable state?
+- [ ] No force unwrapping (!) without justification?
+- [ ] No ignored errors?
+- [ ] No excessive Singleton pattern?
+- [ ] No blocking main thread?
+- [ ] Property wrappers for cross-cutting concerns?

@@ -1,10 +1,22 @@
 # TypeScript Code Style
 
-## General Rules
+> **Scope**: TypeScript formatting and maintainability  
+> **Applies to**: *.ts, *.tsx, *.mts, *.cts files  
+> **Extends**: General code style, typescript/architecture.md
 
-- **Strict mode** enabled
-- **ESLint + Prettier** for formatting
-- **No `any`** - use `unknown` if needed
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Enable strict mode (`strict: true`)
+> **ALWAYS**: Use ESLint + Prettier for formatting
+> **ALWAYS**: Explicit return types for public methods
+> **ALWAYS**: Use unknown (not any)
+> **ALWAYS**: Use const for immutable values
+> 
+> **NEVER**: Use any (use unknown + type guards)
+> **NEVER**: Use var (use const/let)
+> **NEVER**: Use Function type (use specific signature)
+> **NEVER**: Use ! (non-null assertion) without justification
+> **NEVER**: Ignore TypeScript errors with @ts-ignore
 
 ## Naming Conventions
 
@@ -134,3 +146,18 @@ const [first, ...rest] = items;
 // Template literals
 const message = `User ${name} created`;
 ```
+
+## AI Self-Check
+
+- [ ] Strict mode enabled (`strict: true`)?
+- [ ] ESLint + Prettier configured?
+- [ ] Explicit return types for public methods?
+- [ ] Using unknown (not any)?
+- [ ] Using const for immutable values?
+- [ ] PascalCase for types/interfaces/classes?
+- [ ] camelCase for variables/functions?
+- [ ] No var (using const/let)?
+- [ ] No Function type (specific signatures)?
+- [ ] No ! (non-null assertion) without justification?
+- [ ] No @ts-ignore (using @ts-expect-error if needed)?
+- [ ] Readonly arrays/objects where appropriate?

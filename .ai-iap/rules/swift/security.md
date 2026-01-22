@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.swift files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use Keychain Services for sensitive data
+> **ALWAYS**: HTTPS only (ATS enabled)
+> **ALWAYS**: BCryptDigest for password hashing
+> **ALWAYS**: Certificate pinning for critical APIs
+> **ALWAYS**: Parameterized queries for SQL
+> 
+> **NEVER**: Store secrets in UserDefaults/plists
+> **NEVER**: Disable ATS in production
+> **NEVER**: Use string interpolation in SQL
+> **NEVER**: Force unwrap optionals without validation
+> **NEVER**: Disable SSL verification
+
 ## 0. Embedded SQL (when SQL appears inside Swift)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in Swift code.
-- **NEVER**: Build SQL with string interpolation using untrusted input.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER build SQL with string interpolation using untrusted input
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. iOS/macOS Security
 
@@ -66,7 +80,8 @@
 
 ## AI Self-Check
 
-Before generating Swift code:
+## AI Self-Check
+
 - [ ] Keychain for sensitive data (not UserDefaults)?
 - [ ] ATS enabled (HTTPS only)?
 - [ ] BCrypt for passwords (Vapor)?
@@ -75,3 +90,5 @@ Before generating Swift code:
 - [ ] SecureField for password inputs?
 - [ ] File Protection API for sensitive files?
 - [ ] Generic error messages to users?
+- [ ] Parameterized queries for SQL?
+- [ ] No force unwrapping of security-critical values?

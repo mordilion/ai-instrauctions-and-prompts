@@ -1,11 +1,22 @@
 # Swift Code Style
 
-## General Rules
+> **Scope**: Swift formatting and maintainability  
+> **Applies to**: *.swift files  
+> **Extends**: General code style, swift/architecture.md
 
-- **Swift 5.9+**
-- **SwiftLint** for linting
-- **Swift Format** for formatting
-- **Immutability** preferred
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use SwiftLint for linting
+> **ALWAYS**: Prefer immutability (let over var)
+> **ALWAYS**: Use guard for early returns
+> **ALWAYS**: Explicit types for public APIs
+> **ALWAYS**: Optional chaining (?) over force unwrapping (!)
+> 
+> **NEVER**: Use force unwrapping (!) without justification
+> **NEVER**: Use implicitly unwrapped optionals (!) unless necessary
+> **NEVER**: Use var when let is sufficient
+> **NEVER**: Use ! for optionals in production code
+> **NEVER**: Skip error handling
 
 ## Naming Conventions
 
@@ -85,3 +96,18 @@ case .failure(let error):
     print(error)
 }
 ```
+
+## AI Self-Check
+
+- [ ] SwiftLint configured?
+- [ ] Preferring immutability (let over var)?
+- [ ] Using guard for early returns?
+- [ ] Explicit types for public APIs?
+- [ ] Optional chaining (?) over force unwrapping?
+- [ ] PascalCase for types?
+- [ ] camelCase for variables/functions?
+- [ ] No force unwrapping (!) without justification?
+- [ ] No var when let is sufficient?
+- [ ] Error handling with Result or throws?
+- [ ] Trailing closures for readability?
+- [ ] Type inference for locals?

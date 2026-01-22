@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.ts, *.tsx, *.mts, *.cts, *.vue, *.svelte files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use parameterized queries / prepared statements
+> **ALWAYS**: Use framework escaping (React JSX, Angular templates)
+> **ALWAYS**: httpOnly cookies for auth tokens
+> **ALWAYS**: Validate inputs with Zod/Yup/class-validator
+> **ALWAYS**: Use HTTPS in production
+> 
+> **NEVER**: Concatenate untrusted input into SQL
+> **NEVER**: Use dangerouslySetInnerHTML, innerHTML, eval
+> **NEVER**: Store tokens in localStorage
+> **NEVER**: Disable SSL verification
+> **NEVER**: Expose secrets in frontend code
+
 ## 0. Embedded SQL (when SQL appears inside TypeScript)
-- **ALWAYS**: Use parameterized queries / prepared statements (or a safe ORM). This applies to any SQL you embed in TS code.
-- **NEVER**: Concatenate or interpolate untrusted input into SQL (including template literals).
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (or a safe ORM)
+- NEVER concatenate or interpolate untrusted input into SQL (including template literals)
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Frontend Security
 
