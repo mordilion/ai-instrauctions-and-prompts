@@ -3,9 +3,19 @@
 > **Scope**: Core database design concepts for ALL projects. Language/ORM-specific rules take precedence.  
 > **Note**: See ORM-specific files (prisma.md, sqlalchemy.md, etc.) for implementation syntax.
 
+## CRITICAL REQUIREMENTS (Anti-Patterns to Avoid)
+
+> **NEVER**: Store CSV lists in columns (violates 1NF)
+> **NEVER**: Denormalize prematurely (profile first)
+> **NEVER**: Use EAV pattern for structured data
+> **NEVER**: Create God Tables (>20 columns)
+> **NEVER**: Use polymorphic associations
+
 ## 1. Normalization
 
 > **ALWAYS**: Understand which normal form fits your use case before designing schema.
+> **ALWAYS**: Start with 3NF for transactional systems (OLTP).
+> **ALWAYS**: Normalize user-generated data (avoid redundancy).
 
 | Normal Form | Requirement | Example Violation |
 |-------------|-------------|-------------------|
@@ -16,18 +26,41 @@
 
 ### When to Normalize
 
-- **ALWAYS**: Start with 3NF for transactional systems (OLTP).
-- **ALWAYS**: Normalize user-generated data (avoid redundancy).
-- **ALWAYS**: Normalize when data integrity is critical.
-- **Prefer**: 3NF for most applications unless proven performance issue.
+- Start with 3NF for transactional systems
+- Normalize when data integrity is critical
+- Prefer 3NF unless proven performance issue
 
 ### When to Denormalize
 
-- **Consider**: Reporting/analytics (OLAP) systems.
-- **Consider**: Read-heavy systems with complex joins causing bottlenecks.
-- **Consider**: Caching frequently accessed aggregates (with background refresh).
-- **NEVER**: Denormalize prematurely. Profile first, optimize second.
-- **ALWAYS**: Document denormalization reasons and maintenance strategy.
+- **Consider**: Reporting/analytics (OLAP) systems
+- **Consider**: Read-heavy systems with proven join bottlenecks
+- **ALWAYS**: Document denormalization reasons
+
+### Example: Proper 3NF Design
+
+```sql
+-- ✅ GOOD: Normalized (3NF)
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    total_amount DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- ❌ BAD: Denormalized (stores user data in orders)
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    user_email VARCHAR(255),    -- Redundant!
+    user_name VARCHAR(100),     -- Redundant!
+    total_amount DECIMAL(10,2)
+);
+```
 
 ## 2. Schema Design Patterns
 

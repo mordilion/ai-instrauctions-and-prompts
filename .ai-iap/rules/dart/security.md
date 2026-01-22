@@ -4,10 +4,24 @@
 > **Extends**: General security rules
 > **Applies to**: *.dart files
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Use flutter_secure_storage for sensitive data
+> **ALWAYS**: HTTPS for all API calls
+> **ALWAYS**: Certificate pinning for critical APIs
+> **ALWAYS**: Parameterized queries for SQL
+> **ALWAYS**: Validate all user inputs
+> 
+> **NEVER**: Use string interpolation in SQL
+> **NEVER**: Store secrets in SharedPreferences
+> **NEVER**: Disable certificate validation
+> **NEVER**: Use ! (null assertion) on security-critical values
+> **NEVER**: Expose secrets in logs or error messages
+
 ## 0. Embedded SQL (when SQL appears inside Dart)
-- **ALWAYS**: Use parameterized queries / prepared statements. This applies to any SQL you embed in Dart code (e.g., sqflite/drift).
-- **NEVER**: Use string interpolation or concatenation for SQL with untrusted input.
-- **If** you must select dynamic table/column names: use strict allowlists (do not pass user input through).
+- Use parameterized queries / prepared statements (sqflite/drift)
+- NEVER use string interpolation or concatenation for SQL
+- If dynamic table/column names needed: use strict allowlists
 
 ## 1. Flutter Secure Storage
 

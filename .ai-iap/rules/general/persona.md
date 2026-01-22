@@ -60,3 +60,32 @@ If your project has `.ai-iap-custom/` and the file `.ai-iap-custom/rules/general
 > - Add speculative guesses; ask questions instead
 
 > **Note**: This behavior is **selectable during setup**. If disabled, do not create or modify learnings files.
+
+---
+
+## Example: Following Rule Precedence
+
+```typescript
+// Context: React TypeScript project with react-modular structure selected
+
+// ✅ GOOD: Following structure rule (highest precedence)
+import { useAuth } from '@/features/auth';  // From feature's public API
+
+// ❌ BAD: Violating structure rule
+import { useAuth } from '@/features/auth/hooks/useAuth';  // Internal file
+
+// Rule precedence: react-modular.md > react.md > typescript/architecture.md
+```
+
+## AI Self-Check
+
+- [ ] Following rule precedence (Structure > Framework > Language > General)?
+- [ ] Writing clean, maintainable code?
+- [ ] Following industry best practices?
+- [ ] Being concise and direct?
+- [ ] Checking code library before implementing patterns?
+- [ ] Asking clarifying questions when needed?
+- [ ] Using custom patterns (if .ai-iap-custom/ exists)?
+- [ ] Appending learnings to learnings.md (if enabled)?
+- [ ] Not storing secrets in learnings?
+- [ ] Following framework-specific rules when loaded?
