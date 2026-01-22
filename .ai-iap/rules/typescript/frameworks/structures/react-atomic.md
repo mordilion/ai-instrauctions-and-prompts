@@ -1,7 +1,22 @@
 # React Atomic Design Structure
 
-> **Scope**: Use this structure for design-system-focused React applications.
-> **Precedence**: When loaded, this structure overrides any default folder organization from the base React rules.
+> **Scope**: Atomic Design structure for React (TypeScript)  
+> **Applies to**: React TypeScript projects with Atomic Design  
+> **Extends**: typescript/frameworks/react.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Build from atoms → molecules → organisms → templates → pages
+> **ALWAYS**: No skip levels (molecules use atoms)
+> **ALWAYS**: Atoms are single elements (no dependencies)
+> **ALWAYS**: Templates are layouts (no data)
+> **ALWAYS**: Pages are templates with data
+> 
+> **NEVER**: Skip hierarchy levels
+> **NEVER**: Data in atoms/molecules
+> **NEVER**: Business logic in atoms/molecules
+> **NEVER**: Organisms depend on pages
+> **NEVER**: Unclear component categorization
 
 ## Project Structure
 ```
@@ -56,4 +71,17 @@ src/
 - Component library projects
 - Teams with dedicated designers
 - Consistent UI across large apps
+
+## AI Self-Check
+
+- [ ] Building from atoms → molecules → organisms → templates → pages?
+- [ ] No skip levels?
+- [ ] Atoms are single elements?
+- [ ] Templates are layouts (no data)?
+- [ ] Pages are templates with data?
+- [ ] Components categorized correctly?
+- [ ] Storybook documentation?
+- [ ] No data in atoms/molecules?
+- [ ] No business logic in atoms/molecules?
+- [ ] Hierarchy respected?
 

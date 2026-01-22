@@ -1,6 +1,22 @@
 # NestJS Modular Structure
 
-> Feature-based NestJS structure with separate modules per domain. Best for modular applications with clear bounded contexts.
+> **Scope**: Modular structure for NestJS  
+> **Applies to**: NestJS projects with modular structure  
+> **Extends**: typescript/frameworks/nestjs.md
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Module per feature (user.module.ts)
+> **ALWAYS**: Co-locate feature files (controller, service, dto, entities)
+> **ALWAYS**: Import dependencies in module
+> **ALWAYS**: Export services for other modules
+> **ALWAYS**: Features independent
+> 
+> **NEVER**: Cross-module dependencies (use shared module)
+> **NEVER**: Split feature across locations
+> **NEVER**: Generic services folder
+> **NEVER**: Share state between modules directly
+> **NEVER**: Deep folder nesting
 
 ## Directory Structure
 
@@ -65,3 +81,16 @@ export class UserModule {}
 ## When to Use
 - Modular NestJS apps
 - Feature-based development
+
+## AI Self-Check
+
+- [ ] Module per feature?
+- [ ] Feature files co-located?
+- [ ] Dependencies imported in module?
+- [ ] Services exported for other modules?
+- [ ] Features independent?
+- [ ] No cross-module dependencies (using shared)?
+- [ ] No split features?
+- [ ] No generic services folder?
+- [ ] Module properly configured?
+- [ ] Feature self-contained?
