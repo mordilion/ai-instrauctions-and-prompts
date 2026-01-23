@@ -512,7 +512,22 @@
         "architecture",
         "code-style",
         "security"
-      ]
+      ],
+      "frameworks": {
+        "tailwind": {
+          "name": "Tailwind CSS",
+          "file": "tailwind",
+          "category": "CSS Framework",
+          "description": "Utility-first CSS framework with JIT compilation",
+          "recommended": true
+        },
+        "bootstrap": {
+          "name": "Bootstrap",
+          "file": "bootstrap",
+          "category": "CSS Framework",
+          "description": "Component-based CSS framework with 12-column grid"
+        }
+      }
     },
     "sass": {
       "name": "Sass/SCSS",
