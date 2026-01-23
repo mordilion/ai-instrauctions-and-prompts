@@ -2,17 +2,18 @@
 
 > **Scope**: Apply these rules when implementing or changing any UI (web, mobile, desktop), UI logic, or user-facing flows. Always active for frontends and UI-heavy backends.
 
-## Core Principles
+## CRITICAL REQUIREMENTS
 
-> **ALWAYS** optimize for:
-> - **Reusability**: build components once, reuse everywhere
-> - **Consistency**: same patterns, same naming, same UI behavior
-> - **Accessibility**: keyboard, semantics, contrast, focus states
-> - **Maintainability**: small components with clear responsibilities
-
-> **NEVER**:
-> - Duplicate UI patterns across multiple screens when a reusable component fits
-> - Hardcode design tokens (colors/spacing/typography) if your project has a theme/design system
+> **ALWAYS**: Build reusable components (DRY)
+> **ALWAYS**: Composition over inheritance
+> **ALWAYS**: Accessibility (keyboard, semantics, contrast, focus)
+> **ALWAYS**: Single-purpose components
+> **ALWAYS**: Use design tokens (no hardcoded colors/spacing)
+> 
+> **NEVER**: Duplicate UI patterns when reusable component fits
+> **NEVER**: Hardcode design tokens if theme/design system exists
+> **NEVER**: Create mega-components with multiple unrelated use cases
+> **NEVER**: Bake routing/state/network into basic UI atoms
 
 ---
 

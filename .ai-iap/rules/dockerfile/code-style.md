@@ -1,16 +1,29 @@
 # Dockerfile Code Style
 
-> **Scope**: Dockerfile formatting and maintainability rules.
+> **Scope**: Dockerfile formatting and maintainability rules
 
-## 1. Readability
-- **ALWAYS**: Use uppercase Dockerfile instructions (`FROM`, `RUN`, `COPY`, `ENV`).
-- **Prefer**: One logical step per `RUN` (but combine related commands to reduce layers).
+## CRITICAL REQUIREMENTS
 
-## 2. Layer efficiency
-- **Prefer**: Combine package install + cleanup in the same `RUN`.
-- **ALWAYS**: Clean package manager caches in the same layer that created them.
+> **ALWAYS**: Uppercase instructions (FROM, RUN, COPY, ENV)
+> **ALWAYS**: Clean caches in same layer
+> **ALWAYS**: Explicit versions for packages
+> 
+> **NEVER**: Use `curl | sh` installs
+> **NEVER**: Leave package caches across layers
 
-## 3. Determinism
-- **Prefer**: Explicit versions for package installs where feasible.
-- **NEVER**: Use `curl | sh` style installs.
+## Best Practices
+
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Instructions** | `from node:18` | `FROM node:18` |
+| **Layer Cleanup** | Separate RUN | `RUN apt install && rm -rf /var/lib/apt` |
+| **Versioning** | `RUN pip install flask` | `RUN pip install flask==2.3.0` |
+
+## AI Self-Check
+
+- [ ] Instructions uppercase?
+- [ ] Caches cleaned in same layer?
+- [ ] Package versions explicit?
+- [ ] No `curl | sh` installs?
+- [ ] Combined related commands?
 

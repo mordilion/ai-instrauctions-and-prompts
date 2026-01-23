@@ -1,16 +1,31 @@
 # dotenv (.env) Code Style
 
-> **Scope**: Formatting rules for `.env` files.
+> **Scope**: Formatting rules for `.env` files
 
-## 1. Key/value format
-- **ALWAYS**: Use `KEY=VALUE` (no spaces around `=`).
-- **Prefer**: Uppercase keys with underscores (`DATABASE_URL`, `JWT_SECRET`).
-- **Prefer**: One key per line.
+## CRITICAL REQUIREMENTS
 
-## 2. Values
-- **Prefer**: Quote values that contain spaces or special characters.
-- **NEVER**: Add shell syntax that only works in one shell (keep it dotenv-compatible).
+> **ALWAYS**: `KEY=VALUE` (no spaces around `=`)
+> **ALWAYS**: Uppercase keys with underscores (DATABASE_URL)
+> **ALWAYS**: One key per line
+> 
+> **NEVER**: Shell-specific syntax
+> **NEVER**: Spaces around `=`
 
-## 3. Comments
-- **Prefer**: Use `#` comments sparingly to document non-obvious keys.
+## Format
+
+```bash
+# ✅ Correct
+DATABASE_URL=postgres://localhost:5432/db
+JWT_SECRET="my secret value"
+
+# ❌ Wrong
+database_url = postgres://localhost:5432/db
+```
+
+## AI Self-Check
+
+- [ ] `KEY=VALUE` format (no spaces)?
+- [ ] Uppercase keys with underscores?
+- [ ] Values with spaces quoted?
+- [ ] No shell-specific syntax?
 

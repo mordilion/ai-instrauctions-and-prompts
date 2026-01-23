@@ -4,18 +4,24 @@
 
 ---
 
-## 🚨 When the user asks you to commit (MANDATORY)
+## CRITICAL REQUIREMENTS
 
-> **NEVER** create a commit unless the user explicitly asks (e.g., "commit", "make a commit", "create a commit").
->
-> When asked to commit, **ALWAYS**:
-> - Review changes (`git status`, staged + unstaged diffs)
-> - Ensure no secrets/credentials are included (e.g., `.env`, tokens, private keys)
-> - Stage only files for **one logical change**
-> - Write the message using the rules below
-> - Commit, then re-run `git status` to verify
->
-> If there are **no changes**, say so and **do not** create an empty commit.
+> **ALWAYS**: Wait for explicit user request before committing
+> **ALWAYS**: Review changes (`git status`, diffs) before commit
+> **ALWAYS**: Check for secrets/credentials (`.env`, tokens)
+> **ALWAYS**: One logical change per commit
+> **ALWAYS**: Use format `<type>[scope]: <description>`
+> **ALWAYS**: Imperative mood ("add" not "added")
+> **ALWAYS**: Lowercase description, no period
+> **ALWAYS**: Under 72 characters
+> 
+> **NEVER**: Commit without explicit user request
+> **NEVER**: Commit secrets/credentials
+> **NEVER**: Multiple unrelated changes in one commit
+> **NEVER**: Past tense ("added", "fixed")
+> **NEVER**: Capitalize description first letter
+> **NEVER**: Period at end of description
+> **NEVER**: Create empty commits
 
 ---
 

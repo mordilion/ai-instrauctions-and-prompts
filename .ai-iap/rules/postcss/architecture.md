@@ -1,13 +1,24 @@
-# PostCSS Architecture
+# Postcss Architecture
 
-> **Scope**: Apply these rules when working with PostCSS stylesheets (`*.pcss`, `*.postcss`). These extend the general architecture guidelines.
+> **Scope**: Postcss stylesheet patterns  
+> **Extends**: General architecture + CSS rules
 
-## 1. Core Principles
-- **Prefer explicit plugins**: Keep the plugin chain small and purposeful.
-- **Design tokens first**: Prefer CSS variables where possible; document token sources.
-- **Avoid magic**: Prefer readable, explicit transformations over surprising implicit behavior.
+## CRITICAL REQUIREMENTS
 
-## 2. Layering
-- **Base layers**: tokens → utilities → components → pages.
-- **Keep processing predictable**: Ensure the same build pipeline is used across environments.
+> **ALWAYS**: Design tokens first (variables/custom properties)
+> **ALWAYS**: One-way dependencies (low-level → high-level)
+> **ALWAYS**: Minimal global selectors
+> 
+> **NEVER**: Global leakage
+> **NEVER**: High-level depends on low-level
 
+## Layering
+
+tokens → mixins → utilities → components → pages
+
+## AI Self-Check
+
+- [ ] Design tokens centralized?
+- [ ] One-way dependencies?
+- [ ] Minimal global selectors?
+- [ ] Proper layering (tokens → components)?

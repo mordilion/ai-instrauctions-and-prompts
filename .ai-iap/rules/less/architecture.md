@@ -1,13 +1,24 @@
 # Less Architecture
 
-> **Scope**: Apply these rules when working with Less stylesheets (`*.less`, `*.module.less`). These extend the general architecture guidelines.
+> **Scope**: Less stylesheet patterns  
+> **Extends**: General architecture + CSS rules
 
-## 1. Core Principles
-- **Design tokens first**: Centralize colors/spacing/typography as variables.
-- **Avoid global leakage**: Keep global selectors minimal and predictable.
-- **Prefer composition**: Use mixins for reuse and consistency.
+## CRITICAL REQUIREMENTS
 
-## 2. Layering
-- **Base layers**: tokens → mixins → utilities → components → pages.
-- **Keep dependencies one-way**: Low-level modules must not depend on higher-level modules.
+> **ALWAYS**: Design tokens first (variables/custom properties)
+> **ALWAYS**: One-way dependencies (low-level → high-level)
+> **ALWAYS**: Minimal global selectors
+> 
+> **NEVER**: Global leakage
+> **NEVER**: High-level depends on low-level
 
+## Layering
+
+tokens → mixins → utilities → components → pages
+
+## AI Self-Check
+
+- [ ] Design tokens centralized?
+- [ ] One-way dependencies?
+- [ ] Minimal global selectors?
+- [ ] Proper layering (tokens → components)?

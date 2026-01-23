@@ -1,14 +1,22 @@
-# PostCSS Code Style
+# Postcss Code Style
 
-> **Scope**: PostCSS formatting and maintainability rules.
+> **Scope**: Postcss formatting rules  
+> **Extends**: CSS code style
 
-## 1. Formatting
-- **Indentation**: 2 spaces.
-- **One selector per line**: Prefer multi-line blocks.
-- **Ordering**: Group properties consistently (layout → box model → typography → visuals → animation).
+## CRITICAL REQUIREMENTS
 
-## 2. Plugin usage
-- **Prefer**: Document non-obvious plugin effects (e.g., nesting, autoprefixing rules).
-- **Avoid**: Plugin chains that hide output behavior (hard to debug).
-- **NEVER**: Use `!important`.
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: One selector per line
+> **ALWAYS**: Variables for repeated values
+> 
+> **NEVER**: Deep nesting (keep shallow)
+> **NEVER**: Use !important
+> **NEVER**: Long descendant chains
 
+## AI Self-Check
+
+- [ ] 2-space indentation?
+- [ ] One selector per line?
+- [ ] Variables for repeated values?
+- [ ] Shallow selectors (avoid deep nesting)?
+- [ ] No !important?

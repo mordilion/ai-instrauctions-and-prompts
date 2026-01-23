@@ -1,17 +1,24 @@
-# Sass/SCSS Architecture
+# Sass Architecture
 
-> **Scope**: Apply these rules when working with Sass/SCSS stylesheets (`*.scss`, `*.sass`, `*.module.scss`, `*.module.sass`). These extend the general architecture guidelines.
+> **Scope**: Sass stylesheet patterns  
+> **Extends**: General architecture + CSS rules
 
-## 1. Core Principles
-- **Prefer modern Sass modules**: Use `@use` / `@forward`; avoid legacy `@import`.
-- **Design tokens first**: Centralize colors/spacing/typography as variables or CSS variables.
-- **Avoid global leakage**: Keep globals minimal; prefer modules, CSS Modules, or scoped component styles where supported.
+## CRITICAL REQUIREMENTS
 
-## 2. Layering
-- **Base layers**: tokens → mixins/functions → utilities → components → pages.
-- **Keep dependencies one-way**: Low-level modules (`tokens`) must not import higher-level modules (`components`).
+> **ALWAYS**: Design tokens first (variables/custom properties)
+> **ALWAYS**: One-way dependencies (low-level → high-level)
+> **ALWAYS**: Minimal global selectors
+> 
+> **NEVER**: Global leakage
+> **NEVER**: High-level depends on low-level
 
-## 3. Composition
-- **Prefer**: Mixins/functions for reuse instead of copy/paste.
-- **Avoid**: Deep nesting; keep selectors shallow and predictable.
+## Layering
 
+tokens → mixins → utilities → components → pages
+
+## AI Self-Check
+
+- [ ] Design tokens centralized?
+- [ ] One-way dependencies?
+- [ ] Minimal global selectors?
+- [ ] Proper layering (tokens → components)?

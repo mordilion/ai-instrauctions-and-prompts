@@ -1,19 +1,31 @@
 # dotenv (.env) Security
 
-> **Scope**: Prevent secret leakage and unsafe environment usage.  
+> **Scope**: Prevent secret leakage and unsafe environment usage  
 > **Extends**: General security rules
 
-## 1. No secrets in git
-- **NEVER**: Commit real `.env` files containing secrets.
-- **ALWAYS**: Commit `.env.example` instead (keys only, safe placeholder values).
+## CRITICAL REQUIREMENTS
 
-## 2. Key hygiene
-- **NEVER**: Put private keys/certificates in `.env` (use files/secret stores).
-- **Prefer**: Rotate leaked credentials immediately and invalidate old tokens.
+> **ALWAYS**: Commit `.env.example` only (no real secrets)
+> **ALWAYS**: Use `.gitignore` for `.env` files
+> **ALWAYS**: Rotate leaked credentials immediately
+> 
+> **NEVER**: Commit real `.env` files
+> **NEVER**: Put private keys/certificates in `.env`
+> **NEVER**: Print environment values in logs
 
-## 3. CI/CD and production
-- **Prefer**: Inject environment values via CI/CD secrets and runtime secret stores.
-- **ALWAYS**: Avoid printing environment values in logs.
+## Best Practices
 
-Follow the general security rules; the rules above are additive.
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Git** | `.env` committed | `.env` in `.gitignore`, `.env.example` committed |
+| **Secrets** | Private key in `.env` | Use secret store or file references |
+| **Production** | `.env` on server | CI/CD secrets, secret managers |
+
+## AI Self-Check
+
+- [ ] `.env` in `.gitignore`?
+- [ ] Only `.env.example` committed?
+- [ ] No private keys in `.env`?
+- [ ] Using secret stores for production?
+- [ ] Not printing secrets in logs?
 

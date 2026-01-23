@@ -1,13 +1,18 @@
 # JSON Code Style
 
-> **Scope**: JSON formatting rules for consistency and reviewability.
+> **Scope**: JSON formatting rules
 
-## 1. Formatting
-- **ALWAYS**: Use consistent indentation (2 spaces unless the project already uses 4).
-- **ALWAYS**: Add a trailing newline.
-- **NEVER**: Use trailing commas (invalid JSON).
+## CRITICAL REQUIREMENTS
 
-## 2. Key discipline
-- **Prefer**: Stable key ordering within the same object type.
-- **Prefer**: Keep related keys grouped together (e.g., `name`, `version`, `description`).
+> **ALWAYS**: 2-space indentation (or project standard)
+> **ALWAYS**: Trailing newline
+> **ALWAYS**: Stable key ordering
+> 
+> **NEVER**: Trailing commas (invalid JSON)
 
+## AI Self-Check
+
+- [ ] Consistent indentation?
+- [ ] Trailing newline?
+- [ ] No trailing commas?
+- [ ] Related keys grouped?

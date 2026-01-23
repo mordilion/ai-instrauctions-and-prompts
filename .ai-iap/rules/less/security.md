@@ -1,15 +1,20 @@
 # Less Security
 
-> **Scope**: Less security and safety.
-> **Extends**: General security rules
+> **Scope**: Less security and safety  
+> **Extends**: General security + CSS security
 
-## 1. Untrusted Inputs
-- **NEVER**: Compile Less from untrusted input.
-- **ALWAYS**: If user-controlled values affect styling, restrict to allowlists (themes, class names, known tokens).
+## CRITICAL REQUIREMENTS
 
-## 2. Build pipeline safety
-- **Prefer**: Pinned dependency versions for Less tooling.
-- **Avoid**: Unreviewed third-party mixin libraries.
+> **ALWAYS**: Allowlist user-controlled style values
+> **ALWAYS**: Pin dependency versions
+> 
+> **NEVER**: Compile from untrusted input
+> **NEVER**: Unreviewed third-party libraries
+> **NEVER**: User-controlled compilation
 
-Follow the general security rules; the rules above are additive.
+## AI Self-Check
 
+- [ ] No compilation from untrusted input?
+- [ ] User values allowlisted?
+- [ ] Dependencies pinned?
+- [ ] Third-party libraries reviewed?

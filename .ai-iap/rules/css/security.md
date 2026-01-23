@@ -1,19 +1,30 @@
 # CSS Security
 
-> **Scope**: CSS-specific security and safety.  
+> **Scope**: CSS-specific security and safety  
 > **Extends**: General security rules
 
-## 1. Untrusted Inputs
-- **NEVER**: Insert untrusted strings into `<style>` or `style=""` attributes without strict validation.
-- **ALWAYS**: If user-controlled values affect styling, restrict to allowlists (e.g., allowed themes, known class names).
+## CRITICAL REQUIREMENTS
 
-## 2. CSS Injection Considerations
-- **Avoid**: Building CSS strings dynamically with untrusted input.
-- **Prefer**: Toggle known classes (`.is-open`) and use CSS variables with validated values.
+> **ALWAYS**: Allowlist user values (themes, class names)
+> **ALWAYS**: Pin third-party CSS versions
+> 
+> **NEVER**: Insert untrusted strings in `<style>` or `style=""`
+> **NEVER**: Build CSS dynamically with untrusted input
+> **NEVER**: Use unpinned CDN includes
 
-## 3. Third-Party CSS
-- **Minimize**: Third-party style dependencies where possible.
-- **Pin versions**: Avoid unpinned CDN includes; prefer local builds.
+## Best Practices
 
-Follow the general security rules; the rules above are additive.
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **User Input** | `style="${userColor}"` | Toggle `.theme-dark`, `.theme-light` |
+| **Dynamic CSS** | Build CSS string | CSS variables with validated values |
+| **Third-Party** | Unpinned CDN | Local build, pinned version |
+
+## AI Self-Check
+
+- [ ] User values allowlisted?
+- [ ] No untrusted strings in `<style>` or `style=""`?
+- [ ] No dynamic CSS building?
+- [ ] Third-party CSS pinned?
+- [ ] Using toggle classes instead of inline styles?
 

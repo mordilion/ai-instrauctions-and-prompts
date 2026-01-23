@@ -1,17 +1,29 @@
 # YAML Architecture
 
-> **Scope**: YAML configuration design for CI/CD, k8s, docker-compose, and tooling.  
+> **Scope**: YAML configuration design (CI/CD, K8s, Docker Compose, tooling)  
 > **Extends**: General architecture rules
 
-## 1. Keep config modular (but navigable)
-- **Prefer**: Small, focused YAML files over one mega-file.
-- **ALWAYS**: Use clear file naming that matches the system (`ci.yml`, `deployment.yml`, `compose.yml`).
+## CRITICAL REQUIREMENTS
 
-## 2. Environment separation
-- **Prefer**: Overlays/variants (`dev`, `staging`, `prod`) over big conditional blocks.
-- **ALWAYS**: Keep secrets out of YAML; reference secret stores instead.
+> **ALWAYS**: Small, focused YAML files (not one mega-file)
+> **ALWAYS**: Clear file naming (`ci.yml`, `deployment.yml`)
+> **ALWAYS**: Keep secrets out of YAML (reference secret stores)
+> 
+> **NEVER**: Secrets in YAML files
+> **NEVER**: Overuse anchors (mental indirection)
 
-## 3. Reduce duplication safely
-- **Prefer**: YAML anchors/aliases for repeated blocks.
-- **NEVER**: Overuse anchors to the point that reading the file requires “executing” mental indirection.
+## Best Practices
 
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Modularity** | One mega-file | Separate `ci.yml`, `deploy.yml` |
+| **Secrets** | Hardcoded | Reference secret stores |
+| **Environments** | Big conditional blocks | Overlays (`dev.yml`, `prod.yml`) |
+
+## AI Self-Check
+
+- [ ] Small, focused files?
+- [ ] Clear file naming?
+- [ ] No secrets in YAML?
+- [ ] Environment separation (overlays)?
+- [ ] Anchors/aliases used moderately?

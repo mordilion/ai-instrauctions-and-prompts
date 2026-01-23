@@ -1,14 +1,22 @@
 # Stylus Code Style
 
-> **Scope**: Stylus formatting and maintainability rules.
+> **Scope**: Stylus formatting rules  
+> **Extends**: CSS code style
 
-## 1. Formatting
-- **Indentation**: 2 spaces.
-- **One selector per line**: Prefer multi-line blocks.
-- **Ordering**: Group properties consistently (layout → box model → typography → visuals → animation).
+## CRITICAL REQUIREMENTS
 
-## 2. Readability
-- **Prefer**: Explicit braces/colons if a codebase mixes styles; keep it consistent.
-- **Avoid**: Too much implicit nesting/whitespace-driven meaning.
-- **NEVER**: Use `!important`.
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: One selector per line
+> **ALWAYS**: Variables for repeated values
+> 
+> **NEVER**: Deep nesting (keep shallow)
+> **NEVER**: Use !important
+> **NEVER**: Long descendant chains
 
+## AI Self-Check
+
+- [ ] 2-space indentation?
+- [ ] One selector per line?
+- [ ] Variables for repeated values?
+- [ ] Shallow selectors (avoid deep nesting)?
+- [ ] No !important?

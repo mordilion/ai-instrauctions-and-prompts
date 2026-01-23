@@ -1,15 +1,20 @@
-# PostCSS Security
+# Postcss Security
 
-> **Scope**: PostCSS security and safety.
-> **Extends**: General security rules
+> **Scope**: Postcss security and safety  
+> **Extends**: General security + CSS security
 
-## 1. Supply chain
-- **Prefer**: Pinned versions for PostCSS plugins.
-- **Avoid**: Untrusted plugins (they execute code at build time).
+## CRITICAL REQUIREMENTS
 
-## 2. Untrusted Inputs
-- **NEVER**: Feed untrusted user input into a build-time CSS pipeline.
-- **ALWAYS**: Treat build pipelines as privileged (CI secrets, filesystem access).
+> **ALWAYS**: Allowlist user-controlled style values
+> **ALWAYS**: Pin dependency versions
+> 
+> **NEVER**: Compile from untrusted input
+> **NEVER**: Unreviewed third-party libraries
+> **NEVER**: User-controlled compilation
 
-Follow the general security rules; the rules above are additive.
+## AI Self-Check
 
+- [ ] No compilation from untrusted input?
+- [ ] User values allowlisted?
+- [ ] Dependencies pinned?
+- [ ] Third-party libraries reviewed?

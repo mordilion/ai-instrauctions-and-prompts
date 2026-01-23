@@ -1,18 +1,22 @@
 # Less Code Style
 
-> **Scope**: Less formatting and maintainability rules.
+> **Scope**: Less formatting rules  
+> **Extends**: CSS code style
 
-## 1. Formatting
-- **Indentation**: 2 spaces.
-- **One selector per line**: Prefer multi-line blocks.
-- **Ordering**: Group properties consistently (layout → box model → typography → visuals → animation).
+## CRITICAL REQUIREMENTS
 
-## 2. Nesting
-- **Avoid**: Deep nesting; keep selectors shallow.
-- **Prefer**: Explicit class names over long descendant chains.
-- **NEVER**: Use `!important`.
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: One selector per line
+> **ALWAYS**: Variables for repeated values
+> 
+> **NEVER**: Deep nesting (keep shallow)
+> **NEVER**: Use !important
+> **NEVER**: Long descendant chains
 
-## 3. Variables and mixins
-- **Prefer**: Variables for repeated values.
-- **Prefer**: Parametric mixins for repeated patterns.
+## AI Self-Check
 
+- [ ] 2-space indentation?
+- [ ] One selector per line?
+- [ ] Variables for repeated values?
+- [ ] Shallow selectors (avoid deep nesting)?
+- [ ] No !important?

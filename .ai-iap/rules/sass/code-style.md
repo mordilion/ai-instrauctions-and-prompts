@@ -1,18 +1,22 @@
-# Sass/SCSS Code Style
+# Sass Code Style
 
-> **Scope**: Sass/SCSS formatting and maintainability rules.
+> **Scope**: Sass formatting rules  
+> **Extends**: CSS code style
 
-## 1. Formatting
-- **Indentation**: 2 spaces.
-- **One selector per line**: Prefer multi-line blocks.
-- **Ordering**: Group properties consistently (layout → box model → typography → visuals → animation).
+## CRITICAL REQUIREMENTS
 
-## 2. Nesting
-- **Avoid**: Nesting deeper than 2 levels.
-- **Prefer**: `&` for modifiers (`&--active`) and state classes (`&.is-open`).
-- **NEVER**: Use `!important`.
+> **ALWAYS**: 2-space indentation
+> **ALWAYS**: One selector per line
+> **ALWAYS**: Variables for repeated values
+> 
+> **NEVER**: Deep nesting (keep shallow)
+> **NEVER**: Use !important
+> **NEVER**: Long descendant chains
 
-## 3. Modules
-- **Prefer**: `@use` / `@forward`.
-- **Avoid**: Global `!default` overrides spread across the codebase; centralize configuration.
+## AI Self-Check
 
+- [ ] 2-space indentation?
+- [ ] One selector per line?
+- [ ] Variables for repeated values?
+- [ ] Shallow selectors (avoid deep nesting)?
+- [ ] No !important?

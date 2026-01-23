@@ -1,15 +1,20 @@
 # SQL Code Style
 
-> **Scope**: SQL formatting rules for clarity and maintainability.
+> **Scope**: SQL formatting rules
 
-## 1. Formatting
-- **Prefer**: Uppercase SQL keywords for readability (examples: `SELECT`, `FROM`, `WHERE`, `JOIN`, `GROUP BY`, `ORDER BY`, `INSERT`, `UPDATE`, `DELETE`, `CREATE`, `ALTER`, `DROP`, etc.). This list is **not exhaustive**.
-- **ALWAYS**: Use consistent indentation for nested queries and joins.
+## CRITICAL REQUIREMENTS
 
-## 2. Naming
-- **Prefer**: `snake_case` for table/column names (unless the project uses a different convention).
-- **ALWAYS**: Use explicit column lists (avoid `SELECT *` in application queries).
+> **ALWAYS**: Uppercase SQL keywords (SELECT, FROM, WHERE, JOIN)
+> **ALWAYS**: Explicit column lists (no `SELECT *` in app queries)
+> **ALWAYS**: Consistent indentation for nested queries
+> 
+> **NEVER**: `SELECT *` in application queries
+> **NEVER**: Uncommented risky operations
 
-## 3. Migrations
-- **ALWAYS**: Add comments for risky operations (large backfills, table rewrites).
+## AI Self-Check
 
+- [ ] SQL keywords uppercase?
+- [ ] Explicit column lists?
+- [ ] Consistent indentation?
+- [ ] snake_case for tables/columns (or project standard)?
+- [ ] Comments for risky operations?

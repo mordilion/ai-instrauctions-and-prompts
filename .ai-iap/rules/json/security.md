@@ -1,15 +1,19 @@
 # JSON Security
 
-> **Scope**: JSON security guidance (manifests, tool configs, app config).  
+> **Scope**: JSON security guidance  
 > **Extends**: General security rules
 
-## 1. Secrets
-- **NEVER**: Store secrets or tokens in JSON committed to git.
-- **Prefer**: Reference secret stores or environment variables.
+## CRITICAL REQUIREMENTS
 
-## 2. Package/dependency risk (where applicable)
-- **ALWAYS**: Be cautious with executable hooks/scripts defined in JSON configs (e.g., build scripts).
-- **Prefer**: Least privilege and explicit allowlists for tooling that executes commands.
+> **ALWAYS**: Reference secret stores or environment variables
+> **ALWAYS**: Validate executable hooks/scripts
+> 
+> **NEVER**: Store secrets/tokens in JSON committed to git
+> **NEVER**: Unchecked command execution from JSON configs
 
-Follow the general security rules; the rules above are additive.
+## AI Self-Check
 
+- [ ] No secrets in committed JSON?
+- [ ] Using secret stores/env vars?
+- [ ] Executable hooks validated?
+- [ ] Least privilege for tooling?

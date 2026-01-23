@@ -1,13 +1,28 @@
 # JSON Architecture
 
-> **Scope**: JSON configuration patterns (tooling configs, manifests, app settings).  
+> **Scope**: JSON configuration patterns (configs, manifests, app settings)  
 > **Extends**: General architecture rules
 
-## 1. Make JSON machine-friendly
-- **Prefer**: JSON that can be validated (JSON Schema where applicable).
-- **ALWAYS**: Keep structure stable (avoid “sometimes string, sometimes array” fields).
+## CRITICAL REQUIREMENTS
 
-## 2. Split concerns
-- **Prefer**: Separate files for separate concerns (build config vs runtime config).
-- **ALWAYS**: Keep environment-specific overrides explicit and documented.
+> **ALWAYS**: Stable structure (no "sometimes string, sometimes array")
+> **ALWAYS**: Separate files for separate concerns
+> **ALWAYS**: Validate with JSON Schema where applicable
+> 
+> **NEVER**: Inconsistent field types
+> **NEVER**: Mix unrelated configs in one file
 
+## Best Practices
+
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Type Stability** | `"tags": "foo"` or `"tags": ["foo"]` | Always `"tags": ["foo"]` |
+| **Separation** | One `config.json` for all | `build.json`, `runtime.json` |
+| **Validation** | No schema | JSON Schema validation |
+
+## AI Self-Check
+
+- [ ] Field types stable?
+- [ ] Concerns separated?
+- [ ] JSON Schema used?
+- [ ] Environment overrides documented?

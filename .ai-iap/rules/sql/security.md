@@ -1,19 +1,29 @@
 # SQL Security
 
-> **Scope**: SQL security rules (injection prevention, safe migrations).  
+> **Scope**: SQL security rules  
 > **Extends**: General security rules
 
-## 1. Injection prevention
-- **ALWAYS**: Use parameterized queries / prepared statements.
-- **NEVER**: Build SQL by concatenating untrusted input.
+## CRITICAL REQUIREMENTS
 
-## 2. Least privilege
-- **Prefer**: Separate DB users/roles for app runtime vs migrations/admin tasks.
-- **ALWAYS**: Restrict production credentials to the minimum required permissions.
+> **ALWAYS**: Parameterized queries / prepared statements
+> **ALWAYS**: Separate DB users for app vs admin
+> **ALWAYS**: Wrap risky migrations in transactions
+> 
+> **NEVER**: Concatenate untrusted input in SQL
+> **NEVER**: Run DROP/mass DELETE without safeguards
 
-## 3. Destructive operations
-- **NEVER**: Run destructive statements (`DROP`, mass `DELETE`) without safeguards.
-- **Prefer**: Wrap risky migration steps in transactions when supported.
+## Best Practices
 
-Follow the general security rules; the rules above are additive.
+| Pattern | ❌ Wrong | ✅ Correct |
+|---------|---------|-----------|
+| **Queries** | `"SELECT * WHERE id=" + input` | `SELECT * WHERE id = ?` (parameterized) |
+| **Permissions** | One admin user for all | Separate app user (read/write) vs admin user |
+| **Destructive** | Direct `DROP TABLE` | Transaction + backup + safeguards |
 
+## AI Self-Check
+
+- [ ] Parameterized queries used?
+- [ ] No SQL concatenation with user input?
+- [ ] Separate DB users (app vs admin)?
+- [ ] Minimum required permissions?
+- [ ] Transactions for risky migrations?

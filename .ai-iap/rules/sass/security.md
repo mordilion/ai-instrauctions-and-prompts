@@ -1,15 +1,20 @@
-# Sass/SCSS Security
+# Sass Security
 
-> **Scope**: Sass/SCSS security and safety.
-> **Extends**: General security rules
+> **Scope**: Sass security and safety  
+> **Extends**: General security + CSS security
 
-## 1. Untrusted Inputs
-- **NEVER**: Compile Sass from untrusted input.
-- **ALWAYS**: If user-controlled values affect styling, restrict to allowlists (e.g., themes, known class names).
+## CRITICAL REQUIREMENTS
 
-## 2. Build pipeline safety
-- **Prefer**: Pinned dependency versions for Sass tooling.
-- **Avoid**: Unreviewed third-party mixin libraries and copy-pasted “utility packs”.
+> **ALWAYS**: Allowlist user-controlled style values
+> **ALWAYS**: Pin dependency versions
+> 
+> **NEVER**: Compile from untrusted input
+> **NEVER**: Unreviewed third-party libraries
+> **NEVER**: User-controlled compilation
 
-Follow the general security rules; the rules above are additive.
+## AI Self-Check
 
+- [ ] No compilation from untrusted input?
+- [ ] User values allowlisted?
+- [ ] Dependencies pinned?
+- [ ] Third-party libraries reviewed?
