@@ -1,6 +1,23 @@
 # Compliance Standards (General)
 
-> **Scope**: Apply when working on regulated, privacy-sensitive, or audited systems. If your project has no compliance requirements, treat this as “nice-to-have” and defer to `security.md` and project-specific policies.
+> **Scope**: Apply when working on regulated, privacy-sensitive, or audited systems. If your project has no compliance requirements, treat this as "nice-to-have" and defer to `security.md` and project-specific policies.
+
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Treat PII/PHI/PCI/secrets as sensitive by default
+> **ALWAYS**: Data minimization (only store required data)
+> **ALWAYS**: Document sensitive data locations and flows
+> **ALWAYS**: Least-privilege access (RBAC/ABAC)
+> **ALWAYS**: Implement right-to-delete and right-to-access/export
+> **ALWAYS**: Audit trail for security-relevant events
+> 
+> **NEVER**: Log secrets/tokens/passwords/sensitive payloads
+> **NEVER**: Copy production sensitive data to dev without approval
+> **NEVER**: Use PII for secondary purposes without approval
+> **NEVER**: Store PII beyond necessary retention period
+> **NEVER**: Store full payment card data (PCI scope explosion)
+
+---
 
 ## Data Classification & Handling
 
@@ -71,7 +88,7 @@
 ## HIPAA / PCI (If Applicable)
 
 > **ALWAYS**:
-> - Follow the applicable standard’s requirements for data handling, auditability, and access controls
+> - Follow the applicable standard's requirements for data handling, auditability, and access controls
 > - Avoid introducing scope creep (keep PHI/PCI out of systems unless explicitly required)
 > - Ensure encryption in transit and at rest for in-scope data and backups
 
@@ -109,4 +126,3 @@
 - [ ] If GDPR/PII applies: do we support deletion/export and data minimization?
 - [ ] If SOC2/ISO applies: is change management and release provenance covered?
 - [ ] If HIPAA/PCI applies: is scope minimized and data protected end-to-end?
-

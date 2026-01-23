@@ -2,6 +2,20 @@
 
 > **Scope**: Apply these rules when working with React applications using JavaScript (`.jsx` files).
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Functional components (NO class components)
+> **ALWAYS**: Define PropTypes for all props
+> **ALWAYS**: Use hooks (useState, useEffect, useMemo, useCallback)
+> **ALWAYS**: Extract event handlers to named functions
+> **ALWAYS**: Use key prop in lists
+> 
+> **NEVER**: Class components
+> **NEVER**: Missing PropTypes
+> **NEVER**: Inline functions in JSX (performance issue)
+> **NEVER**: Missing dependency arrays in useEffect
+> **NEVER**: Mutate props or state directly
+
 ## Overview
 
 React is a JavaScript library for building user interfaces. This is the JavaScript version - for TypeScript, see `typescript/frameworks/react.md`.

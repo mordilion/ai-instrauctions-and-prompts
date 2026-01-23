@@ -5,6 +5,20 @@
 > **Extends**: typescript/architecture.md, typescript/frameworks/adonisjs.md
 > **Precedence**: Structure rules OVERRIDE framework rules
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Group by feature/domain (modules folder)
+> **ALWAYS**: Each module self-contained (controllers, models, services, routes)
+> **ALWAYS**: Shared code in shared folder (cross-cutting concerns)
+> **ALWAYS**: Module-level route registration
+> **ALWAYS**: Dependency injection for services
+> 
+> **NEVER**: Cross-module direct dependencies
+> **NEVER**: Shared business logic in controllers
+> **NEVER**: Skip service layer for complex logic
+> **NEVER**: Global state within modules
+> **NEVER**: Circular dependencies between modules
+
 ## Structure Overview
 
 ```

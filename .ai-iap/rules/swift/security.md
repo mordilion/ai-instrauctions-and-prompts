@@ -80,8 +80,6 @@
 
 ## AI Self-Check
 
-## AI Self-Check
-
 - [ ] Keychain for sensitive data (not UserDefaults)?
 - [ ] ATS enabled (HTTPS only)?
 - [ ] BCrypt for passwords (Vapor)?
@@ -92,3 +90,4 @@
 - [ ] Generic error messages to users?
 - [ ] Parameterized queries for SQL?
 - [ ] No force unwrapping of security-critical values?
+- [ ] Dependencies audited regularly?

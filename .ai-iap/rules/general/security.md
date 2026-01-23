@@ -104,14 +104,11 @@
 
 ## AI Self-Check
 
-Before generating code:
-## AI Self-Check
-
 - [ ] Parameterized queries (no string concatenation)?
 - [ ] Password hashing (BCrypt/Argon2, 12+ rounds)?
 - [ ] Input validation on ALL user data?
 - [ ] HTTPS enforced?
-- [ ] Secrets in environment variables?
+- [ ] Secrets in environment variables (not hardcoded)?
 - [ ] CSRF protection enabled?
 - [ ] Security headers configured?
 - [ ] Rate limiting on auth endpoints?

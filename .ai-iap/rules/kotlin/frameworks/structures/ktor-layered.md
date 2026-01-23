@@ -5,6 +5,20 @@
 > **Extends**: kotlin/architecture.md, kotlin/frameworks/ktor.md
 > **Precedence**: Structure rules OVERRIDE framework rules
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Layered architecture (routes → controllers → services → repositories)
+> **ALWAYS**: Dependency injection (Koin or manual)
+> **ALWAYS**: DTOs for API layer (separate from domain models)
+> **ALWAYS**: Repository pattern for data access
+> **ALWAYS**: Suspend functions for async operations
+> 
+> **NEVER**: Business logic in routes or controllers
+> **NEVER**: Direct database access from routes/controllers
+> **NEVER**: Expose domain models directly in API
+> **NEVER**: Skip DTO layer
+> **NEVER**: Blocking database calls (use suspend)
+
 ## Structure Overview
 
 ```

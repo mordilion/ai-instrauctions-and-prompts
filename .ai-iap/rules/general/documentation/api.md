@@ -2,16 +2,17 @@
 
 > **Scope**: REST APIs, GraphQL, gRPC, SDK documentation
 
----
+## CRITICAL REQUIREMENTS
 
-## Core Principles
-
-> **ALWAYS**: Document all public endpoints/operations  
-> **ALWAYS**: Include request/response examples  
-> **ALWAYS**: Document error responses and status codes  
-> **ALWAYS**: Keep documentation in sync with implementation  
-> **NEVER**: Document internal/private endpoints  
+> **ALWAYS**: Document all public endpoints/operations
+> **ALWAYS**: Include request/response examples
+> **ALWAYS**: Document error responses and status codes
+> **ALWAYS**: Keep documentation in sync with implementation
+> **ALWAYS**: Use OpenAPI 3.0+ for REST APIs
+> 
+> **NEVER**: Document internal/private endpoints
 > **NEVER**: Expose sensitive implementation details
+> **NEVER**: Skip authentication/authorization docs
 
 ---
 

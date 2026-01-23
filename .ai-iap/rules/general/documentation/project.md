@@ -2,6 +2,17 @@
 
 > **Scope**: README, CHANGELOG, CONTRIBUTING, LICENSE, project-level docs
 
+## CRITICAL REQUIREMENTS
+
+> **ALWAYS**: Include README with Title, Features, Installation, Quick Start
+> **ALWAYS**: Keep CHANGELOG (reverse chronological, semantic versioning)
+> **ALWAYS**: Include LICENSE file with valid SPDX identifier
+> **ALWAYS**: Keep docs in sync with code changes
+> 
+> **NEVER**: Skip installation instructions
+> **NEVER**: Forget to update CHANGELOG on releases
+> **NEVER**: Use placeholder/outdated content
+
 ---
 
 ## README Structure

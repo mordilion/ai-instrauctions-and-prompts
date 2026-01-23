@@ -2,16 +2,18 @@
 
 > **Scope**: Inline comments, docstrings, JSDoc, XML docs, etc.
 
----
+## CRITICAL REQUIREMENTS
 
-## Core Principles
-
-> **ALWAYS**: Write self-documenting code first (clear names, simple logic)  
-> **ALWAYS**: Document WHY, not WHAT (code shows what, comments explain why)  
-> **ALWAYS**: Keep comments synchronized with code changes  
-> **NEVER**: State the obvious ("increment i" for `i++`)  
-> **NEVER**: Comment out code for version control (use git)  
+> **ALWAYS**: Write self-documenting code first (clear names, simple logic)
+> **ALWAYS**: Document WHY, not WHAT
+> **ALWAYS**: Keep comments synchronized with code changes
+> **ALWAYS**: Document all public functions/methods
+> **ALWAYS**: Include parameters, return values, exceptions
+> 
+> **NEVER**: State the obvious ("increment i" for `i++`)
+> **NEVER**: Comment out code (use git instead)
 > **NEVER**: Write misleading or outdated comments
+> **NEVER**: Skip documentation for complex algorithms
 
 ---
 
