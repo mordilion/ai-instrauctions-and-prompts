@@ -14,6 +14,7 @@ Copilot, Windsurf, Aider, Google AI Studio, Amazon Q, Tabnine, Cody, and Continu
 ## ✨ Features
 
 - 🔧 **Multi-Tool** – One source, 10 AI tools configured
+- 🧠 **Role-Based Adaptive AI** – AI detects your expertise level (PM, Engineer, DevOps) and adapts questions accordingly – **no more assumptions!**
 - 🌍 **Multi-Language** – Swift, Kotlin, Java, Python, JavaScript, TypeScript,
   HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Dart/Flutter, .NET/C#, PHP,
   Node.js, Bash, PowerShell

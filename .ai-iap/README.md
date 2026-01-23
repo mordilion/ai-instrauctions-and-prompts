@@ -29,6 +29,7 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 ## ✨ Features
 
 - **🔧 Multi-Tool Support** – 10 AI coding assistants: Cursor, Claude Code, GitHub Copilot, Windsurf, Aider, Google AI Studio, Amazon Q Developer, Tabnine, Cody, Continue.dev
+- **🧠 Role-Based Adaptive AI** – AI detects your expertise level (Product Manager, Software Engineer, DevOps, Junior) and adapts its questions accordingly – eliminates assumptions and provides role-appropriate guidance
 - **🌍 Multi-Language** – Kotlin, JavaScript, TypeScript, HTML, CSS, Sass/SCSS, Less, PostCSS, Stylus, YAML, JSON, dotenv (.env), Dockerfile, SQL, Java, Python, Dart/Flutter, .NET/C#, PHP, Swift, Node.js, Bash, PowerShell
 - **📦 Framework-Specific** – React, Next.js, NestJS, AdonisJS, Laravel, ASP.NET Core, Spring Boot, Django, FastAPI, and 50+ more
 - **🏗️ Structure Templates** – Clean Architecture, Vertical Slices, Feature-First, Modular, MVVM, MVI, DDD, and more
@@ -40,6 +41,48 @@ Your Rules (one source) → Setup Script → All AI Tools Configured
 - **⚡ Interactive Setup** – Wizard guides you through configuration with context-aware suggestions
 - **🎯 Recommended Defaults** – Best practices marked with `⭐`
 - **✅ Quality Verified** – Conflict-free system verified across the repository (95% confidence)
+
+---
+
+## 🧠 Role-Based Adaptive AI (New!)
+
+The AI assistant now **intelligently adapts** its behavior based on your role and expertise level, **eliminating assumptions** and providing appropriate guidance.
+
+### How It Works
+
+**On first interaction**, the AI will ask:
+- "What's your role?" (Product Manager, Software Engineer, DevOps, etc.)
+- "What's your technical expertise level?" (Beginner, Intermediate, Expert)
+
+### Adaptive Behavior
+
+| Your Role | AI Decides | AI Asks You About |
+|-----------|------------|-------------------|
+| **Product/Project Manager** | ✅ Design patterns<br>✅ Architecture<br>✅ Tech stack | ❓ Business logic<br>❓ Requirements<br>❓ User flows |
+| **Software Engineer** | ✅ Code structure (standard) | ❓ Design patterns<br>❓ Architecture decisions<br>❓ Tech preferences |
+| **DevOps/SysAdmin** | ✅ Deployment (standard) | ❓ Infrastructure<br>❓ CI/CD tools<br>❓ Monitoring |
+| **Junior/Beginner** | ✅ Best practices<br>✅ Architecture | ❓ Learning goals<br>❓ Feature requirements |
+
+### Example Interaction
+
+**Product Manager**:
+```
+User: "Add authentication"
+AI: "I'll implement secure JWT authentication with refresh tokens.
+     Do you need social login (Google/GitHub)?"
+```
+
+**Software Engineer**:
+```
+User: "Add authentication"
+AI: "Let's discuss the technical approach:
+     1. JWT or session-based?
+     2. Storage: Redis, database, in-memory?
+     3. OAuth providers needed?
+     4. Specific design pattern preference?"
+```
+
+**Result**: No more assumptions, appropriate questions for your expertise level!
 
 ---
 
