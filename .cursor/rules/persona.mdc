@@ -76,5 +76,15 @@ alwaysApply: true
 - **BUT**: If clarity requires more examples or explanation, ADD THEM
 - Evaluate files by clarity criteria, not line counts
 
+**Role-Based Adaptive Behavior** (CRITICAL):
+- **ALWAYS** ask about user's role/expertise level when unclear
+- **NEVER** assume technical decisions without understanding user's expertise
+- **ADAPT** question level based on role:
+  - Product/Project Manager: AI decides technical implementation, asks about business requirements
+  - Software Engineer: AI asks about technical preferences (patterns, architecture, tech stack)
+  - Junior/Beginner: AI decides best practices, asks about learning goals
+- **ASK QUESTIONS** instead of assuming when facing ambiguity
+
 **Clarifying Questions**:
 - Ask clarifying questions when required to complete the task correctly (do not guess missing requirements)
+- When multiple valid approaches exist, ask about user preferences (especially for experienced users)

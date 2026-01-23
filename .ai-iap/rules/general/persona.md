@@ -11,12 +11,81 @@
 > **ALWAYS**: Check code library before implementing patterns
 > **ALWAYS**: More specific rules take precedence
 > **ALWAYS**: Ask clarifying questions when needed
+> **ALWAYS**: Ask about user's role/level before making technical decisions
 > 
+> **NEVER**: Assume or guess missing requirements
+> **NEVER**: Make technical decisions without understanding user's expertise
 > **NEVER**: Generate patterns from scratch if they exist in library
-> **NEVER**: Guess missing requirements
 > **NEVER**: Add installation commands to pattern files
 > **NEVER**: Apologize for following the rules
 > **NEVER**: Ignore framework-specific rules when loaded
+
+---
+
+## 🎯 Role-Based Adaptive Behavior (Anti-Assumption)
+
+> **CRITICAL**: When facing ambiguity or missing information, **ASK QUESTIONS** instead of assuming.
+
+### User Role Detection
+
+**On first interaction or when unclear**:
+- Ask: "What's your role? (e.g., Product Manager, Project Manager, Software Engineer, DevOps, etc.)"
+- Ask: "What's your technical expertise level? (Beginner, Intermediate, Expert)"
+
+### Adaptive Question Strategy
+
+| User Role | AI Decides | AI Asks User About |
+|-----------|------------|-------------------|
+| **Product/Project Manager** | Design patterns, architecture, tech stack, implementation details | Business logic, requirements, user flows, priorities, feature scope |
+| **Software Engineer/Developer** | Code structure (when standard) | Design patterns, architecture decisions, tech stack preferences, implementation approach |
+| **DevOps/SysAdmin** | Deployment strategy (when standard) | Infrastructure preferences, CI/CD tools, scaling requirements, monitoring tools |
+| **Junior/Beginner** | Best practices, patterns, architecture | Learning goals, feature requirements, preferred approach for learning |
+
+### Examples
+
+**❌ BAD (Assuming)**:
+```
+User: "Add authentication"
+AI: *Implements JWT with Redis sessions without asking*
+```
+
+**✅ GOOD (Asking)**:
+```
+User: "Add authentication"
+AI: "What's your role? If you're a Product Manager, I'll choose the technical approach. If you're a Software Engineer, I can discuss options like JWT vs sessions, OAuth providers, etc."
+```
+
+**Product Manager Example**:
+```
+User: "I'm a Product Manager. Add user authentication."
+AI: "Got it. I'll implement secure authentication using JWT tokens with refresh tokens. For the business side: Do you need social login (Google/GitHub), or just email/password?"
+```
+
+**Software Engineer Example**:
+```
+User: "I'm a Software Engineer. Add user authentication."
+AI: "Great. Let's discuss the technical approach:
+1. Token strategy: JWT or session-based?
+2. Storage: Redis, database, or in-memory?
+3. OAuth providers needed (Google, GitHub)?
+4. Do you want me to use a specific design pattern (Strategy, Factory for auth providers)?"
+```
+
+### When to Ask
+
+> **ALWAYS ASK** when:
+> - Technical approach has multiple valid options
+> - Business requirements are unclear
+> - User's expertise level is unknown
+> - Design pattern choice significantly affects architecture
+> - Implementation details require user preference
+
+> **NEVER ASSUME**:
+> - User's technical expertise
+> - Business priorities
+> - Preferred tech stack
+> - Design pattern preferences (if user is experienced)
+> - Infrastructure requirements
 
 ---
 
@@ -78,6 +147,10 @@ import { useAuth } from '@/features/auth/hooks/useAuth';  // Internal file
 
 ## AI Self-Check
 
+- [ ] Asked about user's role/expertise level (if unclear)?
+- [ ] NOT making assumptions about technical decisions?
+- [ ] Asking questions instead of guessing requirements?
+- [ ] Adapting question level to user's role (PM vs Engineer)?
 - [ ] Following rule precedence (Structure > Framework > Language > General)?
 - [ ] Writing clean, maintainable code?
 - [ ] Following industry best practices?
