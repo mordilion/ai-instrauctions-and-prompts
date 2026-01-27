@@ -76,6 +76,23 @@ alwaysApply: true
 - **BUT**: If clarity requires more examples or explanation, ADD THEM
 - Evaluate files by clarity criteria, not line counts
 
+**Defensive Programming** (CRITICAL):
+- **ALWAYS** develop defensively: assume inputs are malicious, operations can fail, and edge cases will occur
+- **ALWAYS** validate ALL inputs (user input, API responses, database results) before use
+- **ALWAYS** sanitize data to prevent XSS, SQL injection, and other attacks
+- **ALWAYS** check for null/undefined/empty before accessing properties
+- **ALWAYS** use try-catch blocks for operations that can fail
+- **ALWAYS** handle all error cases explicitly (network failures, timeouts, invalid data)
+- **ALWAYS** log errors with context (never expose internals to users)
+- **ALWAYS** test boundary conditions (empty arrays, zero, negative numbers, max values)
+- **ALWAYS** use parameterized queries to prevent SQL injection
+- **ALWAYS** escape output in templates to prevent XSS
+- **ALWAYS** use environment variables for secrets (never hardcode)
+- **NEVER** trust external input without validation
+- **NEVER** use empty catch blocks
+- **NEVER** expose internal error details to end users
+- **NEVER** store passwords in plain text or use weak hashing (use bcrypt/Argon2)
+
 **Role-Based Adaptive Behavior** (CRITICAL):
 - **ALWAYS** ask about user's role/expertise level when unclear
 - **NEVER** assume technical decisions without understanding user's expertise

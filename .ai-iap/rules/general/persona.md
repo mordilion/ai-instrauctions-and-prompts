@@ -22,6 +22,100 @@
 
 ---
 
+## 🛡️ Defensive Programming (CRITICAL)
+
+> **ALWAYS** develop defensively: assume inputs are malicious, operations can fail, and edge cases will occur.
+
+### Input Validation & Sanitization
+
+> **ALWAYS**: Validate ALL inputs (user input, API responses, database results, file contents)
+> **ALWAYS**: Sanitize data before use (XSS prevention, SQL injection prevention)
+> **ALWAYS**: Check for null/undefined/empty before accessing properties or methods
+> **ALWAYS**: Validate data types and formats (email, phone, date, URL)
+> **ALWAYS**: Set reasonable limits (string length, array size, file size)
+> 
+> **NEVER**: Trust external input without validation
+> **NEVER**: Use dynamic code execution (eval, exec) with user input
+> **NEVER**: Skip sanitization for "trusted" sources
+
+### Error Handling & Resilience
+
+> **ALWAYS**: Use try-catch blocks for operations that can fail
+> **ALWAYS**: Handle all error cases explicitly (network failures, timeouts, invalid data)
+> **ALWAYS**: Provide meaningful error messages (for logs, not exposing internals to users)
+> **ALWAYS**: Use fail-safe defaults when operations fail
+> **ALWAYS**: Log errors with context (timestamp, user ID, operation, stack trace)
+> 
+> **NEVER**: Use empty catch blocks
+> **NEVER**: Expose internal error details to end users
+> **NEVER**: Let unhandled exceptions crash the application
+
+### Boundary & Edge Case Validation
+
+> **ALWAYS**: Test and handle boundary conditions (empty arrays, zero, negative numbers, max values)
+> **ALWAYS**: Check array/collection bounds before access
+> **ALWAYS**: Handle concurrent access and race conditions
+> **ALWAYS**: Validate business logic constraints (age > 0, price >= 0, quantity > 0)
+> 
+> **NEVER**: Assume arrays have elements
+> **NEVER**: Assume database queries return results
+> **NEVER**: Skip edge case validation in production code
+
+### Security-First Mindset
+
+> **ALWAYS**: Use parameterized queries (prevent SQL injection)
+> **ALWAYS**: Escape output in templates (prevent XSS)
+> **ALWAYS**: Use HTTPS for sensitive data transmission
+> **ALWAYS**: Hash passwords with strong algorithms (bcrypt, Argon2)
+> **ALWAYS**: Implement rate limiting for API endpoints
+> **ALWAYS**: Validate file uploads (type, size, content)
+> **ALWAYS**: Use environment variables for secrets (never hardcode)
+> 
+> **NEVER**: Store passwords in plain text
+> **NEVER**: Trust client-side validation alone
+> **NEVER**: Expose sensitive data in error messages or logs
+> **NEVER**: Use weak cryptographic algorithms (MD5, SHA1 for passwords)
+
+### Example: Defensive vs Non-Defensive
+
+**❌ NON-DEFENSIVE**:
+```typescript
+function updateUser(userId: string, data: any) {
+  const user = users.find(u => u.id === userId);
+  user.name = data.name;  // No null check, no validation
+  return user;
+}
+```
+
+**✅ DEFENSIVE**:
+```typescript
+function updateUser(userId: string, data: unknown): Result<User, Error> {
+  // Input validation
+  if (!userId || typeof userId !== 'string') {
+    return Err(new Error('Invalid user ID'));
+  }
+  
+  // Validate data structure
+  const validated = validateUserData(data);
+  if (!validated.success) {
+    return Err(new Error('Invalid user data'));
+  }
+  
+  // Safe lookup with null check
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    return Err(new Error('User not found'));
+  }
+  
+  // Sanitize input
+  user.name = sanitizeString(validated.data.name);
+  
+  return Ok(user);
+}
+```
+
+---
+
 ## 🎯 Role-Based Adaptive Behavior (Anti-Assumption)
 
 > **CRITICAL**: When facing ambiguity or missing information, **ASK QUESTIONS** instead of assuming.
@@ -161,3 +255,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';  // Internal file
 - [ ] Appending learnings to learnings.md (if enabled)?
 - [ ] Not storing secrets in learnings?
 - [ ] Following framework-specific rules when loaded?
+- [ ] **Validating ALL inputs (null checks, type validation, sanitization)?**
+- [ ] **Handling errors with try-catch blocks and meaningful logging?**
+- [ ] **Testing boundary conditions and edge cases?**
+- [ ] **Using parameterized queries and output escaping (security)?**
+- [ ] **Never exposing sensitive data in errors or logs?**
