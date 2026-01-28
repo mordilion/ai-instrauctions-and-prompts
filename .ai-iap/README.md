@@ -191,7 +191,7 @@ Enable commit standards? (y/N):
 Enable project learnings capture to .ai-iap-custom/rules/general/learnings.md?
 Enable learnings capture? (y/N):
 ```
-When enabled, AIs should append stable project-specific decisions to that file. After updates, re-run setup so generated tool outputs include the latest learnings.
+When enabled, AIs should append stable project-specific decisions to that file. Setup also includes the learnings-capture rules in generated outputs. After updates, re-run setup so generated tool outputs include the latest learnings.
 
 **Step 6: Select Frameworks, Structures & Processes** (if applicable)
 
@@ -667,6 +667,10 @@ When rules are loaded, they're applied in this order (highest to lowest):
 4. **Language code style** – Language-specific conventions
 5. **General architecture** – Universal structure principles
 6. **General code style** – Universal coding conventions
+
+### Optional Rules (Setup Toggles)
+
+Some general rules are only included when a setup toggle is enabled. These are listed under `languages.general.optionalRules` in `config.json`. For example, `learnings-capture` is gated by `enableProjectLearnings`.
 
 ### Combining Frameworks
 

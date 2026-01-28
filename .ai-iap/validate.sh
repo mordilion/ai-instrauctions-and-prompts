@@ -87,6 +87,17 @@ while IFS= read -r lang_key; do
             fi
         fi
     done < <(jq -r ".languages[\"$lang_key\"].files[]" "$CONFIG_FILE" 2>/dev/null || echo "")
+
+    # Check optional rule files
+    while IFS= read -r opt_key; do
+        opt_file=$(jq -r ".languages[\"$lang_key\"].optionalRules[\"$opt_key\"].file" "$CONFIG_FILE")
+        if [[ -n "$opt_file" && "$opt_file" != "null" ]]; then
+            opt_path="$lang_dir/$opt_file.md"
+            if [[ ! -f "$opt_path" ]]; then
+                missing_files+=("$lang_key/$opt_file.md")
+            fi
+        fi
+    done < <(jq -r ".languages[\"$lang_key\"].optionalRules // {} | keys[]" "$CONFIG_FILE" 2>/dev/null || echo "")
     
     # Check framework files
     while IFS= read -r fw_key; do

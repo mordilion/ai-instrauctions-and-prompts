@@ -122,6 +122,15 @@
           ]
         }
       }
+      ,
+      "optionalRules": {
+        "learnings-capture": {
+          "name": "Project Learnings Capture",
+          "file": "learnings-capture",
+          "description": "Rules for when/how to append project learnings",
+          "toggle": "enableProjectLearnings"
+        }
+      }
     },
     "bash": {
       "name": "Bash",

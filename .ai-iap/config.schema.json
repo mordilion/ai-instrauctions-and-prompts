@@ -71,6 +71,24 @@
               },
               "additionalProperties": false
             },
+            "optionalRules": {
+              "type": "object",
+              "description": "Optional rule files gated by setup toggles",
+              "patternProperties": {
+                "^[a-z-]+$": {
+                  "type": "object",
+                  "required": ["name", "file", "description", "toggle"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "file": { "type": "string" },
+                    "description": { "type": "string" },
+                    "toggle": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
             "processes": {
               "type": "object",
               "description": "Optional language process guides (permanent and on-demand)",

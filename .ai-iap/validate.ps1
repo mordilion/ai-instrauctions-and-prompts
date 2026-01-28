@@ -123,6 +123,16 @@ foreach ($langKey in $config.languages.PSObject.Properties.Name) {
             $missingFiles += "$langKey/$file.md"
         }
     }
+
+    if ($null -ne $lang.optionalRules) {
+        foreach ($ruleKey in $lang.optionalRules.PSObject.Properties.Name) {
+            $rule = $lang.optionalRules.$ruleKey
+            $rulePath = Join-Path $langDir "$($rule.file).md"
+            if (-not (Test-Path $rulePath)) {
+                $missingFiles += "$langKey/$($rule.file).md"
+            }
+        }
+    }
     
     if ($null -ne $lang.frameworks) {
         foreach ($fwKey in $lang.frameworks.PSObject.Properties.Name) {
