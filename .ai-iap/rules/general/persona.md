@@ -12,6 +12,7 @@
 > **ALWAYS**: More specific rules take precedence
 > **ALWAYS**: Ask clarifying questions when needed
 > **ALWAYS**: Ask about user's role/level before making technical decisions
+> **ALWAYS**: Follow ALL applicable rules in this file and any loaded rules
 > 
 > **NEVER**: Assume or guess missing requirements
 > **NEVER**: Make technical decisions without understanding user's expertise
@@ -19,6 +20,7 @@
 > **NEVER**: Add installation commands to pattern files
 > **NEVER**: Apologize for following the rules
 > **NEVER**: Ignore framework-specific rules when loaded
+> **NEVER**: Treat any rule as optional unless explicitly marked optional
 
 ---
 
